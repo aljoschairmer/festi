@@ -9,6 +9,7 @@ import {
   Loader2Icon,
   MapPinIcon,
   SaveIcon,
+  SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -38,6 +39,8 @@ import type {
   PlaceResult,
   RideDifficulty,
   RidePace,
+  RouteHighlight,
+  RoutePlaceName,
   RouteProfile,
   RouteResult,
   Waypoint,
@@ -105,28 +108,73 @@ function StepIndicator({ current }: { current: Step }) {
 
 export function RidePlanner({
   initialRoute = null,
+  initialGenerated = null,
 }: {
   /** Preloaded waypoints from a library route (skips the start step). */
   initialRoute?: { name: string; waypoints: Waypoint[] } | null;
+  /** Preloaded tour from the map generator (skips to the build step). */
+  initialGenerated?: {
+    route: RouteResult;
+    generation: { jobId: string; routeIndex: number };
+    /** Sampled along the tour so it stays editable via BRouter. */
+    waypoints: Waypoint[];
+    roundTrip: boolean;
+    name: string | null;
+    /** Landmarks along the tour, used to name waypoints after places. */
+    highlights: RouteHighlight[];
+    /** Street-name samples along the tour, used to name waypoints. */
+    streetPoints: RoutePlaceName[];
+  } | null;
 }) {
+  // Street names and landmarks survive edits: even after the tour
+  // switches to manual planning, nearby points keep their names.
+  const highlights = initialGenerated?.highlights ?? [];
+  const streetPoints = initialGenerated?.streetPoints ?? [];
   const router = useRouter();
-  const [step, setStep] = useState<Step>(initialRoute ? "build" : "start");
-  const [startPlace, setStartPlace] = useState<PlaceResult | null>(() =>
-    initialRoute?.waypoints[0]
+  const [step, setStep] = useState<Step>(
+    initialRoute || initialGenerated ? "build" : "start",
+  );
+  const [startPlace, setStartPlace] = useState<PlaceResult | null>(() => {
+    if (initialGenerated) {
+      const start = initialGenerated.waypoints[0];
+      return {
+        id: "generated",
+        name: initialGenerated.name ?? "Generated route",
+        lat: start.lat,
+        lng: start.lng,
+      };
+    }
+    return initialRoute?.waypoints[0]
       ? {
           id: "library",
           name: initialRoute.name,
           lat: initialRoute.waypoints[0].lat,
           lng: initialRoute.waypoints[0].lng,
         }
-      : null,
-  );
-  const [waypoints, setWaypoints] = useState<Waypoint[]>(
-    () => initialRoute?.waypoints ?? [],
-  );
+      : null;
+  });
+  const [waypoints, setWaypoints] = useState<Waypoint[]>(() => {
+    if (initialGenerated) {
+      return initialGenerated.waypoints;
+    }
+    return initialRoute?.waypoints ?? [];
+  });
   const [profile, setProfile] = useState<RouteProfile>("trekking");
-  const [roundTrip, setRoundTrip] = useState(false);
-  const [route, setRoute] = useState<RouteResult | null>(null);
+  const [roundTrip, setRoundTrip] = useState(
+    initialGenerated?.roundTrip ?? false,
+  );
+  const [route, setRoute] = useState<RouteResult | null>(
+    initialGenerated?.route ?? null,
+  );
+  /**
+   * Set while the current route came from the generator. Any manual edit
+   * clears it and falls back to BRouter recalculation; on save it makes
+   * `createRide` fetch the route from the engine instead.
+   */
+  const [generation, setGeneration] = useState<{
+    jobId: string;
+    routeIndex: number;
+  } | null>(initialGenerated?.generation ?? null);
   const [elevationHover, setElevationHover] = useState<[number, number] | null>(
     null,
   );
@@ -141,7 +189,7 @@ export function RidePlanner({
   } = useForm<RideFormValues>({
     resolver: zodResolver(rideFormSchema),
     defaultValues: {
-      title: "",
+      title: initialGenerated?.name ?? "",
       description: "",
       startTime: "",
       maxParticipants: "",
@@ -185,6 +233,7 @@ export function RidePlanner({
         maxParticipants:
           values.maxParticipants === "" ? null : Number(values.maxParticipants),
         repeatWeekly: Number(values.repeatWeekly),
+        generation,
       });
       if (!result.success) {
         throw new Error(result.error);
@@ -202,10 +251,16 @@ export function RidePlanner({
 
   const calcMutate = calcMutation.mutate;
 
-  // Recalculate the route (debounced) whenever the points or profile change.
+  // Recalculate the route (debounced) whenever the points or profile
+  // change. Generated routes are engine-owned — no BRouter recalculation
+  // until a manual edit clears the generation reference.
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
+    }
+
+    if (generation) {
+      return;
     }
 
     if (waypoints.length < (roundTrip ? 3 : 2)) {
@@ -222,9 +277,15 @@ export function RidePlanner({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [waypoints, profile, roundTrip, calcMutate]);
+  }, [waypoints, profile, roundTrip, generation, calcMutate]);
+
+  /** Any manual route edit hands control back to BRouter planning. */
+  const dropGeneration = () => {
+    setGeneration(null);
+  };
 
   const addWaypoint = (waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       // In round-trip mode, insert before the returning end point.
       if (roundTrip && current.length >= 2) {
@@ -245,10 +306,12 @@ export function RidePlanner({
     if (roundTrip && index === waypoints.length - 1) {
       return;
     }
+    dropGeneration();
     setWaypoints((current) => current.filter((_, i) => i !== index));
   };
 
   const insertWaypoint = (index: number, waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       const next = [...current];
       next.splice(index, 0, waypoint);
@@ -257,6 +320,7 @@ export function RidePlanner({
   };
 
   const moveWaypoint = (index: number, direction: -1 | 1) => {
+    dropGeneration();
     setWaypoints((current) => {
       const target = index + direction;
       if (target < 0 || target >= current.length) {
@@ -269,6 +333,7 @@ export function RidePlanner({
   };
 
   const repositionWaypoint = (index: number, waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       const next = [...current];
       next[index] = waypoint;
@@ -286,12 +351,14 @@ export function RidePlanner({
   };
 
   const handleSelectStart = (place: PlaceResult) => {
+    dropGeneration();
     setStartPlace(place);
     const start = { lat: place.lat, lng: place.lng };
     setWaypoints(roundTrip ? [start, start] : [start]);
   };
 
   const toggleRoundTrip = (value: boolean) => {
+    dropGeneration();
     setRoundTrip(value);
     setWaypoints((current) => {
       if (!startPlace) {
@@ -312,6 +379,7 @@ export function RidePlanner({
   };
 
   const clearExtraPoints = () => {
+    dropGeneration();
     if (!startPlace) {
       setWaypoints([]);
       return;
@@ -322,6 +390,7 @@ export function RidePlanner({
 
   // Going back to step 1 resets the built route to a clean slate.
   const backToStart = () => {
+    setGeneration(null);
     setRoute(null);
     clearExtraPoints();
     setStep("start");
@@ -386,6 +455,20 @@ export function RidePlanner({
                     </span>
                   </span>
                 </label>
+
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() =>
+                    router.push("/dashboard/community-rides/generate")
+                  }
+                >
+                  <SparklesIcon className="size-4 text-primary" />
+                  Generate a route for me
+                  <span className="text-muted-foreground">
+                    — pick a start on the map
+                  </span>
+                </Button>
 
                 <Button
                   className="self-end"
@@ -466,7 +549,7 @@ export function RidePlanner({
                         type="button"
                         variant="ghost"
                         size="icon-sm"
-                        disabled={waypoints.length <= 1}
+                        disabled={waypoints.length <= 1 || generation !== null}
                         onClick={clearExtraPoints}
                         aria-label="Clear extra points"
                       >
@@ -475,18 +558,39 @@ export function RidePlanner({
                     </div>
                   </CardTitle>
                   <p className="text-muted-foreground text-xs">
-                    Click the map to add points, or drag the route line to shape
-                    it.
+                    {generation
+                      ? "Drag the route line or a marker on the map to fine-tune the tour."
+                      : "Click the map to add points, or drag the route line to shape it."}
                   </p>
                 </CardHeader>
                 <CardContent className="min-h-0 flex-1 overflow-y-auto">
-                  <WaypointList
-                    waypoints={waypoints}
-                    onRemove={removeWaypoint}
-                    onMove={moveWaypoint}
-                    lockedFirst={!!startPlace}
-                    lockedLast={roundTrip}
-                  />
+                  {generation ? (
+                    <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+                      <p className="flex items-center gap-2 font-medium">
+                        <SparklesIcon className="size-4 text-primary" />
+                        {startPlace?.name ?? "Generated tour"}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Generated {roundTrip ? "roundtrip" : "route"}, shaped by{" "}
+                        {Math.max(0, waypoints.length - 2)} anchor points along
+                        the way. Adjust it directly on the map — the first edit
+                        switches to manual planning, where every point becomes
+                        editable here.
+                      </p>
+                    </div>
+                  ) : (
+                    <WaypointList
+                      waypoints={waypoints}
+                      onRemove={removeWaypoint}
+                      onMove={moveWaypoint}
+                      lockedFirst={!!startPlace}
+                      lockedLast={roundTrip}
+                      routeCoordinates={route?.coordinates}
+                      roundTrip={roundTrip}
+                      highlights={highlights}
+                      streetPoints={streetPoints}
+                    />
+                  )}
                 </CardContent>
               </Card>
 

@@ -33,6 +33,14 @@ type RideMapProps = {
   highlight?: [number, number] | null;
   /** Points drawn on top of the route (e.g. live rider positions). */
   dots?: MapDot[];
+  /**
+   * Additional route candidates drawn dimmed under the main line (route
+   * generator). Clicking one selects it via `onSelectAlternative`.
+   */
+  alternatives?: { id: string; coordinates: [number, number][] }[];
+  onSelectAlternative?: (id: string) => void;
+  /** When set, the viewport fits these coordinates whenever they change. */
+  fitTo?: [number, number][] | null;
   className?: string;
 };
 
@@ -45,6 +53,9 @@ const HIGHLIGHT_SOURCE_ID = "ride-highlight";
 const HIGHLIGHT_LAYER_ID = "ride-highlight-point";
 const DOTS_SOURCE_ID = "ride-dots";
 const DOTS_LAYER_ID = "ride-dots-points";
+const ALT_SOURCE_ID = "ride-alternatives";
+const ALT_LAYER_ID = "ride-alternatives-line";
+const ALT_HIT_LAYER_ID = "ride-alternatives-hit";
 
 /** Index of the coordinate in `coords` closest to `target` (squared distance). */
 function nearestRouteIndex(
@@ -102,6 +113,9 @@ export function RideMap({
   initialCenter,
   highlight,
   dots,
+  alternatives,
+  onSelectAlternative,
+  fitTo,
   className,
 }: RideMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +124,7 @@ export function RideMap({
   const addWaypointRef = useRef(onAddWaypoint);
   const insertWaypointRef = useRef(onInsertWaypoint);
   const moveWaypointRef = useRef(onMoveWaypoint);
+  const selectAlternativeRef = useRef(onSelectAlternative);
   const interactiveRef = useRef(interactive);
   const waypointsRef = useRef(waypoints);
   const routeCoordinatesRef = useRef(routeCoordinates ?? []);
@@ -121,6 +136,7 @@ export function RideMap({
     addWaypointRef.current = onAddWaypoint;
     insertWaypointRef.current = onInsertWaypoint;
     moveWaypointRef.current = onMoveWaypoint;
+    selectAlternativeRef.current = onSelectAlternative;
     interactiveRef.current = interactive;
     waypointsRef.current = waypoints;
     routeCoordinatesRef.current = routeCoordinates ?? [];
@@ -128,6 +144,7 @@ export function RideMap({
     onAddWaypoint,
     onInsertWaypoint,
     onMoveWaypoint,
+    onSelectAlternative,
     interactive,
     waypoints,
     routeCoordinates,
@@ -253,6 +270,48 @@ export function RideMap({
         if (!map) {
           return;
         }
+        // Alternative candidates sit below the main route line so the
+        // selected route always reads as the primary one.
+        map.addSource(ALT_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: ALT_LAYER_ID,
+          type: "line",
+          source: ALT_SOURCE_ID,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": "#94a3b8",
+            "line-width": 4,
+            "line-opacity": 0.6,
+          },
+        });
+        map.addLayer({
+          id: ALT_HIT_LAYER_ID,
+          type: "line",
+          source: ALT_SOURCE_ID,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": "#000000",
+            "line-width": 22,
+            "line-opacity": 0,
+          },
+        });
+        const altMap = map;
+        altMap.on("click", ALT_HIT_LAYER_ID, (event) => {
+          const id = event.features?.[0]?.properties?.id;
+          if (typeof id === "string") {
+            selectAlternativeRef.current?.(id);
+          }
+        });
+        altMap.on("mouseenter", ALT_HIT_LAYER_ID, () => {
+          altMap.getCanvas().style.cursor = "pointer";
+        });
+        altMap.on("mouseleave", ALT_HIT_LAYER_ID, () => {
+          altMap.getCanvas().style.cursor = "";
+        });
+
         map.addSource(ROUTE_SOURCE_ID, {
           type: "geojson",
           data: {
@@ -596,6 +655,55 @@ export function RideMap({
       });
     }
   }, [routeCoordinates, ready]);
+
+  // Update the alternative candidate lines (route generator).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) {
+      return;
+    }
+
+    const source = map.getSource(ALT_SOURCE_ID);
+    if (source && "setData" in source) {
+      (source as GeoJSONSource).setData({
+        type: "FeatureCollection",
+        features: (alternatives ?? []).map((alternative) => ({
+          type: "Feature",
+          properties: { id: alternative.id },
+          geometry: {
+            type: "LineString",
+            coordinates: alternative.coordinates,
+          },
+        })),
+      });
+    }
+  }, [alternatives, ready]);
+
+  // Fit the viewport to the given coordinates (e.g. a freshly generated
+  // route) whenever they change.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !fitTo || fitTo.length < 2) {
+      return;
+    }
+    let minLng = Infinity;
+    let minLat = Infinity;
+    let maxLng = -Infinity;
+    let maxLat = -Infinity;
+    for (const [lng, lat] of fitTo) {
+      if (lng < minLng) minLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lng > maxLng) maxLng = lng;
+      if (lat > maxLat) maxLat = lat;
+    }
+    map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: 80, duration: 700 },
+    );
+  }, [fitTo, ready]);
 
   // Update the highlight marker (elevation-graph hover).
   useEffect(() => {

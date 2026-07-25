@@ -8,7 +8,8 @@ import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
 import { fetchRoute } from "../lib/brouter";
 import { reverseGeocode } from "../lib/geocode";
-import { createRideSchema } from "../schemas";
+import { getGenerationJobResult, toRouteResult } from "../lib/routeEngine";
+import { createRideRefinedSchema } from "../schemas";
 
 type CreateRideResult =
   | { success: true; message: string; rideId: string }
@@ -25,7 +26,7 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     return { success: false, error: "You must be signed in." };
   }
 
-  const parsed = createRideSchema.safeParse(input);
+  const parsed = createRideRefinedSchema.safeParse(input);
   if (!parsed.success) {
     return {
       success: false,
@@ -45,6 +46,7 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     maxParticipants,
     groupId,
     repeatWeekly,
+    generation,
   } = parsed.data;
 
   // Group rides require the creator to be an approved member of the group.
@@ -99,9 +101,24 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     }
   }
 
+  // Generated routes are re-fetched from the engine server-side (results
+  // are keyed by job id, so stats cannot be tampered with); manual routes
+  // keep the BRouter recompute path.
   let route: Awaited<ReturnType<typeof fetchRoute>>;
   try {
-    route = await fetchRoute(waypoints, profile);
+    if (generation) {
+      const engineRoutes = await getGenerationJobResult(generation.jobId);
+      const engineRoute = engineRoutes?.[generation.routeIndex];
+      if (!engineRoute) {
+        return {
+          success: false,
+          error: "The generated route has expired. Please generate it again.",
+        };
+      }
+      route = toRouteResult(engineRoute);
+    } else {
+      route = await fetchRoute(waypoints, profile);
+    }
   } catch (error) {
     return {
       success: false,
