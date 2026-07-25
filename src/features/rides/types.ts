@@ -88,6 +88,45 @@ export type ElevationMarker = {
   level: number;
 };
 
+/** A scenic POI along a generated route (viewpoint, castle, …). */
+export type RouteHighlight = {
+  name?: string;
+  kind: string;
+  lat: number;
+  lng: number;
+  /** Meters from the start of the route. */
+  distanceAlongRouteM: number;
+};
+
+/**
+ * One candidate produced by the route generation engine, normalized to
+ * the app's `RouteResult` shape plus generation-specific extras.
+ */
+export type GeneratedRouteOption = {
+  route: RouteResult;
+  mode: "roundtrip" | "point-to-point";
+  /** Actual distance ÷ direct distance (point-to-point only). */
+  detourFactor?: number;
+  /** 0–10 difficulty estimate from the engine. */
+  difficultyScore: number;
+  /** Share of unpaved surface (0–1). */
+  unpavedRatio: number;
+  /** Meters where the bike likely has to be pushed. */
+  pushingSectionsM: number;
+  highlights: RouteHighlight[];
+  warnings: string[];
+};
+
+/** Live progress of a generation job, as returned by the status action. */
+export type RouteGenerationStatus = {
+  state: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+  progressPercent: number;
+  message: string;
+  errorDetail?: string;
+  /** Present once `state` is SUCCEEDED. */
+  options?: GeneratedRouteOption[];
+};
+
 export type RideCreator = {
   id: string;
   name: string;

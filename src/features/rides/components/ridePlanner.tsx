@@ -35,6 +35,7 @@ import { getMyRideGroups } from "../actions/getMyRideGroups";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
 import { type RideFormValues, rideFormSchema } from "../schemas";
 import type {
+  GeneratedRouteOption,
   PlaceResult,
   RideDifficulty,
   RidePace,
@@ -45,6 +46,7 @@ import type {
 import { ElevationChart } from "./elevationChart";
 import { LocationSearch } from "./locationSearch";
 import { RideMap } from "./rideMap";
+import { RouteGeneratorPanel } from "./routeGeneratorPanel";
 import { RouteStatsBar } from "./routeStatsBar";
 import { RouteStatsPanel } from "./routeStatsPanel";
 import { WaypointList } from "./waypointList";
@@ -127,6 +129,15 @@ export function RidePlanner({
   const [profile, setProfile] = useState<RouteProfile>("trekking");
   const [roundTrip, setRoundTrip] = useState(false);
   const [route, setRoute] = useState<RouteResult | null>(null);
+  /**
+   * Set while the current route came from the generator. Any manual edit
+   * clears it and falls back to BRouter recalculation; on save it makes
+   * `createRide` fetch the route from the engine instead.
+   */
+  const [generation, setGeneration] = useState<{
+    jobId: string;
+    routeIndex: number;
+  } | null>(null);
   const [elevationHover, setElevationHover] = useState<[number, number] | null>(
     null,
   );
@@ -185,6 +196,7 @@ export function RidePlanner({
         maxParticipants:
           values.maxParticipants === "" ? null : Number(values.maxParticipants),
         repeatWeekly: Number(values.repeatWeekly),
+        generation,
       });
       if (!result.success) {
         throw new Error(result.error);
@@ -202,10 +214,16 @@ export function RidePlanner({
 
   const calcMutate = calcMutation.mutate;
 
-  // Recalculate the route (debounced) whenever the points or profile change.
+  // Recalculate the route (debounced) whenever the points or profile
+  // change. Generated routes are engine-owned — no BRouter recalculation
+  // until a manual edit clears the generation reference.
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
+    }
+
+    if (generation) {
+      return;
     }
 
     if (waypoints.length < (roundTrip ? 3 : 2)) {
@@ -222,9 +240,29 @@ export function RidePlanner({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [waypoints, profile, roundTrip, calcMutate]);
+  }, [waypoints, profile, roundTrip, generation, calcMutate]);
+
+  /** Applies a generator candidate: engine route, start-only waypoints. */
+  const applyGeneratedRoute = (
+    option: GeneratedRouteOption,
+    ref: { jobId: string; routeIndex: number },
+  ) => {
+    if (!startPlace) {
+      return;
+    }
+    setGeneration(ref);
+    setRoute(option.route);
+    setWaypoints([{ lat: startPlace.lat, lng: startPlace.lng }]);
+    setStep("build");
+  };
+
+  /** Any manual route edit hands control back to BRouter planning. */
+  const dropGeneration = () => {
+    setGeneration(null);
+  };
 
   const addWaypoint = (waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       // In round-trip mode, insert before the returning end point.
       if (roundTrip && current.length >= 2) {
@@ -245,10 +283,12 @@ export function RidePlanner({
     if (roundTrip && index === waypoints.length - 1) {
       return;
     }
+    dropGeneration();
     setWaypoints((current) => current.filter((_, i) => i !== index));
   };
 
   const insertWaypoint = (index: number, waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       const next = [...current];
       next.splice(index, 0, waypoint);
@@ -257,6 +297,7 @@ export function RidePlanner({
   };
 
   const moveWaypoint = (index: number, direction: -1 | 1) => {
+    dropGeneration();
     setWaypoints((current) => {
       const target = index + direction;
       if (target < 0 || target >= current.length) {
@@ -269,6 +310,7 @@ export function RidePlanner({
   };
 
   const repositionWaypoint = (index: number, waypoint: Waypoint) => {
+    dropGeneration();
     setWaypoints((current) => {
       const next = [...current];
       next[index] = waypoint;
@@ -286,12 +328,14 @@ export function RidePlanner({
   };
 
   const handleSelectStart = (place: PlaceResult) => {
+    dropGeneration();
     setStartPlace(place);
     const start = { lat: place.lat, lng: place.lng };
     setWaypoints(roundTrip ? [start, start] : [start]);
   };
 
   const toggleRoundTrip = (value: boolean) => {
+    dropGeneration();
     setRoundTrip(value);
     setWaypoints((current) => {
       if (!startPlace) {
@@ -312,6 +356,7 @@ export function RidePlanner({
   };
 
   const clearExtraPoints = () => {
+    dropGeneration();
     if (!startPlace) {
       setWaypoints([]);
       return;
@@ -322,6 +367,7 @@ export function RidePlanner({
 
   // Going back to step 1 resets the built route to a clean slate.
   const backToStart = () => {
+    setGeneration(null);
     setRoute(null);
     clearExtraPoints();
     setStep("start");
@@ -386,6 +432,13 @@ export function RidePlanner({
                     </span>
                   </span>
                 </label>
+
+                {startPlace && (
+                  <RouteGeneratorPanel
+                    start={startPlace}
+                    onApply={applyGeneratedRoute}
+                  />
+                )}
 
                 <Button
                   className="self-end"
