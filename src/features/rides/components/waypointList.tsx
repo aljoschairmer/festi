@@ -4,8 +4,8 @@ import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { waypointKmPositions } from "../lib/geometry";
-import type { Waypoint } from "../types";
+import { waypointHighlightNames, waypointKmPositions } from "../lib/geometry";
+import type { RouteHighlight, Waypoint } from "../types";
 
 type WaypointListProps = {
   waypoints: Waypoint[];
@@ -19,17 +19,9 @@ type WaypointListProps = {
   routeCoordinates?: [number, number][];
   /** Round trips label the last point "Back at start" instead of "End". */
   roundTrip?: boolean;
+  /** Known landmarks; points near one are named after it (Komoot-style). */
+  highlights?: RouteHighlight[];
 };
-
-function waypointLabel(
-  index: number,
-  total: number,
-  roundTrip: boolean,
-): string {
-  if (index === 0) return "Start";
-  if (index === total - 1) return roundTrip ? "Back at start" : "Finish";
-  return `Via ${index}`;
-}
 
 export function WaypointList({
   waypoints,
@@ -39,6 +31,7 @@ export function WaypointList({
   lockedLast = false,
   routeCoordinates,
   roundTrip = false,
+  highlights,
 }: WaypointListProps) {
   // Where each point sits along the route — friendlier than raw
   // coordinates ("km 12.4" instead of "52.37001, 9.73200").
@@ -49,6 +42,38 @@ export function WaypointList({
         : null,
     [waypoints, routeCoordinates],
   );
+
+  // Real place names beat any numbering: label each point after the
+  // nearest known landmark when one is close enough.
+  const placeNames = useMemo(
+    () =>
+      highlights && highlights.length > 0
+        ? waypointHighlightNames(waypoints, highlights)
+        : null,
+    [waypoints, highlights],
+  );
+
+  const title = (index: number): string => {
+    if (index === 0) return "Start";
+    if (index === waypoints.length - 1) {
+      return roundTrip ? "Back at start" : "Finish";
+    }
+    const name = placeNames?.[index];
+    if (name) return name;
+    const km = kmPositions?.[index];
+    if (km !== undefined) return `km ${km.toFixed(1)}`;
+    return "Point";
+  };
+
+  const subtitle = (index: number): string => {
+    const km = kmPositions?.[index];
+    const isMiddle = index > 0 && index < waypoints.length - 1;
+    if (isMiddle && placeNames?.[index] && km !== undefined) {
+      return `km ${km.toFixed(1)}`;
+    }
+    const waypoint = waypoints[index];
+    return `${waypoint.lat.toFixed(5)}, ${waypoint.lng.toFixed(5)}`;
+  };
   if (waypoints.length === 0) {
     return (
       <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
@@ -59,7 +84,7 @@ export function WaypointList({
 
   return (
     <ul className="flex flex-col gap-2">
-      {waypoints.map((waypoint, index) => {
+      {waypoints.map((_waypoint, index) => {
         const isStart = index === 0;
         const isEnd = index === waypoints.length - 1 && waypoints.length > 1;
         const badgeClass = isStart
@@ -82,13 +107,9 @@ export function WaypointList({
               {isStart ? "S" : isEnd ? "E" : index + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">
-                {waypointLabel(index, waypoints.length, roundTrip)}
-              </p>
+              <p className="truncate text-sm font-medium">{title(index)}</p>
               <p className="truncate text-xs text-muted-foreground tabular-nums">
-                {kmPositions && !isStart
-                  ? `km ${kmPositions[index].toFixed(1)}`
-                  : `${waypoint.lat.toFixed(5)}, ${waypoint.lng.toFixed(5)}`}
+                {subtitle(index)}
               </p>
             </div>
             <div className="flex items-center">

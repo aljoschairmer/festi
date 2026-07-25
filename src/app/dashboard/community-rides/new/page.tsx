@@ -49,6 +49,7 @@ export default async function NewRidePage({
               waypoints,
               roundTrip: engineRoute.mode === "roundtrip",
               name: genName?.slice(0, 100) ?? null,
+              highlights: engineRoute.highlights,
             }
           : null;
     }

@@ -1,5 +1,5 @@
 import polyline from "@mapbox/polyline";
-import type { Waypoint } from "../types";
+import type { RouteHighlight, Waypoint } from "../types";
 
 /**
  * Decodes a stored polyline into `[lng, lat]` pairs for map rendering.
@@ -19,6 +19,54 @@ function haversineMeters(a: [number, number], b: [number, number]): number {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/**
+ * Names each waypoint after the closest named highlight within `maxM`
+ * meters ("Lindener Berg"), the way Komoot labels points by what is
+ * actually there. Each highlight names at most one waypoint (greedy,
+ * nearest first); waypoints with nothing nearby get `null`.
+ */
+export function waypointHighlightNames(
+  waypoints: Waypoint[],
+  highlights: RouteHighlight[],
+  maxM = 800,
+): (string | null)[] {
+  const named = highlights.filter((highlight) => highlight.name);
+  if (named.length === 0) {
+    return waypoints.map(() => null);
+  }
+
+  // Collect all (waypoint, highlight) pairs within range, closest first,
+  // then assign greedily so one landmark never labels two points.
+  const pairs: { waypointIndex: number; name: string; distM: number }[] = [];
+  for (let i = 0; i < waypoints.length; i++) {
+    for (const highlight of named) {
+      const distM = haversineMeters(
+        [waypoints[i].lng, waypoints[i].lat],
+        [highlight.lng, highlight.lat],
+      );
+      if (distM <= maxM) {
+        pairs.push({
+          waypointIndex: i,
+          name: highlight.name as string,
+          distM,
+        });
+      }
+    }
+  }
+  pairs.sort((a, b) => a.distM - b.distM);
+
+  const names: (string | null)[] = waypoints.map(() => null);
+  const usedNames = new Set<string>();
+  for (const pair of pairs) {
+    if (names[pair.waypointIndex] !== null || usedNames.has(pair.name)) {
+      continue;
+    }
+    names[pair.waypointIndex] = pair.name;
+    usedNames.add(pair.name);
+  }
+  return names;
 }
 
 /**
