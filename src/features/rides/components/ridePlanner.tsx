@@ -539,7 +539,7 @@ export function RidePlanner({
                         type="button"
                         variant="ghost"
                         size="icon-sm"
-                        disabled={waypoints.length <= 1}
+                        disabled={waypoints.length <= 1 || generation !== null}
                         onClick={clearExtraPoints}
                         aria-label="Clear extra points"
                       >
@@ -548,18 +548,37 @@ export function RidePlanner({
                     </div>
                   </CardTitle>
                   <p className="text-muted-foreground text-xs">
-                    Click the map to add points, or drag the route line to shape
-                    it.
+                    {generation
+                      ? "Drag the route line or a marker on the map to fine-tune the tour."
+                      : "Click the map to add points, or drag the route line to shape it."}
                   </p>
                 </CardHeader>
                 <CardContent className="min-h-0 flex-1 overflow-y-auto">
-                  <WaypointList
-                    waypoints={waypoints}
-                    onRemove={removeWaypoint}
-                    onMove={moveWaypoint}
-                    lockedFirst={!!startPlace}
-                    lockedLast={roundTrip}
-                  />
+                  {generation ? (
+                    <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+                      <p className="flex items-center gap-2 font-medium">
+                        <SparklesIcon className="size-4 text-primary" />
+                        {startPlace?.name ?? "Generated tour"}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Generated {roundTrip ? "roundtrip" : "route"}, shaped by{" "}
+                        {Math.max(0, waypoints.length - 2)} anchor points along
+                        the way. Adjust it directly on the map — the first edit
+                        switches to manual planning, where every point becomes
+                        editable here.
+                      </p>
+                    </div>
+                  ) : (
+                    <WaypointList
+                      waypoints={waypoints}
+                      onRemove={removeWaypoint}
+                      onMove={moveWaypoint}
+                      lockedFirst={!!startPlace}
+                      lockedLast={roundTrip}
+                      routeCoordinates={route?.coordinates}
+                      roundTrip={roundTrip}
+                    />
+                  )}
                 </CardContent>
               </Card>
 

@@ -1,8 +1,10 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { waypointKmPositions } from "../lib/geometry";
 import type { Waypoint } from "../types";
 
 type WaypointListProps = {
@@ -13,12 +15,20 @@ type WaypointListProps = {
   lockedFirst?: boolean;
   /** When true, the last point (return-to-start) can't be removed or displaced. */
   lockedLast?: boolean;
+  /** Route geometry; when present, points are described as "km X" along it. */
+  routeCoordinates?: [number, number][];
+  /** Round trips label the last point "Back at start" instead of "End". */
+  roundTrip?: boolean;
 };
 
-function waypointLabel(index: number, total: number): string {
+function waypointLabel(
+  index: number,
+  total: number,
+  roundTrip: boolean,
+): string {
   if (index === 0) return "Start";
-  if (index === total - 1) return "End";
-  return `Stop ${index}`;
+  if (index === total - 1) return roundTrip ? "Back at start" : "Finish";
+  return `Via ${index}`;
 }
 
 export function WaypointList({
@@ -27,7 +37,18 @@ export function WaypointList({
   onMove,
   lockedFirst = false,
   lockedLast = false,
+  routeCoordinates,
+  roundTrip = false,
 }: WaypointListProps) {
+  // Where each point sits along the route — friendlier than raw
+  // coordinates ("km 12.4" instead of "52.37001, 9.73200").
+  const kmPositions = useMemo(
+    () =>
+      routeCoordinates && routeCoordinates.length >= 2
+        ? waypointKmPositions(waypoints, routeCoordinates)
+        : null,
+    [waypoints, routeCoordinates],
+  );
   if (waypoints.length === 0) {
     return (
       <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
@@ -62,10 +83,12 @@ export function WaypointList({
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">
-                {waypointLabel(index, waypoints.length)}
+                {waypointLabel(index, waypoints.length, roundTrip)}
               </p>
               <p className="truncate text-xs text-muted-foreground tabular-nums">
-                {waypoint.lat.toFixed(5)}, {waypoint.lng.toFixed(5)}
+                {kmPositions && !isStart
+                  ? `km ${kmPositions[index].toFixed(1)}`
+                  : `${waypoint.lat.toFixed(5)}, ${waypoint.lng.toFixed(5)}`}
               </p>
             </div>
             <div className="flex items-center">
