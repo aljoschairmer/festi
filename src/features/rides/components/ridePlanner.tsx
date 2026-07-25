@@ -9,6 +9,7 @@ import {
   Loader2Icon,
   MapPinIcon,
   SaveIcon,
+  SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,7 +36,6 @@ import { getMyRideGroups } from "../actions/getMyRideGroups";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
 import { type RideFormValues, rideFormSchema } from "../schemas";
 import type {
-  GeneratedRouteOption,
   PlaceResult,
   RideDifficulty,
   RidePace,
@@ -46,7 +46,6 @@ import type {
 import { ElevationChart } from "./elevationChart";
 import { LocationSearch } from "./locationSearch";
 import { RideMap } from "./rideMap";
-import { RouteGeneratorPanel } from "./routeGeneratorPanel";
 import { RouteStatsBar } from "./routeStatsBar";
 import { RouteStatsPanel } from "./routeStatsPanel";
 import { WaypointList } from "./waypointList";
@@ -107,28 +106,50 @@ function StepIndicator({ current }: { current: Step }) {
 
 export function RidePlanner({
   initialRoute = null,
+  initialGenerated = null,
 }: {
   /** Preloaded waypoints from a library route (skips the start step). */
   initialRoute?: { name: string; waypoints: Waypoint[] } | null;
+  /** Preloaded tour from the map generator (skips to the build step). */
+  initialGenerated?: {
+    route: RouteResult;
+    generation: { jobId: string; routeIndex: number };
+    start: Waypoint;
+  } | null;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(initialRoute ? "build" : "start");
-  const [startPlace, setStartPlace] = useState<PlaceResult | null>(() =>
-    initialRoute?.waypoints[0]
+  const [step, setStep] = useState<Step>(
+    initialRoute || initialGenerated ? "build" : "start",
+  );
+  const [startPlace, setStartPlace] = useState<PlaceResult | null>(() => {
+    if (initialGenerated) {
+      return {
+        id: "generated",
+        name: "Generated route",
+        lat: initialGenerated.start.lat,
+        lng: initialGenerated.start.lng,
+      };
+    }
+    return initialRoute?.waypoints[0]
       ? {
           id: "library",
           name: initialRoute.name,
           lat: initialRoute.waypoints[0].lat,
           lng: initialRoute.waypoints[0].lng,
         }
-      : null,
-  );
-  const [waypoints, setWaypoints] = useState<Waypoint[]>(
-    () => initialRoute?.waypoints ?? [],
-  );
+      : null;
+  });
+  const [waypoints, setWaypoints] = useState<Waypoint[]>(() => {
+    if (initialGenerated) {
+      return [initialGenerated.start];
+    }
+    return initialRoute?.waypoints ?? [];
+  });
   const [profile, setProfile] = useState<RouteProfile>("trekking");
   const [roundTrip, setRoundTrip] = useState(false);
-  const [route, setRoute] = useState<RouteResult | null>(null);
+  const [route, setRoute] = useState<RouteResult | null>(
+    initialGenerated?.route ?? null,
+  );
   /**
    * Set while the current route came from the generator. Any manual edit
    * clears it and falls back to BRouter recalculation; on save it makes
@@ -137,7 +158,7 @@ export function RidePlanner({
   const [generation, setGeneration] = useState<{
     jobId: string;
     routeIndex: number;
-  } | null>(null);
+  } | null>(initialGenerated?.generation ?? null);
   const [elevationHover, setElevationHover] = useState<[number, number] | null>(
     null,
   );
@@ -241,20 +262,6 @@ export function RidePlanner({
       }
     };
   }, [waypoints, profile, roundTrip, generation, calcMutate]);
-
-  /** Applies a generator candidate: engine route, start-only waypoints. */
-  const applyGeneratedRoute = (
-    option: GeneratedRouteOption,
-    ref: { jobId: string; routeIndex: number },
-  ) => {
-    if (!startPlace) {
-      return;
-    }
-    setGeneration(ref);
-    setRoute(option.route);
-    setWaypoints([{ lat: startPlace.lat, lng: startPlace.lng }]);
-    setStep("build");
-  };
 
   /** Any manual route edit hands control back to BRouter planning. */
   const dropGeneration = () => {
@@ -433,12 +440,19 @@ export function RidePlanner({
                   </span>
                 </label>
 
-                {startPlace && (
-                  <RouteGeneratorPanel
-                    start={startPlace}
-                    onApply={applyGeneratedRoute}
-                  />
-                )}
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() =>
+                    router.push("/dashboard/community-rides/generate")
+                  }
+                >
+                  <SparklesIcon className="size-4 text-primary" />
+                  Generate a route for me
+                  <span className="text-muted-foreground">
+                    — pick a start on the map
+                  </span>
+                </Button>
 
                 <Button
                   className="self-end"
