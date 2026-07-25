@@ -66,6 +66,14 @@ export type EngineHighlight = {
   distanceAlongRouteM: number;
 };
 
+export type EngineTurn = {
+  text: string;
+  streetName: string;
+  distanceM: number;
+  sign: number;
+  pointIndex: number;
+};
+
 /** Engine route payload (only the fields Festi consumes). */
 export type EngineRoute = {
   geojson: {
@@ -81,6 +89,7 @@ export type EngineRoute = {
   wayTypeBreakdown: Record<string, number>;
   pushingSectionsM: number;
   highlights: EngineHighlight[];
+  turns: EngineTurn[];
   mode: "roundtrip" | "point-to-point";
   detourFactor?: number;
   warnings: string[];
@@ -281,6 +290,40 @@ export function sampleRouteWaypoints(
   }
   waypoints.push(toWaypoint(coordinates[coordinates.length - 1]));
   return waypoints;
+}
+
+/**
+ * Turns the engine's turn-by-turn instructions into named points along
+ * the route: each instruction segment carries its street name, sampled
+ * every few coordinates so every spot on the route has a named point
+ * nearby. This is what lets the planner label waypoints "Hildesheimer
+ * Straße" instead of "km 8.6" — with zero geocoding requests.
+ */
+export function buildStreetPoints(
+  route: Pick<EngineRoute, "geojson" | "turns">,
+  maxPoints = 400,
+): Array<{ name: string; lat: number; lng: number }> {
+  const coordinates = route.geojson.geometry.coordinates;
+  const turns = [...route.turns].sort((a, b) => a.pointIndex - b.pointIndex);
+  const points: Array<{ name: string; lat: number; lng: number }> = [];
+
+  for (let t = 0; t < turns.length && points.length < maxPoints; t++) {
+    const name = turns[t].streetName.trim();
+    if (!name) continue;
+    const from = Math.max(0, turns[t].pointIndex);
+    const to = Math.min(
+      coordinates.length - 1,
+      turns[t + 1]?.pointIndex ?? coordinates.length - 1,
+    );
+    // Sample the segment sparsely — enough that any waypoint on it finds
+    // a nearby named point, without ballooning the payload.
+    const step = Math.max(1, Math.floor((to - from) / 4) || 1);
+    for (let i = from; i <= to && points.length < maxPoints; i += step) {
+      const c = coordinates[i];
+      points.push({ name, lat: c[1], lng: c[0] });
+    }
+  }
+  return points;
 }
 
 /**

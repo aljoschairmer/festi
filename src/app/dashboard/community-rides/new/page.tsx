@@ -1,6 +1,7 @@
 import { requireAuth } from "@/features/auth/guards";
 import { RidePlanner } from "@/features/rides/components/ridePlanner";
 import {
+  buildStreetPoints,
   getGenerationJobResult,
   sampleRouteWaypoints,
   toRouteResult,
@@ -50,6 +51,7 @@ export default async function NewRidePage({
               roundTrip: engineRoute.mode === "roundtrip",
               name: genName?.slice(0, 100) ?? null,
               highlights: engineRoute.highlights,
+              streetPoints: buildStreetPoints(engineRoute),
             }
           : null;
     }

@@ -88,6 +88,13 @@ export type ElevationMarker = {
   level: number;
 };
 
+/** A named point along a route (street-name sample from the engine). */
+export type RoutePlaceName = {
+  name: string;
+  lat: number;
+  lng: number;
+};
+
 /** A scenic POI along a generated route (viewpoint, castle, …). */
 export type RouteHighlight = {
   name?: string;

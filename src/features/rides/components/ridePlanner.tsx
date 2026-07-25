@@ -40,6 +40,7 @@ import type {
   RideDifficulty,
   RidePace,
   RouteHighlight,
+  RoutePlaceName,
   RouteProfile,
   RouteResult,
   Waypoint,
@@ -121,11 +122,14 @@ export function RidePlanner({
     name: string | null;
     /** Landmarks along the tour, used to name waypoints after places. */
     highlights: RouteHighlight[];
+    /** Street-name samples along the tour, used to name waypoints. */
+    streetPoints: RoutePlaceName[];
   } | null;
 }) {
-  // Landmarks survive edits: even after the tour switches to manual
-  // planning, nearby points keep their place names.
+  // Street names and landmarks survive edits: even after the tour
+  // switches to manual planning, nearby points keep their names.
   const highlights = initialGenerated?.highlights ?? [];
+  const streetPoints = initialGenerated?.streetPoints ?? [];
   const router = useRouter();
   const [step, setStep] = useState<Step>(
     initialRoute || initialGenerated ? "build" : "start",
@@ -584,6 +588,7 @@ export function RidePlanner({
                       routeCoordinates={route?.coordinates}
                       roundTrip={roundTrip}
                       highlights={highlights}
+                      streetPoints={streetPoints}
                     />
                   )}
                 </CardContent>

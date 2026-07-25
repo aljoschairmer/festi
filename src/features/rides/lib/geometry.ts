@@ -1,5 +1,5 @@
 import polyline from "@mapbox/polyline";
-import type { RouteHighlight, Waypoint } from "../types";
+import type { RouteHighlight, RoutePlaceName, Waypoint } from "../types";
 
 /**
  * Decodes a stored polyline into `[lng, lat]` pairs for map rendering.
@@ -19,6 +19,37 @@ function haversineMeters(a: [number, number], b: [number, number]): number {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/**
+ * Names each waypoint after the street it sits on: nearest street-name
+ * sample within `maxM` meters. Streets may legitimately name several
+ * points (a long road crosses many vias) — the km subtitle keeps rows
+ * distinguishable.
+ */
+export function waypointStreetNames(
+  waypoints: Waypoint[],
+  streetPoints: RoutePlaceName[],
+  maxM = 300,
+): (string | null)[] {
+  if (streetPoints.length === 0) {
+    return waypoints.map(() => null);
+  }
+  return waypoints.map((waypoint) => {
+    let bestName: string | null = null;
+    let bestDist = maxM;
+    for (const point of streetPoints) {
+      const dist = haversineMeters(
+        [waypoint.lng, waypoint.lat],
+        [point.lng, point.lat],
+      );
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestName = point.name;
+      }
+    }
+    return bestName;
+  });
 }
 
 /**
