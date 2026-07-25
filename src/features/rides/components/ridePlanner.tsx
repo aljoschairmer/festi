@@ -114,7 +114,10 @@ export function RidePlanner({
   initialGenerated?: {
     route: RouteResult;
     generation: { jobId: string; routeIndex: number };
-    start: Waypoint;
+    /** Sampled along the tour so it stays editable via BRouter. */
+    waypoints: Waypoint[];
+    roundTrip: boolean;
+    name: string | null;
   } | null;
 }) {
   const router = useRouter();
@@ -123,11 +126,12 @@ export function RidePlanner({
   );
   const [startPlace, setStartPlace] = useState<PlaceResult | null>(() => {
     if (initialGenerated) {
+      const start = initialGenerated.waypoints[0];
       return {
         id: "generated",
-        name: "Generated route",
-        lat: initialGenerated.start.lat,
-        lng: initialGenerated.start.lng,
+        name: initialGenerated.name ?? "Generated route",
+        lat: start.lat,
+        lng: start.lng,
       };
     }
     return initialRoute?.waypoints[0]
@@ -141,12 +145,14 @@ export function RidePlanner({
   });
   const [waypoints, setWaypoints] = useState<Waypoint[]>(() => {
     if (initialGenerated) {
-      return [initialGenerated.start];
+      return initialGenerated.waypoints;
     }
     return initialRoute?.waypoints ?? [];
   });
   const [profile, setProfile] = useState<RouteProfile>("trekking");
-  const [roundTrip, setRoundTrip] = useState(false);
+  const [roundTrip, setRoundTrip] = useState(
+    initialGenerated?.roundTrip ?? false,
+  );
   const [route, setRoute] = useState<RouteResult | null>(
     initialGenerated?.route ?? null,
   );
@@ -173,7 +179,7 @@ export function RidePlanner({
   } = useForm<RideFormValues>({
     resolver: zodResolver(rideFormSchema),
     defaultValues: {
-      title: "",
+      title: initialGenerated?.name ?? "",
       description: "",
       startTime: "",
       maxParticipants: "",

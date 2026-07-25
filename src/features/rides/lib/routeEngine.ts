@@ -248,6 +248,42 @@ function buildElevationProfile(coordinates: number[][]): ElevationPoint[] {
 }
 
 /**
+ * Samples evenly spaced waypoints along a route geometry (start, vias,
+ * end). Handing a generated route to the planner this way makes it
+ * editable exactly like a manually planned one: BRouter can reproduce
+ * the tour through the vias, so dragging the line or moving a marker
+ * recalculates a close variant instead of discarding the route.
+ */
+export function sampleRouteWaypoints(
+  coordinates: number[][],
+  viaCount = 8,
+): Array<{ lat: number; lng: number }> {
+  if (coordinates.length < 2) return [];
+
+  const cumulative: number[] = [0];
+  for (let i = 1; i < coordinates.length; i++) {
+    cumulative.push(
+      cumulative[i - 1] + haversineMeters(coordinates[i - 1], coordinates[i]),
+    );
+  }
+  const total = cumulative[cumulative.length - 1];
+  if (total === 0) return [];
+
+  const toWaypoint = (c: number[]) => ({ lat: c[1], lng: c[0] });
+  const waypoints = [toWaypoint(coordinates[0])];
+  let cursor = 0;
+  for (let via = 1; via <= viaCount; via++) {
+    const targetM = (total * via) / (viaCount + 1);
+    while (cursor < cumulative.length - 1 && cumulative[cursor] < targetM) {
+      cursor++;
+    }
+    waypoints.push(toWaypoint(coordinates[cursor]));
+  }
+  waypoints.push(toWaypoint(coordinates[coordinates.length - 1]));
+  return waypoints;
+}
+
+/**
  * Normalizes an engine route into the app's `RouteResult` shape:
  * km → meters, minutes → seconds, GeoJSON → encoded `[lat,lng]` polyline.
  */

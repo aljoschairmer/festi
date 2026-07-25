@@ -35,6 +35,69 @@ type Category = (typeof CATEGORIES)[number]["value"];
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
 
 /**
+ * Landmark kinds that make good tour names, best first — a castle or
+ * viewpoint names a tour better than a random piece of street art.
+ */
+const NAME_KIND_RANK = [
+  "natural:peak",
+  "historic:castle",
+  "tourism:viewpoint",
+  "natural:waterfall",
+  "man_made:lighthouse",
+  "man_made:windmill",
+  "historic:ruins",
+  "historic:monument",
+  "tourism:attraction",
+];
+
+/**
+ * Names a tour after a landmark near its halfway point ("Via Benther
+ * Berg") — the place the loop is "about", like Komoot's tour titles.
+ * Falls back to a character-based name when no highlight carries a name.
+ */
+function tourName(option: GeneratedRouteOption, taken: Set<string>): string {
+  const halfM = option.route.distance / 2;
+  const rank = (kind: string) => {
+    const index = NAME_KIND_RANK.indexOf(kind);
+    return index === -1 ? NAME_KIND_RANK.length : index;
+  };
+  const named = option.highlights
+    .filter((highlight) => highlight.name)
+    .sort(
+      (a, b) =>
+        rank(a.kind) - rank(b.kind) ||
+        Math.abs(a.distanceAlongRouteM - halfM) -
+          Math.abs(b.distanceAlongRouteM - halfM),
+    );
+  for (const highlight of named) {
+    const name = `Via ${highlight.name}`.slice(0, 34);
+    if (!taken.has(name)) {
+      return name;
+    }
+  }
+
+  const gainPerKm =
+    option.route.elevationGain / Math.max(1, option.route.distance / 1000);
+  const base =
+    option.unpavedRatio >= 0.35
+      ? "Gravel adventure"
+      : gainPerKm >= 12
+        ? "Hilly loop"
+        : gainPerKm >= 6
+          ? "Rolling loop"
+          : "Easy spin";
+  if (!taken.has(base)) {
+    return base;
+  }
+  for (let i = 2; ; i++) {
+    const candidate = `${base} ${i}`;
+    if (!taken.has(candidate)) {
+      return candidate;
+    }
+  }
+}
+
+/**
  * Komoot-style full-map route generator: pick a start by tapping the map,
  * using the browser location or searching — candidates are generated
  * immediately and drawn on the map, ready to compare and pick.
@@ -154,6 +217,15 @@ export function RouteGeneratorMap() {
 
   const selected = options?.[selectedIndex] ?? null;
 
+  const tourNames = useMemo(() => {
+    const taken = new Set<string>();
+    return (options ?? []).map((option) => {
+      const name = tourName(option, taken);
+      taken.add(name);
+      return name;
+    });
+  }, [options]);
+
   const alternatives = useMemo(
     () =>
       (options ?? [])
@@ -182,8 +254,9 @@ export function RouteGeneratorMap() {
     if (!jobId || !selected) {
       return;
     }
+    const name = tourNames[selectedIndex] ?? "";
     router.push(
-      `/dashboard/community-rides/new?genJob=${encodeURIComponent(jobId)}&genIndex=${selectedIndex}`,
+      `/dashboard/community-rides/new?genJob=${encodeURIComponent(jobId)}&genIndex=${selectedIndex}&genName=${encodeURIComponent(name)}`,
     );
   };
 
@@ -333,16 +406,18 @@ export function RouteGeneratorMap() {
                 )}
                 onClick={() => setSelectedIndex(index)}
               >
-                <span className="flex items-center justify-between font-medium">
-                  <span className="flex items-center gap-2">
+                <span className="flex items-center justify-between gap-2 font-medium">
+                  <span className="flex min-w-0 items-center gap-2">
                     <span
-                      className="inline-block size-2.5 rounded-full"
+                      className="inline-block size-2.5 shrink-0 rounded-full"
                       style={{
                         backgroundColor:
                           index === selectedIndex ? ROUTE_COLORS[0] : "#94a3b8",
                       }}
                     />
-                    Tour {index + 1}
+                    <span className="truncate">
+                      {tourNames[index] ?? `Tour ${index + 1}`}
+                    </span>
                   </span>
                   <span className="text-muted-foreground text-xs">
                     {Math.round(option.unpavedRatio * 100)}% unpaved
