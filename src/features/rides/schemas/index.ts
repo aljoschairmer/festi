@@ -39,6 +39,42 @@ export const calculateRouteSchema = z.object({
 
 export type CalculateRouteInput = z.infer<typeof calculateRouteSchema>;
 
+/** Bike category understood by the route generation engine. */
+export const generationCategorySchema = z.enum(["road", "gravel", "mtb"]);
+
+/**
+ * Input for the on-the-fly route generator. Roundtrip when `end` is
+ * omitted; the engine enforces coverage, quota and detailed validation —
+ * this schema only keeps obviously broken input away from it.
+ */
+export const generateRouteSchema = z
+  .object({
+    start: waypointSchema,
+    end: waypointSchema.optional(),
+    category: generationCategorySchema,
+    targetDistanceKm: z.number().min(1).max(400).optional(),
+    minDistanceKm: z.number().min(1).max(400).optional(),
+    maxDistanceKm: z.number().min(1).max(400).optional(),
+    targetElevationGainM: z.number().min(0).max(10000).optional(),
+    difficulty: z.enum(["easy", "moderate", "hard"]).optional(),
+    surfacePreference: z.enum(["paved", "unpaved", "mixed"]).optional(),
+    avoid: z.array(z.string().max(30)).max(10).optional(),
+    preferScenic: z.boolean().optional(),
+    eBike: z.boolean().optional(),
+    numAlternatives: z.number().int().min(1).max(3).optional(),
+    /** Client-generated key making submit retries safe. */
+    requestKey: z.string().min(8).max(100).optional(),
+  })
+  .refine(
+    (input) =>
+      input.end !== undefined ||
+      input.targetDistanceKm !== undefined ||
+      (input.minDistanceKm !== undefined && input.maxDistanceKm !== undefined),
+    { message: "Choose a target distance for a roundtrip." },
+  );
+
+export type GenerateRouteInput = z.infer<typeof generateRouteSchema>;
+
 /** Maximum number of weekly instances a recurring ride series can have. */
 export const MAX_RECURRENCE_WEEKS = 12;
 
@@ -49,6 +85,17 @@ export const repeatWeeklySchema = z
   .min(1)
   .max(MAX_RECURRENCE_WEEKS)
   .default(1);
+
+/**
+ * Reference to a finished generation job. When present, `createRide`
+ * fetches the route from the engine server-side instead of recomputing
+ * it from waypoints — generated roundtrips have no reproducible
+ * waypoint chain.
+ */
+export const rideGenerationRefSchema = z.object({
+  jobId: z.string().min(1).max(100),
+  routeIndex: z.number().int().min(0).max(2),
+});
 
 export const createRideSchema = z.object({
   title: z
@@ -73,7 +120,7 @@ export const createRideSchema = z.object({
     .or(z.literal("")),
   waypoints: z
     .array(waypointSchema)
-    .min(2, "Add at least two points to build a route.")
+    .min(1, "Add a start point.")
     .max(25, "A route can have at most 25 points."),
   profile: routeProfileSchema,
   pace: ridePaceSchema.nullish(),
@@ -83,9 +130,20 @@ export const createRideSchema = z.object({
   groupId: z.string().nullish(),
   /** Number of weekly instances to create (1 = single ride). */
   repeatWeekly: repeatWeeklySchema,
+  /** Set when the route came from the generator instead of manual planning. */
+  generation: rideGenerationRefSchema.nullish(),
 });
 
 export type CreateRideInput = z.infer<typeof createRideSchema>;
+
+/** Manually planned rides still need at least two points for BRouter. */
+export const createRideRefinedSchema = createRideSchema.refine(
+  (data) => data.generation != null || data.waypoints.length >= 2,
+  {
+    message: "Add at least two points to build a route.",
+    path: ["waypoints"],
+  },
+);
 
 /** Raw max-spots input used by the client forms: empty string = unlimited. */
 const maxParticipantsFormField = z

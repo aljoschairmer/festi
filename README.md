@@ -158,6 +158,8 @@ Create `.env.local` (and/or `.env`) in the project root. The following variables
 | `EMAIL_FROM` | Verified sender address (defaults to Resend onboarding address locally). |
 | `NEXT_PUBLIC_MAPTILER_API_KEY` | MapTiler API key for maps and geocoding. |
 | `BROUTER_URL` | Optional custom BRouter instance (defaults to `https://brouter.de`). |
+| `ROUTE_ENGINE_URL` | Base URL of the Festi Route Engine (festi-backend) powering "Generate a route for me". Set as a Wrangler secret in production. |
+| `ROUTE_ENGINE_API_KEY` | Shared secret for the route engine (its `API_KEY`). Set as a Wrangler secret; optional in local dev when the engine runs without auth. |
 | `R2_ACCOUNT_ID` | Cloudflare account ID for R2. |
 | `R2_ACCESS_KEY_ID` | R2 S3-compatible access key. |
 | `R2_SECRET_ACCESS_KEY` | R2 S3-compatible secret key. |
