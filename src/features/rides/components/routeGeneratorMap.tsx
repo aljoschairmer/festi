@@ -37,8 +37,10 @@ import { RideMap, type WeatherMarkerData } from "./rideMap";
 
 const CATEGORIES = [
   { value: "road", label: "Road" },
+  { value: "touring", label: "Touring" },
   { value: "gravel", label: "Gravel" },
   { value: "mtb", label: "MTB" },
+  { value: "enduro", label: "Enduro" },
   { value: "cargo", label: "Cargo" },
 ] as const;
 

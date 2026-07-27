@@ -42,8 +42,10 @@ export type CalculateRouteInput = z.infer<typeof calculateRouteSchema>;
 /** Bike category understood by the route generation engine. */
 export const generationCategorySchema = z.enum([
   "road",
+  "touring",
   "gravel",
   "mtb",
+  "enduro",
   "cargo",
 ]);
 

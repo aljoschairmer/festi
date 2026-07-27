@@ -14,7 +14,13 @@ import type { ElevationPoint, RouteResult } from "../types";
  * trusting client-supplied stats.
  */
 
-export type EngineCategory = "road" | "gravel" | "mtb" | "cargo";
+export type EngineCategory =
+  | "road"
+  | "touring"
+  | "gravel"
+  | "mtb"
+  | "enduro"
+  | "cargo";
 export type EngineDifficulty = "easy" | "moderate" | "hard";
 export type EngineSurfacePreference = "paved" | "unpaved" | "mixed";
 
