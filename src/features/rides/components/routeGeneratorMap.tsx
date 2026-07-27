@@ -30,9 +30,10 @@ import { cancelRouteGeneration } from "../actions/cancelRouteGeneration";
 import { generateRoute } from "../actions/generateRoute";
 import { getRouteGenerationStatus } from "../actions/getRouteGenerationStatus";
 import { formatDistance, formatDuration, formatElevation } from "../lib/format";
+import { compassLabel, weatherEmoji } from "../lib/weather";
 import type { GeneratedRouteOption, MapDot, Waypoint } from "../types";
 import { LocationSearch } from "./locationSearch";
-import { RideMap } from "./rideMap";
+import { RideMap, type WeatherMarkerData } from "./rideMap";
 
 const CATEGORIES = [
   { value: "road", label: "Road" },
@@ -318,6 +319,23 @@ export function RouteGeneratorMap() {
     [options, selectedIndex],
   );
 
+  const weather = selected?.weather ?? null;
+
+  // One badge per forecast sample, skipping the start (it sits under the
+  // start marker) — its values are in the summary panel anyway.
+  const weatherMarkers: WeatherMarkerData[] = useMemo(
+    () =>
+      (selected?.weather?.points ?? []).slice(1).map((point, index) => ({
+        id: `wx-${index}`,
+        lng: point.lng,
+        lat: point.lat,
+        icon: weatherEmoji(point.weatherCode),
+        label: `${Math.round(point.temperatureC)}° · ${Math.round(point.windSpeedKmh)} km/h`,
+        windDeg: point.windDirectionDeg,
+      })),
+    [selected],
+  );
+
   const highlightDots: MapDot[] = useMemo(
     () =>
       (selected?.highlights ?? []).slice(0, 25).map((highlight, index) => ({
@@ -352,9 +370,48 @@ export function RouteGeneratorMap() {
         dots={highlightDots}
         fitTo={selected?.route.coordinates ?? null}
         centerOn={!selected && start ? [start.lng, start.lat] : null}
+        weatherMarkers={weatherMarkers}
         interactive
         onAddWaypoint={handleMapTap}
       />
+
+      {/* Ride-time weather for the selected route. */}
+      {weather && selected && (
+        <div className="absolute top-4 right-14 z-10 flex flex-col gap-1 rounded-xl border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
+          <span className="flex items-center gap-2 font-medium text-sm">
+            {weatherEmoji(weather.points[0]?.weatherCode ?? 3)}
+            {Math.round(weather.summary.temperatureMinC)}–
+            {Math.round(weather.summary.temperatureMaxC)} °C
+          </span>
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <span
+              className="inline-block"
+              style={{
+                transform: `rotate(${(weather.summary.dominantWindDirectionDeg + 180) % 360}deg)`,
+              }}
+            >
+              ↑
+            </span>
+            {Math.round(weather.summary.windAvgKmh)} km/h from{" "}
+            {compassLabel(weather.summary.dominantWindDirectionDeg)}
+            {" · "}
+            {Math.round(weather.summary.headwindShare * 100)}% headwind
+          </span>
+          {weather.summary.precipitationProbabilityMax >= 20 && (
+            <span className="text-muted-foreground">
+              💧 {Math.round(weather.summary.precipitationProbabilityMax)}% rain
+              risk
+            </span>
+          )}
+          {Math.abs(
+            weather.windAdjustedDurationMin - selected.route.duration / 60,
+          ) >= 3 && (
+            <span className="text-muted-foreground">
+              ≈ {formatDuration(weather.windAdjustedDurationMin * 60)} with wind
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Floating control panel, Komoot-style on the left. */}
       <div className="absolute top-4 left-4 z-10 flex w-[min(22rem,calc(100%-2rem))] flex-col gap-3">
@@ -662,6 +719,12 @@ export function RouteGeneratorMap() {
                       +
                       {Math.max(0, Math.round((option.detourFactor - 1) * 100))}
                       % vs. direct
+                    </span>
+                  )}
+                  {option.weather && (
+                    <span>
+                      {weatherEmoji(option.weather.points[0]?.weatherCode ?? 3)}{" "}
+                      {Math.round(option.weather.summary.temperatureMaxC)}°
                     </span>
                   )}
                 </span>

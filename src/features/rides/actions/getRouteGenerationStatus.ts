@@ -70,6 +70,7 @@ export async function getRouteGenerationStatus(
           unpavedRatio: route.unpavedRatio,
           pushingSectionsM: route.pushingSectionsM,
           highlights: route.highlights,
+          weather: route.weather,
           warnings: route.warnings,
         })),
       },

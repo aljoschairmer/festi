@@ -76,6 +76,43 @@ export type EngineTurn = {
   pointIndex: number;
 };
 
+/** One forecast sample along the route, at the rider's ETA there. */
+export type EngineWeatherSample = {
+  lat: number;
+  lng: number;
+  distanceAlongRouteM: number;
+  etaMinutes: number;
+  time: string;
+  temperatureC: number;
+  windSpeedKmh: number;
+  windGustsKmh: number;
+  /** Direction the wind comes FROM (degrees, 0 = north). */
+  windDirectionDeg: number;
+  precipitationMm: number;
+  precipitationProbability: number;
+  /** WMO weather interpretation code (0 = clear … 99 = thunderstorm). */
+  weatherCode: number;
+};
+
+export type EngineRouteWeather = {
+  points: EngineWeatherSample[];
+  summary: {
+    temperatureMinC: number;
+    temperatureMaxC: number;
+    windAvgKmh: number;
+    windMaxGustsKmh: number;
+    dominantWindDirectionDeg: number;
+    precipitationProbabilityMax: number;
+    expectedPrecipitationMm: number;
+    /** Distance shares [0..1] ridden against / with the wind. */
+    headwindShare: number;
+    tailwindShare: number;
+  };
+  /** Duration re-estimated with head-/tailwind along the route. */
+  windAdjustedDurationMin: number;
+  source: "open-meteo";
+};
+
 /** Engine route payload (only the fields Festi consumes). */
 export type EngineRoute = {
   geojson: {
@@ -94,6 +131,8 @@ export type EngineRoute = {
   turns: EngineTurn[];
   mode: "roundtrip" | "point-to-point";
   detourFactor?: number;
+  /** Ride-time forecast (absent when the weather source was unavailable). */
+  weather?: EngineRouteWeather;
   warnings: string[];
 };
 
