@@ -139,6 +139,14 @@ export type EngineRoute = {
   trafficStressBreakdown?: Record<string, number>;
   /** Distance-weighted mean LTS, e.g. 2.1. */
   avgTrafficStress?: number;
+  /** Metabolic energy estimate for the rider, in kJ (≈ kcal). */
+  physicalEffortKj: number;
+  /** E-bike only: rough battery draw in Wh for the motor's share. */
+  estimatedBatteryWh?: number;
+  /** Share of the route within ~300 m of greenery (absent without data). */
+  greenShare?: number;
+  /** Share of the route within ~300 m of water (absent without data). */
+  waterShare?: number;
   /** 0–100 match against the requested preferences; null without any. */
   matchPercent: number | null;
   /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */

@@ -160,6 +160,14 @@ export type GeneratedRouteOption = {
   weather?: RouteWeather;
   /** Distance-weighted mean Level of Traffic Stress (1–5). */
   avgTrafficStress?: number;
+  /** Metabolic energy estimate for the rider, in kJ (≈ kcal). */
+  physicalEffortKj?: number;
+  /** E-bike only: rough battery draw in Wh for the motor's share. */
+  estimatedBatteryWh?: number;
+  /** Share of the route within ~300 m of greenery. */
+  greenShare?: number;
+  /** Share of the route within ~300 m of water. */
+  waterShare?: number;
   /** 0–100 match against the requested preferences; null without any. */
   matchPercent?: number | null;
   /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */

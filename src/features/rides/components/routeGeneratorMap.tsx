@@ -778,6 +778,22 @@ export function RouteGeneratorMap() {
                       {Math.round(option.weather.summary.temperatureMaxC)}°
                     </span>
                   )}
+                  {option.physicalEffortKj !== undefined && (
+                    <span>⚡ {option.physicalEffortKj} kJ</span>
+                  )}
+                  {option.estimatedBatteryWh !== undefined && (
+                    <span>🔋 {option.estimatedBatteryWh} Wh</span>
+                  )}
+                  {(option.greenShare ?? 0) >= 0.25 && (
+                    <span>
+                      🌳 {Math.round((option.greenShare ?? 0) * 100)}%
+                    </span>
+                  )}
+                  {(option.waterShare ?? 0) >= 0.25 && (
+                    <span>
+                      💧 {Math.round((option.waterShare ?? 0) * 100)}%
+                    </span>
+                  )}
                 </span>
               </button>
             ))}
