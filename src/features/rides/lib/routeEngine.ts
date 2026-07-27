@@ -43,6 +43,8 @@ export type EngineGenerateRequest = {
   eBike?: boolean;
   viaPoints?: Array<{ lat: number; lng: number }>;
   numAlternatives?: number;
+  /** Planned ride start (ISO 8601, now … +5 days). Default: now. */
+  departureTime?: string;
   seed?: number;
   locale?: "en" | "de";
 };
@@ -96,6 +98,15 @@ export type EngineWeatherSample = {
   weatherCode: number;
 };
 
+/** Ride-time air quality summary (European AQI: 0–20 good, >60 poor). */
+export type EngineRouteAirQuality = {
+  europeanAqi: number;
+  peakEuropeanAqi: number;
+  pm2_5: number;
+  nitrogenDioxide: number;
+  source: "open-meteo-cams";
+};
+
 export type EngineRouteWeather = {
   points: EngineWeatherSample[];
   summary: {
@@ -135,6 +146,8 @@ export type EngineRoute = {
   detourFactor?: number;
   /** Ride-time forecast (absent when the weather source was unavailable). */
   weather?: EngineRouteWeather;
+  /** Ride-time air quality (CAMS ~10 km grid; absent when unavailable). */
+  airQuality?: EngineRouteAirQuality;
   /** Distance share per Level of Traffic Stress ("1"…"5"). */
   trafficStressBreakdown?: Record<string, number>;
   /** Distance-weighted mean LTS, e.g. 2.1. */

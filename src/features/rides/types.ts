@@ -158,6 +158,13 @@ export type GeneratedRouteOption = {
   highlights: RouteHighlight[];
   /** Ride-time forecast (absent when the weather source was unavailable). */
   weather?: RouteWeather;
+  /** Ride-time air quality (European AQI: 0–20 good, >60 poor). */
+  airQuality?: {
+    europeanAqi: number;
+    peakEuropeanAqi: number;
+    pm2_5: number;
+    nitrogenDioxide: number;
+  };
   /** Distance-weighted mean Level of Traffic Stress (1–5). */
   avgTrafficStress?: number;
   /** Metabolic energy estimate for the rider, in kJ (≈ kcal). */

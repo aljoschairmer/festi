@@ -71,6 +71,8 @@ export const generateRouteSchema = z
     preferScenic: z.boolean().optional(),
     eBike: z.boolean().optional(),
     numAlternatives: z.number().int().min(1).max(5).optional(),
+    /** Planned ride start (ISO 8601); weather/air samples use it. */
+    departureTime: z.string().datetime().optional(),
     /** Client-generated key making submit retries safe. */
     requestKey: z.string().min(8).max(100).optional(),
   })

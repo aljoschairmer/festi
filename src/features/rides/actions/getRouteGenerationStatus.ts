@@ -71,6 +71,7 @@ export async function getRouteGenerationStatus(
           pushingSectionsM: route.pushingSectionsM,
           highlights: route.highlights,
           weather: route.weather,
+          airQuality: route.airQuality,
           avgTrafficStress: route.avgTrafficStress,
           physicalEffortKj: route.physicalEffortKj,
           estimatedBatteryWh: route.estimatedBatteryWh,

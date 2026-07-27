@@ -63,7 +63,18 @@ const LABEL_TEXT: Record<string, string> = {
   MOST_SCENIC: "Most scenic",
   FLATTEST: "Flattest",
   HILLIEST: "Hilliest",
+  LEAST_HEADWIND: "Least headwind",
+  CLEANEST_AIR: "Cleanest air",
 };
+
+/** Verbal rating for the European Air Quality Index. */
+function aqiLabel(aqi: number): string {
+  if (aqi <= 20) return "good";
+  if (aqi <= 40) return "fair";
+  if (aqi <= 60) return "moderate";
+  if (aqi <= 80) return "poor";
+  return "very poor";
+}
 
 /**
  * Landmark kinds that make good tour names, best first — a castle or
@@ -422,6 +433,12 @@ export function RouteGeneratorMap() {
           ) >= 3 && (
             <span className="text-muted-foreground">
               ≈ {formatDuration(weather.windAdjustedDurationMin * 60)} with wind
+            </span>
+          )}
+          {selected.airQuality && (
+            <span className="text-muted-foreground">
+              🍃 air {aqiLabel(selected.airQuality.europeanAqi)} (AQI{" "}
+              {selected.airQuality.europeanAqi})
             </span>
           )}
         </div>

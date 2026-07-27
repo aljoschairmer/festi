@@ -53,6 +53,7 @@ export async function generateRoute(
     preferScenic: data.preferScenic,
     eBike: data.eBike,
     numAlternatives: data.numAlternatives ?? 2,
+    departureTime: data.departureTime,
     locale: "en",
   };
 
