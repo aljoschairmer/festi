@@ -41,7 +41,24 @@ type RideMapProps = {
   onSelectAlternative?: (id: string) => void;
   /** When set, the viewport fits these coordinates whenever they change. */
   fitTo?: [number, number][] | null;
+  /** When set, the map flies to this `[lng, lat]` whenever it changes. */
+  centerOn?: [number, number] | null;
+  /** Passive weather badges rendered as DOM markers along the route. */
+  weatherMarkers?: WeatherMarkerData[] | null;
   className?: string;
+};
+
+/** A small weather badge pinned to a route position. */
+export type WeatherMarkerData = {
+  id: string;
+  lng: number;
+  lat: number;
+  /** Emoji for the conditions, e.g. "⛅". */
+  icon: string;
+  /** Short text, e.g. "21° · 13 km/h". */
+  label: string;
+  /** Wind origin in degrees (0 = north); renders a rotated arrow. */
+  windDeg?: number;
 };
 
 const ROUTE_SOURCE_ID = "ride-route";
@@ -116,6 +133,8 @@ export function RideMap({
   alternatives,
   onSelectAlternative,
   fitTo,
+  centerOn,
+  weatherMarkers,
   className,
 }: RideMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -129,6 +148,9 @@ export function RideMap({
   const waypointsRef = useRef(waypoints);
   const routeCoordinatesRef = useRef(routeCoordinates ?? []);
   const initialCenterRef = useRef(initialCenter);
+  const lastCenterOnRef = useRef<string | null>(null);
+  const weatherMarkersRef = useRef<Marker[]>([]);
+  const lastWeatherKeyRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
   // Keep the latest values available inside handlers bound once on the map.
@@ -678,6 +700,84 @@ export function RideMap({
       });
     }
   }, [alternatives, ready]);
+
+  // Fly to a requested center (e.g. the just-located start position).
+  // Deliberately not gated on `ready`: the camera works before the style
+  // has loaded, and the value is deduped so re-renders with a fresh array
+  // identity don't restart the animation mid-flight.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !centerOn) {
+      return;
+    }
+    const key = `${centerOn[0]},${centerOn[1]}`;
+    if (lastCenterOnRef.current === key) {
+      return;
+    }
+    lastCenterOnRef.current = key;
+    map.flyTo({ center: centerOn, zoom: Math.max(map.getZoom(), 12) });
+  }, [centerOn]);
+
+  // Weather badges along the route. Plain DOM markers, so they work even
+  // before the style has loaded; deduped by value because the array gets
+  // a fresh identity on every render.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    const key = (weatherMarkers ?? [])
+      .map((m) => `${m.id}:${m.lng}:${m.lat}:${m.label}`)
+      .join("|");
+    if (lastWeatherKeyRef.current === key) {
+      return;
+    }
+    lastWeatherKeyRef.current = key;
+
+    let cancelled = false;
+    void (async () => {
+      const maplibregl = (await import("maplibre-gl")).default;
+      if (cancelled) {
+        return;
+      }
+      for (const marker of weatherMarkersRef.current) {
+        marker.remove();
+      }
+      weatherMarkersRef.current = [];
+
+      for (const data of weatherMarkers ?? []) {
+        const el = document.createElement("div");
+        el.className =
+          "flex items-center gap-1 rounded-full border bg-background/95 px-2 py-0.5 text-[10px] font-medium shadow backdrop-blur pointer-events-none";
+        const icon = document.createElement("span");
+        icon.textContent = data.icon;
+        el.appendChild(icon);
+        const text = document.createElement("span");
+        text.textContent = data.label;
+        el.appendChild(text);
+        if (data.windDeg !== undefined) {
+          const arrow = document.createElement("span");
+          arrow.textContent = "↑";
+          // The glyph points north; rotate it to where the wind blows TO.
+          arrow.style.transform = `rotate(${(data.windDeg + 180) % 360}deg)`;
+          arrow.style.display = "inline-block";
+          el.appendChild(arrow);
+        }
+        weatherMarkersRef.current.push(
+          new maplibregl.Marker({
+            element: el,
+            anchor: "bottom",
+            offset: [0, -8],
+          })
+            .setLngLat([data.lng, data.lat])
+            .addTo(map),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [weatherMarkers]);
 
   // Fit the viewport to the given coordinates (e.g. a freshly generated
   // route) whenever they change.

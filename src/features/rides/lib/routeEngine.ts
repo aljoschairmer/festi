@@ -14,7 +14,13 @@ import type { ElevationPoint, RouteResult } from "../types";
  * trusting client-supplied stats.
  */
 
-export type EngineCategory = "road" | "gravel" | "mtb";
+export type EngineCategory =
+  | "road"
+  | "touring"
+  | "gravel"
+  | "mtb"
+  | "enduro"
+  | "cargo";
 export type EngineDifficulty = "easy" | "moderate" | "hard";
 export type EngineSurfacePreference = "paved" | "unpaved" | "mixed";
 
@@ -27,6 +33,10 @@ export type EngineGenerateRequest = {
   minDistanceKm?: number;
   maxDistanceKm?: number;
   targetElevationGainM?: number;
+  /** Point-to-point only: max actual/direct distance ratio (1–3). */
+  maxDetourFactor?: number;
+  /** Traffic-stress ceiling (LTS 1–5): avoid road classes above it. */
+  maxTrafficStress?: number;
   category: EngineCategory;
   difficulty?: EngineDifficulty;
   surfacePreference?: EngineSurfacePreference;
@@ -39,6 +49,8 @@ export type EngineGenerateRequest = {
   eBike?: boolean;
   viaPoints?: Array<{ lat: number; lng: number }>;
   numAlternatives?: number;
+  /** Planned ride start (ISO 8601, now … +5 days). Default: now. */
+  departureTime?: string;
   seed?: number;
   locale?: "en" | "de";
 };
@@ -74,6 +86,52 @@ export type EngineTurn = {
   pointIndex: number;
 };
 
+/** One forecast sample along the route, at the rider's ETA there. */
+export type EngineWeatherSample = {
+  lat: number;
+  lng: number;
+  distanceAlongRouteM: number;
+  etaMinutes: number;
+  time: string;
+  temperatureC: number;
+  windSpeedKmh: number;
+  windGustsKmh: number;
+  /** Direction the wind comes FROM (degrees, 0 = north). */
+  windDirectionDeg: number;
+  precipitationMm: number;
+  precipitationProbability: number;
+  /** WMO weather interpretation code (0 = clear … 99 = thunderstorm). */
+  weatherCode: number;
+};
+
+/** Ride-time air quality summary (European AQI: 0–20 good, >60 poor). */
+export type EngineRouteAirQuality = {
+  europeanAqi: number;
+  peakEuropeanAqi: number;
+  pm2_5: number;
+  nitrogenDioxide: number;
+  source: "open-meteo-cams";
+};
+
+export type EngineRouteWeather = {
+  points: EngineWeatherSample[];
+  summary: {
+    temperatureMinC: number;
+    temperatureMaxC: number;
+    windAvgKmh: number;
+    windMaxGustsKmh: number;
+    dominantWindDirectionDeg: number;
+    precipitationProbabilityMax: number;
+    expectedPrecipitationMm: number;
+    /** Distance shares [0..1] ridden against / with the wind. */
+    headwindShare: number;
+    tailwindShare: number;
+  };
+  /** Duration re-estimated with head-/tailwind along the route. */
+  windAdjustedDurationMin: number;
+  source: "open-meteo";
+};
+
 /** Engine route payload (only the fields Festi consumes). */
 export type EngineRoute = {
   geojson: {
@@ -92,6 +150,26 @@ export type EngineRoute = {
   turns: EngineTurn[];
   mode: "roundtrip" | "point-to-point";
   detourFactor?: number;
+  /** Ride-time forecast (absent when the weather source was unavailable). */
+  weather?: EngineRouteWeather;
+  /** Ride-time air quality (CAMS ~10 km grid; absent when unavailable). */
+  airQuality?: EngineRouteAirQuality;
+  /** Distance share per Level of Traffic Stress ("1"…"5"). */
+  trafficStressBreakdown?: Record<string, number>;
+  /** Distance-weighted mean LTS, e.g. 2.1. */
+  avgTrafficStress?: number;
+  /** Metabolic energy estimate for the rider, in kJ (≈ kcal). */
+  physicalEffortKj: number;
+  /** E-bike only: rough battery draw in Wh for the motor's share. */
+  estimatedBatteryWh?: number;
+  /** Share of the route within ~300 m of greenery (absent without data). */
+  greenShare?: number;
+  /** Share of the route within ~300 m of water (absent without data). */
+  waterShare?: number;
+  /** 0–100 match against the requested preferences; null without any. */
+  matchPercent: number | null;
+  /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */
+  labels: string[];
   warnings: string[];
 };
 

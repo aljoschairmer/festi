@@ -109,6 +109,41 @@ export type RouteHighlight = {
  * One candidate produced by the route generation engine, normalized to
  * the app's `RouteResult` shape plus generation-specific extras.
  */
+/** Ride-time forecast for a generated route (mirrors the engine shape). */
+export type RouteWeather = {
+  points: Array<{
+    lat: number;
+    lng: number;
+    distanceAlongRouteM: number;
+    etaMinutes: number;
+    time: string;
+    temperatureC: number;
+    windSpeedKmh: number;
+    windGustsKmh: number;
+    /** Direction the wind comes FROM (degrees, 0 = north). */
+    windDirectionDeg: number;
+    precipitationMm: number;
+    precipitationProbability: number;
+    /** WMO weather interpretation code (0 = clear … 99 = thunderstorm). */
+    weatherCode: number;
+  }>;
+  summary: {
+    temperatureMinC: number;
+    temperatureMaxC: number;
+    windAvgKmh: number;
+    windMaxGustsKmh: number;
+    dominantWindDirectionDeg: number;
+    precipitationProbabilityMax: number;
+    expectedPrecipitationMm: number;
+    /** Distance shares [0..1] ridden against / with the wind. */
+    headwindShare: number;
+    tailwindShare: number;
+  };
+  /** Duration re-estimated with head-/tailwind along the route. */
+  windAdjustedDurationMin: number;
+  source: "open-meteo";
+};
+
 export type GeneratedRouteOption = {
   route: RouteResult;
   mode: "roundtrip" | "point-to-point";
@@ -121,6 +156,29 @@ export type GeneratedRouteOption = {
   /** Meters where the bike likely has to be pushed. */
   pushingSectionsM: number;
   highlights: RouteHighlight[];
+  /** Ride-time forecast (absent when the weather source was unavailable). */
+  weather?: RouteWeather;
+  /** Ride-time air quality (European AQI: 0–20 good, >60 poor). */
+  airQuality?: {
+    europeanAqi: number;
+    peakEuropeanAqi: number;
+    pm2_5: number;
+    nitrogenDioxide: number;
+  };
+  /** Distance-weighted mean Level of Traffic Stress (1–5). */
+  avgTrafficStress?: number;
+  /** Metabolic energy estimate for the rider, in kJ (≈ kcal). */
+  physicalEffortKj?: number;
+  /** E-bike only: rough battery draw in Wh for the motor's share. */
+  estimatedBatteryWh?: number;
+  /** Share of the route within ~300 m of greenery. */
+  greenShare?: number;
+  /** Share of the route within ~300 m of water. */
+  waterShare?: number;
+  /** 0–100 match against the requested preferences; null without any. */
+  matchPercent?: number | null;
+  /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */
+  labels?: string[];
   warnings: string[];
 };
 

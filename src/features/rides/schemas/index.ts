@@ -40,7 +40,14 @@ export const calculateRouteSchema = z.object({
 export type CalculateRouteInput = z.infer<typeof calculateRouteSchema>;
 
 /** Bike category understood by the route generation engine. */
-export const generationCategorySchema = z.enum(["road", "gravel", "mtb"]);
+export const generationCategorySchema = z.enum([
+  "road",
+  "touring",
+  "gravel",
+  "mtb",
+  "enduro",
+  "cargo",
+]);
 
 /**
  * Input for the on-the-fly route generator. Roundtrip when `end` is
@@ -56,12 +63,18 @@ export const generateRouteSchema = z
     minDistanceKm: z.number().min(1).max(400).optional(),
     maxDistanceKm: z.number().min(1).max(400).optional(),
     targetElevationGainM: z.number().min(0).max(10000).optional(),
+    /** Point-to-point only: how much longer than the direct line (1–3). */
+    maxDetourFactor: z.number().min(1).max(3).optional(),
+    /** Traffic-stress ceiling (LTS 1–5): avoid road classes above it. */
+    maxTrafficStress: z.number().int().min(1).max(5).optional(),
     difficulty: z.enum(["easy", "moderate", "hard"]).optional(),
     surfacePreference: z.enum(["paved", "unpaved", "mixed"]).optional(),
     avoid: z.array(z.string().max(30)).max(10).optional(),
     preferScenic: z.boolean().optional(),
     eBike: z.boolean().optional(),
-    numAlternatives: z.number().int().min(1).max(3).optional(),
+    numAlternatives: z.number().int().min(1).max(5).optional(),
+    /** Planned ride start (ISO 8601); weather/air samples use it. */
+    departureTime: z.string().datetime().optional(),
     /** Client-generated key making submit retries safe. */
     requestKey: z.string().min(8).max(100).optional(),
   })
@@ -94,7 +107,7 @@ export const repeatWeeklySchema = z
  */
 export const rideGenerationRefSchema = z.object({
   jobId: z.string().min(1).max(100),
-  routeIndex: z.number().int().min(0).max(2),
+  routeIndex: z.number().int().min(0).max(4),
 });
 
 export const createRideSchema = z.object({
