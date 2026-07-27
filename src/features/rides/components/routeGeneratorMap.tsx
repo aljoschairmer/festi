@@ -194,7 +194,7 @@ export function RouteGeneratorMap() {
         avoid: avoid.length > 0 ? avoid : undefined,
         preferScenic,
         eBike,
-        numAlternatives: 3,
+        numAlternatives: 5,
         requestKey: requestKeyRef.current,
       });
       if (!result.success) {
@@ -447,7 +447,7 @@ export function RouteGeneratorMap() {
       )}
 
       {/* Floating control panel, Komoot-style on the left. */}
-      <div className="absolute top-4 left-4 z-10 flex w-[min(22rem,calc(100%-2rem))] flex-col gap-3">
+      <div className="absolute top-4 left-4 z-10 flex max-h-[calc(100%-2rem)] w-[min(22rem,calc(100%-2rem))] flex-col gap-3 overflow-y-auto">
         <div className="flex flex-col gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur">
           <div className="flex items-center gap-2 text-sm font-medium">
             <SparklesIcon className="size-4 text-primary" />
