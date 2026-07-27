@@ -4,6 +4,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
   CameraIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   Loader2Icon,
   LocateFixedIcon,
   MountainIcon,
@@ -15,6 +17,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { cancelRouteGeneration } from "../actions/cancelRouteGeneration";
 import { generateRoute } from "../actions/generateRoute";
@@ -31,6 +41,15 @@ const CATEGORIES = [
 ] as const;
 
 type Category = (typeof CATEGORIES)[number]["value"];
+
+const AVOID_OPTIONS = [
+  { value: "highways", label: "Main roads" },
+  { value: "high-traffic", label: "Traffic" },
+  { value: "cobblestone", label: "Cobblestone" },
+  { value: "ferries", label: "Ferries" },
+  { value: "steps", label: "Steps" },
+  { value: "tunnels", label: "Tunnels" },
+] as const;
 
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
 
@@ -109,6 +128,15 @@ export function RouteGeneratorMap() {
   const [distanceKm, setDistanceKm] = useState("40");
   const [preferScenic, setPreferScenic] = useState(true);
   const [eBike, setEBike] = useState(false);
+  /** "roundtrip" loops back to the start; "atob" routes to a tapped end. */
+  const [mode, setMode] = useState<"roundtrip" | "atob">("roundtrip");
+  const [end, setEnd] = useState<Waypoint | null>(null);
+  const [detourFactor, setDetourFactor] = useState("1.3");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [elevationTarget, setElevationTarget] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [surface, setSurface] = useState("");
+  const [avoid, setAvoid] = useState<string[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [locating, setLocating] = useState(false);
@@ -119,13 +147,23 @@ export function RouteGeneratorMap() {
     /^\d+$/.test(distanceKm) &&
     Number(distanceKm) >= 5 &&
     Number(distanceKm) <= 400;
+  const elevationValid =
+    elevationTarget === "" ||
+    (/^\d+$/.test(elevationTarget) && Number(elevationTarget) <= 10000);
 
   const submitMutation = useMutation({
-    mutationFn: async (from: Waypoint) => {
+    mutationFn: async (points: { from: Waypoint; to: Waypoint | null }) => {
       const result = await generateRoute({
-        start: from,
+        start: points.from,
+        end: points.to ?? undefined,
         category,
-        targetDistanceKm: Number(distanceKm),
+        targetDistanceKm: points.to ? undefined : Number(distanceKm),
+        maxDetourFactor: points.to ? Number(detourFactor) : undefined,
+        targetElevationGainM:
+          elevationTarget === "" ? undefined : Number(elevationTarget),
+        difficulty: difficulty === "" ? undefined : difficulty,
+        surfacePreference: surface === "" ? undefined : surface,
+        avoid: avoid.length > 0 ? avoid : undefined,
         preferScenic,
         eBike,
         numAlternatives: 3,
@@ -174,9 +212,21 @@ export function RouteGeneratorMap() {
     (jobId !== null &&
       (!status || status.state === "PENDING" || status.state === "RUNNING"));
 
-  /** Starts a fresh generation, cancelling whatever ran before. */
-  const regenerate = (from: Waypoint | null = start) => {
-    if (!from || !distanceValid) {
+  /**
+   * Starts a fresh generation, cancelling whatever ran before. Points
+   * are passed explicitly so a just-set start/end is never stale.
+   */
+  const regenerate = (
+    from: Waypoint | null = start,
+    to: Waypoint | null = mode === "atob" ? end : null,
+  ) => {
+    if (!from || !elevationValid) {
+      return;
+    }
+    if (mode === "roundtrip" && !distanceValid) {
+      return;
+    }
+    if (mode === "atob" && !to) {
       return;
     }
     if (activeJobRef.current) {
@@ -185,12 +235,35 @@ export function RouteGeneratorMap() {
     }
     requestKeyRef.current = crypto.randomUUID();
     setJobId(null);
-    submitMutation.mutate(from);
+    submitMutation.mutate({ from, to: mode === "atob" ? to : null });
   };
 
   const setStartAndGenerate = (waypoint: Waypoint) => {
     setStart(waypoint);
     regenerate(waypoint);
+  };
+
+  /**
+   * Map taps: roundtrip always (re)sets the start; A-to-B sets the
+   * start first, then places/moves the destination.
+   */
+  const handleMapTap = (waypoint: Waypoint) => {
+    if (mode === "roundtrip" || !start) {
+      setStartAndGenerate(waypoint);
+      return;
+    }
+    setEnd(waypoint);
+    regenerate(start, waypoint);
+  };
+
+  const switchMode = (next: "roundtrip" | "atob") => {
+    if (next === mode) {
+      return;
+    }
+    setMode(next);
+    setEnd(null);
+    setJobId(null);
+    activeJobRef.current = null;
   };
 
   const useBrowserLocation = () => {
@@ -212,6 +285,14 @@ export function RouteGeneratorMap() {
         toast.error("Could not read your location. Pick the start on the map.");
       },
       { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const toggleAvoid = (value: string) => {
+    setAvoid((current) =>
+      current.includes(value)
+        ? current.filter((entry) => entry !== value)
+        : [...current, value],
     );
   };
 
@@ -264,14 +345,15 @@ export function RouteGeneratorMap() {
     <div className="relative h-[calc(100svh-6.5rem)] overflow-hidden rounded-xl border">
       <RideMap
         className="h-full"
-        waypoints={start ? [start] : []}
+        waypoints={start ? (end ? [start, end] : [start]) : []}
         routeCoordinates={selected?.route.coordinates}
         alternatives={alternatives}
         onSelectAlternative={(id) => setSelectedIndex(Number(id))}
         dots={highlightDots}
         fitTo={selected?.route.coordinates ?? null}
+        centerOn={!selected && start ? [start.lng, start.lat] : null}
         interactive
-        onAddWaypoint={setStartAndGenerate}
+        onAddWaypoint={handleMapTap}
       />
 
       {/* Floating control panel, Komoot-style on the left. */}
@@ -280,6 +362,29 @@ export function RouteGeneratorMap() {
           <div className="flex items-center gap-2 text-sm font-medium">
             <SparklesIcon className="size-4 text-primary" />
             Route generator
+          </div>
+
+          <div className="flex rounded-lg border p-0.5">
+            {(
+              [
+                { value: "roundtrip", label: "Roundtrip" },
+                { value: "atob", label: "A to B" },
+              ] as const
+            ).map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={cn(
+                  "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  mode === item.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => switchMode(item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
           <LocationSearch
@@ -324,16 +429,29 @@ export function RouteGeneratorMap() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1">
-              <Input
-                className="h-8 w-16 text-right"
-                inputMode="numeric"
-                aria-label="Distance in kilometers"
-                value={distanceKm}
-                onChange={(event) => setDistanceKm(event.target.value)}
-              />
-              <span className="text-muted-foreground text-xs">km</span>
-            </div>
+            {mode === "roundtrip" ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  className="h-8 w-16 text-right"
+                  inputMode="numeric"
+                  aria-label="Distance in kilometers"
+                  value={distanceKm}
+                  onChange={(event) => setDistanceKm(event.target.value)}
+                />
+                <span className="text-muted-foreground text-xs">km</span>
+              </div>
+            ) : (
+              <Select value={detourFactor} onValueChange={setDetourFactor}>
+                <SelectTrigger className="h-8 w-28" aria-label="Allowed detour">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectItem value="1.1">Direct</SelectItem>
+                  <SelectItem value="1.3">+30% detour</SelectItem>
+                  <SelectItem value="1.6">+60% detour</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -365,7 +483,11 @@ export function RouteGeneratorMap() {
                 variant="secondary"
                 size="sm"
                 className="ml-auto"
-                disabled={!distanceValid || generating}
+                disabled={
+                  generating ||
+                  !elevationValid ||
+                  (mode === "roundtrip" ? !distanceValid : !end)
+                }
                 onClick={() => regenerate()}
               >
                 {generating ? (
@@ -378,10 +500,109 @@ export function RouteGeneratorMap() {
             )}
           </div>
 
+          <button
+            type="button"
+            className="flex items-center gap-1 self-start text-muted-foreground text-xs hover:text-foreground"
+            onClick={() => setMoreOpen((open) => !open)}
+          >
+            {moreOpen ? (
+              <ChevronUpIcon className="size-3.5" />
+            ) : (
+              <ChevronDownIcon className="size-3.5" />
+            )}
+            More options
+          </button>
+
+          {moreOpen && (
+            <div className="flex flex-col gap-3 border-t pt-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-elevation"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Climbing target (m)
+                  </Label>
+                  <Input
+                    id="genmap-elevation"
+                    className="h-8"
+                    inputMode="numeric"
+                    placeholder="e.g. 600"
+                    value={elevationTarget}
+                    onChange={(event) => setElevationTarget(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-difficulty"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Difficulty
+                  </Label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger id="genmap-difficulty" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label
+                  htmlFor="genmap-surface"
+                  className="text-muted-foreground text-xs"
+                >
+                  Surface
+                </Label>
+                <Select value={surface} onValueChange={setSurface}>
+                  <SelectTrigger id="genmap-surface" className="h-8">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" align="start">
+                    <SelectItem value="paved">Mostly paved</SelectItem>
+                    <SelectItem value="unpaved">Mostly unpaved</SelectItem>
+                    <SelectItem value="mixed">Mixed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-xs">Avoid</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {AVOID_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                        avoid.includes(item.value)
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      onClick={() => toggleAvoid(item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {!start && (
             <p className="text-muted-foreground text-xs">
               Tap the map, search a place or use your location to set the start
               — routes appear right away.
+            </p>
+          )}
+          {start && mode === "atob" && !end && (
+            <p className="text-muted-foreground text-xs">
+              Now tap the map where the route should end.
             </p>
           )}
           {generating && (
@@ -434,6 +655,13 @@ export function RouteGeneratorMap() {
                     <span className="flex items-center gap-1">
                       <CameraIcon className="size-3" />
                       {option.highlights.length}
+                    </span>
+                  )}
+                  {option.detourFactor !== undefined && (
+                    <span>
+                      +
+                      {Math.max(0, Math.round((option.detourFactor - 1) * 100))}
+                      % vs. direct
                     </span>
                   )}
                 </span>

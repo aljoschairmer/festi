@@ -41,6 +41,8 @@ type RideMapProps = {
   onSelectAlternative?: (id: string) => void;
   /** When set, the viewport fits these coordinates whenever they change. */
   fitTo?: [number, number][] | null;
+  /** When set, the map flies to this `[lng, lat]` whenever it changes. */
+  centerOn?: [number, number] | null;
   className?: string;
 };
 
@@ -116,6 +118,7 @@ export function RideMap({
   alternatives,
   onSelectAlternative,
   fitTo,
+  centerOn,
   className,
 }: RideMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -129,6 +132,7 @@ export function RideMap({
   const waypointsRef = useRef(waypoints);
   const routeCoordinatesRef = useRef(routeCoordinates ?? []);
   const initialCenterRef = useRef(initialCenter);
+  const lastCenterOnRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
   // Keep the latest values available inside handlers bound once on the map.
@@ -678,6 +682,23 @@ export function RideMap({
       });
     }
   }, [alternatives, ready]);
+
+  // Fly to a requested center (e.g. the just-located start position).
+  // Deliberately not gated on `ready`: the camera works before the style
+  // has loaded, and the value is deduped so re-renders with a fresh array
+  // identity don't restart the animation mid-flight.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !centerOn) {
+      return;
+    }
+    const key = `${centerOn[0]},${centerOn[1]}`;
+    if (lastCenterOnRef.current === key) {
+      return;
+    }
+    lastCenterOnRef.current = key;
+    map.flyTo({ center: centerOn, zoom: Math.max(map.getZoom(), 12) });
+  }, [centerOn]);
 
   // Fit the viewport to the given coordinates (e.g. a freshly generated
   // route) whenever they change.

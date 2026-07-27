@@ -44,6 +44,7 @@ export async function generateRoute(
     minDistanceKm: data.minDistanceKm,
     maxDistanceKm: data.maxDistanceKm,
     targetElevationGainM: data.targetElevationGainM,
+    maxDetourFactor: data.end ? data.maxDetourFactor : undefined,
     category: data.category,
     difficulty: data.difficulty,
     surfacePreference: data.surfacePreference,

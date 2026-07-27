@@ -27,6 +27,8 @@ export type EngineGenerateRequest = {
   minDistanceKm?: number;
   maxDistanceKm?: number;
   targetElevationGainM?: number;
+  /** Point-to-point only: max actual/direct distance ratio (1–3). */
+  maxDetourFactor?: number;
   category: EngineCategory;
   difficulty?: EngineDifficulty;
   surfacePreference?: EngineSurfacePreference;

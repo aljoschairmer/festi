@@ -56,6 +56,8 @@ export const generateRouteSchema = z
     minDistanceKm: z.number().min(1).max(400).optional(),
     maxDistanceKm: z.number().min(1).max(400).optional(),
     targetElevationGainM: z.number().min(0).max(10000).optional(),
+    /** Point-to-point only: how much longer than the direct line (1–3). */
+    maxDetourFactor: z.number().min(1).max(3).optional(),
     difficulty: z.enum(["easy", "moderate", "hard"]).optional(),
     surfacePreference: z.enum(["paved", "unpaved", "mixed"]).optional(),
     avoid: z.array(z.string().max(30)).max(10).optional(),
