@@ -44,6 +44,8 @@ export async function generateRoute(
     minDistanceKm: data.minDistanceKm,
     maxDistanceKm: data.maxDistanceKm,
     targetElevationGainM: data.targetElevationGainM,
+    maxDetourFactor: data.end ? data.maxDetourFactor : undefined,
+    maxTrafficStress: data.maxTrafficStress,
     category: data.category,
     difficulty: data.difficulty,
     surfacePreference: data.surfacePreference,
@@ -51,6 +53,7 @@ export async function generateRoute(
     preferScenic: data.preferScenic,
     eBike: data.eBike,
     numAlternatives: data.numAlternatives ?? 2,
+    departureTime: data.departureTime,
     locale: "en",
   };
 

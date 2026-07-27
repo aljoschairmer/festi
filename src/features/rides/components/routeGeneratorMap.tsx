@@ -4,6 +4,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
   CameraIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   Loader2Icon,
   LocateFixedIcon,
   MountainIcon,
@@ -15,24 +17,66 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { cancelRouteGeneration } from "../actions/cancelRouteGeneration";
 import { generateRoute } from "../actions/generateRoute";
 import { getRouteGenerationStatus } from "../actions/getRouteGenerationStatus";
 import { formatDistance, formatDuration, formatElevation } from "../lib/format";
+import { compassLabel, weatherEmoji } from "../lib/weather";
 import type { GeneratedRouteOption, MapDot, Waypoint } from "../types";
 import { LocationSearch } from "./locationSearch";
-import { RideMap } from "./rideMap";
+import { RideMap, type WeatherMarkerData } from "./rideMap";
 
 const CATEGORIES = [
   { value: "road", label: "Road" },
+  { value: "touring", label: "Touring" },
   { value: "gravel", label: "Gravel" },
   { value: "mtb", label: "MTB" },
+  { value: "enduro", label: "Enduro" },
+  { value: "cargo", label: "Cargo" },
 ] as const;
 
 type Category = (typeof CATEGORIES)[number]["value"];
 
+const AVOID_OPTIONS = [
+  { value: "highways", label: "Main roads" },
+  { value: "high-traffic", label: "Traffic" },
+  { value: "cobblestone", label: "Cobblestone" },
+  { value: "ferries", label: "Ferries" },
+  { value: "steps", label: "Steps" },
+  { value: "tunnels", label: "Tunnels" },
+] as const;
+
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
+
+/** Display names for the engine's semantic route labels. */
+const LABEL_TEXT: Record<string, string> = {
+  FASTEST: "Fastest",
+  SHORTEST: "Shortest",
+  QUIETEST: "Quietest",
+  MOST_SCENIC: "Most scenic",
+  FLATTEST: "Flattest",
+  HILLIEST: "Hilliest",
+  LEAST_HEADWIND: "Least headwind",
+  CLEANEST_AIR: "Cleanest air",
+};
+
+/** Verbal rating for the European Air Quality Index. */
+function aqiLabel(aqi: number): string {
+  if (aqi <= 20) return "good";
+  if (aqi <= 40) return "fair";
+  if (aqi <= 60) return "moderate";
+  if (aqi <= 80) return "poor";
+  return "very poor";
+}
 
 /**
  * Landmark kinds that make good tour names, best first — a castle or
@@ -109,6 +153,17 @@ export function RouteGeneratorMap() {
   const [distanceKm, setDistanceKm] = useState("40");
   const [preferScenic, setPreferScenic] = useState(true);
   const [eBike, setEBike] = useState(false);
+  /** "roundtrip" loops back to the start; "atob" routes to a tapped end. */
+  const [mode, setMode] = useState<"roundtrip" | "atob">("roundtrip");
+  const [end, setEnd] = useState<Waypoint | null>(null);
+  const [detourFactor, setDetourFactor] = useState("1.3");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [elevationTarget, setElevationTarget] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [surface, setSurface] = useState("");
+  /** Traffic-stress ceiling as select value ("" = any, "2" = quiet, "1" = car-free). */
+  const [maxTraffic, setMaxTraffic] = useState("");
+  const [avoid, setAvoid] = useState<string[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [locating, setLocating] = useState(false);
@@ -119,16 +174,27 @@ export function RouteGeneratorMap() {
     /^\d+$/.test(distanceKm) &&
     Number(distanceKm) >= 5 &&
     Number(distanceKm) <= 400;
+  const elevationValid =
+    elevationTarget === "" ||
+    (/^\d+$/.test(elevationTarget) && Number(elevationTarget) <= 10000);
 
   const submitMutation = useMutation({
-    mutationFn: async (from: Waypoint) => {
+    mutationFn: async (points: { from: Waypoint; to: Waypoint | null }) => {
       const result = await generateRoute({
-        start: from,
+        start: points.from,
+        end: points.to ?? undefined,
         category,
-        targetDistanceKm: Number(distanceKm),
+        targetDistanceKm: points.to ? undefined : Number(distanceKm),
+        maxDetourFactor: points.to ? Number(detourFactor) : undefined,
+        targetElevationGainM:
+          elevationTarget === "" ? undefined : Number(elevationTarget),
+        difficulty: difficulty === "" ? undefined : difficulty,
+        surfacePreference: surface === "" ? undefined : surface,
+        maxTrafficStress: maxTraffic === "" ? undefined : Number(maxTraffic),
+        avoid: avoid.length > 0 ? avoid : undefined,
         preferScenic,
         eBike,
-        numAlternatives: 3,
+        numAlternatives: 5,
         requestKey: requestKeyRef.current,
       });
       if (!result.success) {
@@ -174,9 +240,21 @@ export function RouteGeneratorMap() {
     (jobId !== null &&
       (!status || status.state === "PENDING" || status.state === "RUNNING"));
 
-  /** Starts a fresh generation, cancelling whatever ran before. */
-  const regenerate = (from: Waypoint | null = start) => {
-    if (!from || !distanceValid) {
+  /**
+   * Starts a fresh generation, cancelling whatever ran before. Points
+   * are passed explicitly so a just-set start/end is never stale.
+   */
+  const regenerate = (
+    from: Waypoint | null = start,
+    to: Waypoint | null = mode === "atob" ? end : null,
+  ) => {
+    if (!from || !elevationValid) {
+      return;
+    }
+    if (mode === "roundtrip" && !distanceValid) {
+      return;
+    }
+    if (mode === "atob" && !to) {
       return;
     }
     if (activeJobRef.current) {
@@ -185,12 +263,35 @@ export function RouteGeneratorMap() {
     }
     requestKeyRef.current = crypto.randomUUID();
     setJobId(null);
-    submitMutation.mutate(from);
+    submitMutation.mutate({ from, to: mode === "atob" ? to : null });
   };
 
   const setStartAndGenerate = (waypoint: Waypoint) => {
     setStart(waypoint);
     regenerate(waypoint);
+  };
+
+  /**
+   * Map taps: roundtrip always (re)sets the start; A-to-B sets the
+   * start first, then places/moves the destination.
+   */
+  const handleMapTap = (waypoint: Waypoint) => {
+    if (mode === "roundtrip" || !start) {
+      setStartAndGenerate(waypoint);
+      return;
+    }
+    setEnd(waypoint);
+    regenerate(start, waypoint);
+  };
+
+  const switchMode = (next: "roundtrip" | "atob") => {
+    if (next === mode) {
+      return;
+    }
+    setMode(next);
+    setEnd(null);
+    setJobId(null);
+    activeJobRef.current = null;
   };
 
   const useBrowserLocation = () => {
@@ -215,6 +316,14 @@ export function RouteGeneratorMap() {
     );
   };
 
+  const toggleAvoid = (value: string) => {
+    setAvoid((current) =>
+      current.includes(value)
+        ? current.filter((entry) => entry !== value)
+        : [...current, value],
+    );
+  };
+
   const selected = options?.[selectedIndex] ?? null;
 
   const tourNames = useMemo(() => {
@@ -235,6 +344,23 @@ export function RouteGeneratorMap() {
         }))
         .filter((_, index) => index !== selectedIndex),
     [options, selectedIndex],
+  );
+
+  const weather = selected?.weather ?? null;
+
+  // One badge per forecast sample, skipping the start (it sits under the
+  // start marker) — its values are in the summary panel anyway.
+  const weatherMarkers: WeatherMarkerData[] = useMemo(
+    () =>
+      (selected?.weather?.points ?? []).slice(1).map((point, index) => ({
+        id: `wx-${index}`,
+        lng: point.lng,
+        lat: point.lat,
+        icon: weatherEmoji(point.weatherCode),
+        label: `${Math.round(point.temperatureC)}° · ${Math.round(point.windSpeedKmh)} km/h`,
+        windDeg: point.windDirectionDeg,
+      })),
+    [selected],
   );
 
   const highlightDots: MapDot[] = useMemo(
@@ -264,22 +390,91 @@ export function RouteGeneratorMap() {
     <div className="relative h-[calc(100svh-6.5rem)] overflow-hidden rounded-xl border">
       <RideMap
         className="h-full"
-        waypoints={start ? [start] : []}
+        waypoints={start ? (end ? [start, end] : [start]) : []}
         routeCoordinates={selected?.route.coordinates}
         alternatives={alternatives}
         onSelectAlternative={(id) => setSelectedIndex(Number(id))}
         dots={highlightDots}
         fitTo={selected?.route.coordinates ?? null}
+        centerOn={!selected && start ? [start.lng, start.lat] : null}
+        weatherMarkers={weatherMarkers}
         interactive
-        onAddWaypoint={setStartAndGenerate}
+        onAddWaypoint={handleMapTap}
       />
 
+      {/* Ride-time weather for the selected route. */}
+      {weather && selected && (
+        <div className="absolute top-4 right-14 z-10 flex flex-col gap-1 rounded-xl border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
+          <span className="flex items-center gap-2 font-medium text-sm">
+            {weatherEmoji(weather.points[0]?.weatherCode ?? 3)}
+            {Math.round(weather.summary.temperatureMinC)}–
+            {Math.round(weather.summary.temperatureMaxC)} °C
+          </span>
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <span
+              className="inline-block"
+              style={{
+                transform: `rotate(${(weather.summary.dominantWindDirectionDeg + 180) % 360}deg)`,
+              }}
+            >
+              ↑
+            </span>
+            {Math.round(weather.summary.windAvgKmh)} km/h from{" "}
+            {compassLabel(weather.summary.dominantWindDirectionDeg)}
+            {" · "}
+            {Math.round(weather.summary.headwindShare * 100)}% headwind
+          </span>
+          {weather.summary.precipitationProbabilityMax >= 20 && (
+            <span className="text-muted-foreground">
+              💧 {Math.round(weather.summary.precipitationProbabilityMax)}% rain
+              risk
+            </span>
+          )}
+          {Math.abs(
+            weather.windAdjustedDurationMin - selected.route.duration / 60,
+          ) >= 3 && (
+            <span className="text-muted-foreground">
+              ≈ {formatDuration(weather.windAdjustedDurationMin * 60)} with wind
+            </span>
+          )}
+          {selected.airQuality && (
+            <span className="text-muted-foreground">
+              🍃 air {aqiLabel(selected.airQuality.europeanAqi)} (AQI{" "}
+              {selected.airQuality.europeanAqi})
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Floating control panel, Komoot-style on the left. */}
-      <div className="absolute top-4 left-4 z-10 flex w-[min(22rem,calc(100%-2rem))] flex-col gap-3">
+      <div className="absolute top-4 left-4 z-10 flex max-h-[calc(100%-2rem)] w-[min(22rem,calc(100%-2rem))] flex-col gap-3 overflow-y-auto">
         <div className="flex flex-col gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur">
           <div className="flex items-center gap-2 text-sm font-medium">
             <SparklesIcon className="size-4 text-primary" />
             Route generator
+          </div>
+
+          <div className="flex rounded-lg border p-0.5">
+            {(
+              [
+                { value: "roundtrip", label: "Roundtrip" },
+                { value: "atob", label: "A to B" },
+              ] as const
+            ).map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={cn(
+                  "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  mode === item.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => switchMode(item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
           <LocationSearch
@@ -324,16 +519,29 @@ export function RouteGeneratorMap() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1">
-              <Input
-                className="h-8 w-16 text-right"
-                inputMode="numeric"
-                aria-label="Distance in kilometers"
-                value={distanceKm}
-                onChange={(event) => setDistanceKm(event.target.value)}
-              />
-              <span className="text-muted-foreground text-xs">km</span>
-            </div>
+            {mode === "roundtrip" ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  className="h-8 w-16 text-right"
+                  inputMode="numeric"
+                  aria-label="Distance in kilometers"
+                  value={distanceKm}
+                  onChange={(event) => setDistanceKm(event.target.value)}
+                />
+                <span className="text-muted-foreground text-xs">km</span>
+              </div>
+            ) : (
+              <Select value={detourFactor} onValueChange={setDetourFactor}>
+                <SelectTrigger className="h-8 w-28" aria-label="Allowed detour">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectItem value="1.1">Direct</SelectItem>
+                  <SelectItem value="1.3">+30% detour</SelectItem>
+                  <SelectItem value="1.6">+60% detour</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -365,7 +573,11 @@ export function RouteGeneratorMap() {
                 variant="secondary"
                 size="sm"
                 className="ml-auto"
-                disabled={!distanceValid || generating}
+                disabled={
+                  generating ||
+                  !elevationValid ||
+                  (mode === "roundtrip" ? !distanceValid : !end)
+                }
                 onClick={() => regenerate()}
               >
                 {generating ? (
@@ -378,10 +590,129 @@ export function RouteGeneratorMap() {
             )}
           </div>
 
+          <button
+            type="button"
+            className="flex items-center gap-1 self-start text-muted-foreground text-xs hover:text-foreground"
+            onClick={() => setMoreOpen((open) => !open)}
+          >
+            {moreOpen ? (
+              <ChevronUpIcon className="size-3.5" />
+            ) : (
+              <ChevronDownIcon className="size-3.5" />
+            )}
+            More options
+          </button>
+
+          {moreOpen && (
+            <div className="flex flex-col gap-3 border-t pt-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-elevation"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Climbing target (m)
+                  </Label>
+                  <Input
+                    id="genmap-elevation"
+                    className="h-8"
+                    inputMode="numeric"
+                    placeholder="e.g. 600"
+                    value={elevationTarget}
+                    onChange={(event) => setElevationTarget(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-difficulty"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Difficulty
+                  </Label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger id="genmap-difficulty" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-surface"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Surface
+                  </Label>
+                  <Select value={surface} onValueChange={setSurface}>
+                    <SelectTrigger id="genmap-surface" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="paved">Mostly paved</SelectItem>
+                      <SelectItem value="unpaved">Mostly unpaved</SelectItem>
+                      <SelectItem value="mixed">Mixed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-traffic"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Traffic
+                  </Label>
+                  <Select value={maxTraffic} onValueChange={setMaxTraffic}>
+                    <SelectTrigger id="genmap-traffic" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="3">Avoid busy roads</SelectItem>
+                      <SelectItem value="2">Quiet streets</SelectItem>
+                      <SelectItem value="1">Mostly car-free</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-xs">Avoid</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {AVOID_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                        avoid.includes(item.value)
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      onClick={() => toggleAvoid(item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {!start && (
             <p className="text-muted-foreground text-xs">
               Tap the map, search a place or use your location to set the start
               — routes appear right away.
+            </p>
+          )}
+          {start && mode === "atob" && !end && (
+            <p className="text-muted-foreground text-xs">
+              Now tap the map where the route should end.
             </p>
           )}
           {generating && (
@@ -423,6 +754,24 @@ export function RouteGeneratorMap() {
                     {Math.round(option.unpavedRatio * 100)}% unpaved
                   </span>
                 </span>
+                {(option.matchPercent != null ||
+                  (option.labels?.length ?? 0) > 0) && (
+                  <span className="flex flex-wrap gap-1">
+                    {option.matchPercent != null && (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 font-medium text-[10px] text-primary">
+                        {option.matchPercent}% match
+                      </span>
+                    )}
+                    {(option.labels ?? []).map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground"
+                      >
+                        {LABEL_TEXT[label] ?? label}
+                      </span>
+                    ))}
+                  </span>
+                )}
                 <span className="flex flex-wrap items-center gap-3 text-muted-foreground text-xs">
                   <span>{formatDistance(option.route.distance)}</span>
                   <span>{formatDuration(option.route.duration)}</span>
@@ -434,6 +783,35 @@ export function RouteGeneratorMap() {
                     <span className="flex items-center gap-1">
                       <CameraIcon className="size-3" />
                       {option.highlights.length}
+                    </span>
+                  )}
+                  {option.detourFactor !== undefined && (
+                    <span>
+                      +
+                      {Math.max(0, Math.round((option.detourFactor - 1) * 100))}
+                      % vs. direct
+                    </span>
+                  )}
+                  {option.weather && (
+                    <span>
+                      {weatherEmoji(option.weather.points[0]?.weatherCode ?? 3)}{" "}
+                      {Math.round(option.weather.summary.temperatureMaxC)}°
+                    </span>
+                  )}
+                  {option.physicalEffortKj !== undefined && (
+                    <span>⚡ {option.physicalEffortKj} kJ</span>
+                  )}
+                  {option.estimatedBatteryWh !== undefined && (
+                    <span>🔋 {option.estimatedBatteryWh} Wh</span>
+                  )}
+                  {(option.greenShare ?? 0) >= 0.25 && (
+                    <span>
+                      🌳 {Math.round((option.greenShare ?? 0) * 100)}%
+                    </span>
+                  )}
+                  {(option.waterShare ?? 0) >= 0.25 && (
+                    <span>
+                      💧 {Math.round((option.waterShare ?? 0) * 100)}%
                     </span>
                   )}
                 </span>
