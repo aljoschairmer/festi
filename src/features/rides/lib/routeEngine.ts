@@ -29,6 +29,8 @@ export type EngineGenerateRequest = {
   targetElevationGainM?: number;
   /** Point-to-point only: max actual/direct distance ratio (1–3). */
   maxDetourFactor?: number;
+  /** Traffic-stress ceiling (LTS 1–5): avoid road classes above it. */
+  maxTrafficStress?: number;
   category: EngineCategory;
   difficulty?: EngineDifficulty;
   surfacePreference?: EngineSurfacePreference;
@@ -133,6 +135,14 @@ export type EngineRoute = {
   detourFactor?: number;
   /** Ride-time forecast (absent when the weather source was unavailable). */
   weather?: EngineRouteWeather;
+  /** Distance share per Level of Traffic Stress ("1"…"5"). */
+  trafficStressBreakdown?: Record<string, number>;
+  /** Distance-weighted mean LTS, e.g. 2.1. */
+  avgTrafficStress?: number;
+  /** 0–100 match against the requested preferences; null without any. */
+  matchPercent: number | null;
+  /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */
+  labels: string[];
   warnings: string[];
 };
 

@@ -54,6 +54,16 @@ const AVOID_OPTIONS = [
 
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
 
+/** Display names for the engine's semantic route labels. */
+const LABEL_TEXT: Record<string, string> = {
+  FASTEST: "Fastest",
+  SHORTEST: "Shortest",
+  QUIETEST: "Quietest",
+  MOST_SCENIC: "Most scenic",
+  FLATTEST: "Flattest",
+  HILLIEST: "Hilliest",
+};
+
 /**
  * Landmark kinds that make good tour names, best first — a castle or
  * viewpoint names a tour better than a random piece of street art.
@@ -137,6 +147,8 @@ export function RouteGeneratorMap() {
   const [elevationTarget, setElevationTarget] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [surface, setSurface] = useState("");
+  /** Traffic-stress ceiling as select value ("" = any, "2" = quiet, "1" = car-free). */
+  const [maxTraffic, setMaxTraffic] = useState("");
   const [avoid, setAvoid] = useState<string[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -164,6 +176,7 @@ export function RouteGeneratorMap() {
           elevationTarget === "" ? undefined : Number(elevationTarget),
         difficulty: difficulty === "" ? undefined : difficulty,
         surfacePreference: surface === "" ? undefined : surface,
+        maxTrafficStress: maxTraffic === "" ? undefined : Number(maxTraffic),
         avoid: avoid.length > 0 ? avoid : undefined,
         preferScenic,
         eBike,
@@ -609,23 +622,43 @@ export function RouteGeneratorMap() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label
-                  htmlFor="genmap-surface"
-                  className="text-muted-foreground text-xs"
-                >
-                  Surface
-                </Label>
-                <Select value={surface} onValueChange={setSurface}>
-                  <SelectTrigger id="genmap-surface" className="h-8">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" align="start">
-                    <SelectItem value="paved">Mostly paved</SelectItem>
-                    <SelectItem value="unpaved">Mostly unpaved</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-surface"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Surface
+                  </Label>
+                  <Select value={surface} onValueChange={setSurface}>
+                    <SelectTrigger id="genmap-surface" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="paved">Mostly paved</SelectItem>
+                      <SelectItem value="unpaved">Mostly unpaved</SelectItem>
+                      <SelectItem value="mixed">Mixed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="genmap-traffic"
+                    className="text-muted-foreground text-xs"
+                  >
+                    Traffic
+                  </Label>
+                  <Select value={maxTraffic} onValueChange={setMaxTraffic}>
+                    <SelectTrigger id="genmap-traffic" className="h-8">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" align="start">
+                      <SelectItem value="3">Avoid busy roads</SelectItem>
+                      <SelectItem value="2">Quiet streets</SelectItem>
+                      <SelectItem value="1">Mostly car-free</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -701,6 +734,24 @@ export function RouteGeneratorMap() {
                     {Math.round(option.unpavedRatio * 100)}% unpaved
                   </span>
                 </span>
+                {(option.matchPercent != null ||
+                  (option.labels?.length ?? 0) > 0) && (
+                  <span className="flex flex-wrap gap-1">
+                    {option.matchPercent != null && (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 font-medium text-[10px] text-primary">
+                        {option.matchPercent}% match
+                      </span>
+                    )}
+                    {(option.labels ?? []).map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground"
+                      >
+                        {LABEL_TEXT[label] ?? label}
+                      </span>
+                    ))}
+                  </span>
+                )}
                 <span className="flex flex-wrap items-center gap-3 text-muted-foreground text-xs">
                   <span>{formatDistance(option.route.distance)}</span>
                   <span>{formatDuration(option.route.duration)}</span>

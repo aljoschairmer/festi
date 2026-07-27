@@ -158,6 +158,12 @@ export type GeneratedRouteOption = {
   highlights: RouteHighlight[];
   /** Ride-time forecast (absent when the weather source was unavailable). */
   weather?: RouteWeather;
+  /** Distance-weighted mean Level of Traffic Stress (1–5). */
+  avgTrafficStress?: number;
+  /** 0–100 match against the requested preferences; null without any. */
+  matchPercent?: number | null;
+  /** Labels vs. the other alternatives (FASTEST, QUIETEST, …). */
+  labels?: string[];
   warnings: string[];
 };
 

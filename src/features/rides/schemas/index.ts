@@ -58,6 +58,8 @@ export const generateRouteSchema = z
     targetElevationGainM: z.number().min(0).max(10000).optional(),
     /** Point-to-point only: how much longer than the direct line (1–3). */
     maxDetourFactor: z.number().min(1).max(3).optional(),
+    /** Traffic-stress ceiling (LTS 1–5): avoid road classes above it. */
+    maxTrafficStress: z.number().int().min(1).max(5).optional(),
     difficulty: z.enum(["easy", "moderate", "hard"]).optional(),
     surfacePreference: z.enum(["paved", "unpaved", "mixed"]).optional(),
     avoid: z.array(z.string().max(30)).max(10).optional(),
