@@ -40,7 +40,12 @@ export const calculateRouteSchema = z.object({
 export type CalculateRouteInput = z.infer<typeof calculateRouteSchema>;
 
 /** Bike category understood by the route generation engine. */
-export const generationCategorySchema = z.enum(["road", "gravel", "mtb"]);
+export const generationCategorySchema = z.enum([
+  "road",
+  "gravel",
+  "mtb",
+  "cargo",
+]);
 
 /**
  * Input for the on-the-fly route generator. Roundtrip when `end` is
@@ -65,7 +70,7 @@ export const generateRouteSchema = z
     avoid: z.array(z.string().max(30)).max(10).optional(),
     preferScenic: z.boolean().optional(),
     eBike: z.boolean().optional(),
-    numAlternatives: z.number().int().min(1).max(3).optional(),
+    numAlternatives: z.number().int().min(1).max(5).optional(),
     /** Client-generated key making submit retries safe. */
     requestKey: z.string().min(8).max(100).optional(),
   })
@@ -98,7 +103,7 @@ export const repeatWeeklySchema = z
  */
 export const rideGenerationRefSchema = z.object({
   jobId: z.string().min(1).max(100),
-  routeIndex: z.number().int().min(0).max(2),
+  routeIndex: z.number().int().min(0).max(4),
 });
 
 export const createRideSchema = z.object({

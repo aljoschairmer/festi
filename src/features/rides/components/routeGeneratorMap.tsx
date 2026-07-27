@@ -39,6 +39,7 @@ const CATEGORIES = [
   { value: "road", label: "Road" },
   { value: "gravel", label: "Gravel" },
   { value: "mtb", label: "MTB" },
+  { value: "cargo", label: "Cargo" },
 ] as const;
 
 type Category = (typeof CATEGORIES)[number]["value"];
