@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/features/auth/guards";
+import { riderPath } from "@/features/community/lib/routes";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +42,7 @@ export async function updateProfile(input: unknown): Promise<Result> {
     },
   });
 
-  revalidatePath(`/dashboard/community/u/${session.user.id}`);
+  revalidatePath(riderPath(session.user.id));
   revalidatePath("/dashboard/profile");
 
   await Logger.log(

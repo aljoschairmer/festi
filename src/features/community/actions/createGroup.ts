@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { COMMUNITY_PATH } from "../lib/routes";
 import { type GroupFormData, groupFormSchema } from "../schemas";
 
 export async function createGroup(input: GroupFormData) {
@@ -40,7 +41,7 @@ export async function createGroup(input: GroupFormData) {
     },
   });
 
-  revalidatePath("/dashboard/community");
+  revalidatePath(COMMUNITY_PATH);
 
   await Logger.log(
     ActivityAction.GROUP_CREATED,

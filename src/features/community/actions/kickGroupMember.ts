@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
 import { getGroupRole } from "../lib/groupRoles";
+import { groupPath } from "../lib/routes";
 
 export async function kickGroupMember(input: {
   groupId: string;
@@ -79,7 +80,7 @@ export async function kickGroupMember(input: {
     where: { id: input.memberId, groupId: input.groupId },
   });
 
-  revalidatePath(`/dashboard/community/g/${input.groupId}`);
+  revalidatePath(groupPath(input.groupId));
 
   await Logger.log(
     ActivityAction.GROUP_MEMBER_REMOVED,

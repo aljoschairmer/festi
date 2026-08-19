@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
 import { isUniqueViolation } from "@/lib/prismaErrors";
+import { groupPath } from "../lib/routes";
 
 export async function joinGroup(groupId: string) {
   const session = await getCurrentUser();
@@ -80,7 +81,7 @@ export async function joinGroup(groupId: string) {
       };
     }
 
-    revalidatePath(`/dashboard/community/g/${groupId}`);
+    revalidatePath(groupPath(groupId));
 
     await Logger.log(
       ActivityAction.GROUP_JOIN_REQUESTED,
@@ -120,7 +121,7 @@ export async function joinGroup(groupId: string) {
     return { success: true, message: "You have joined the group." };
   }
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   await Logger.log(
     ActivityAction.GROUP_JOINED,

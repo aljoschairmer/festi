@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { validateImageUpload } from "@/lib/image";
 import { prisma } from "@/lib/prisma";
 import { publicUrl, putObject } from "@/lib/r2";
+import { COMMUNITY_PATH, groupPath } from "../lib/routes";
 
 type Result =
   | { success: true; message: string; imageUrl: string }
@@ -66,8 +67,8 @@ export async function uploadGroupImage(
     data: { image: imageUrl },
   });
 
-  revalidatePath("/dashboard/community");
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(COMMUNITY_PATH);
+  revalidatePath(groupPath(groupId));
 
   await Logger.log(
     ActivityAction.GROUP_UPDATED,

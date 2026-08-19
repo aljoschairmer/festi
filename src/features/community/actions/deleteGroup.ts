@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
 import { deleteObject } from "@/lib/r2";
+import { COMMUNITY_PATH } from "../lib/routes";
 
 export async function deleteGroup(groupId: string) {
   const session = await getCurrentUser();
@@ -44,7 +45,7 @@ export async function deleteGroup(groupId: string) {
     console.error("[deleteGroup] Failed to delete R2 image:", error);
   }
 
-  revalidatePath("/dashboard/community");
+  revalidatePath(COMMUNITY_PATH);
 
   await Logger.log(
     ActivityAction.GROUP_DELETED,

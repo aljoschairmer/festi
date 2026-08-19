@@ -185,6 +185,11 @@ Insgesamt: **26 Findings** (2 × P0, 8 × P1, 11 × P2, 5 × P3).
 - **Fix:** Alle sieben Aufrufe auf `/dashboard/community/g/${groupId}` bzw. `/dashboard/community`
   umstellen. Danach: die Pfade zentral ablegen (z. B. `features/community/lib/routes.ts` mit
   `groupPath(id)`), damit derselbe Fehler nicht wiederkehrt.
+- **Status:** behoben. Die sieben Aufrufe waren bereits in `9b32f02` korrigiert; nachgezogen ist
+  jetzt der Wiederholungsschutz: `src/features/community/lib/routes.ts` exportiert `COMMUNITY_PATH`,
+  `groupPath(id)` und `riderPath(id)`, und alle 14 `revalidatePath`-Aufrufe im Community-Feature plus
+  der in `updateProfile.ts` bauen ihren Pfad darüber. Bewusst **nicht** auf `<Link href>` angewandt:
+  ein falscher `href` zeigt beim ersten Klick eine 404, ein falscher `revalidatePath` sagt gar nichts.
 
 ---
 

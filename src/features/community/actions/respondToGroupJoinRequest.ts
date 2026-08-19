@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
 import { canManageGroup } from "../lib/groupRoles";
+import { groupPath } from "../lib/routes";
 import {
   type RespondToGroupJoinRequestData,
   respondToGroupJoinRequestSchema,
@@ -78,7 +79,7 @@ export async function respondToGroupJoinRequest(
     };
   }
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   if (approve) {
     await prisma.groupMember.update({

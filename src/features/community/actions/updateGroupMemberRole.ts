@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { groupPath } from "../lib/routes";
 
 const updateGroupMemberRoleSchema = z.object({
   groupId: z.string().min(1),
@@ -76,7 +77,7 @@ export async function updateGroupMemberRole(input: {
     data: { role },
   });
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   await Logger.log(
     ActivityAction.GROUP_MEMBER_ROLE_CHANGED,

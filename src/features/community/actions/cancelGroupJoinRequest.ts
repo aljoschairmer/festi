@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/features/auth/guards";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { groupPath } from "../lib/routes";
 
 /**
  * Lets a user withdraw their own PENDING join request. No activity log is
@@ -55,7 +56,7 @@ export async function cancelGroupJoinRequest(groupId: string) {
     },
   });
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   // Remove the unseen join-request notification to avoid request/cancel spam.
   await Notifier.remove({

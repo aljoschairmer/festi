@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
 import { canManageGroup } from "../lib/groupRoles";
+import { groupPath } from "../lib/routes";
 import { createAnnouncementSchema } from "../schemas/announcements";
 
 type Result =
@@ -56,7 +57,7 @@ export async function createAnnouncement(input: {
     data: { groupId, authorId: session.user.id, content },
   });
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   await Logger.log(
     ActivityAction.GROUP_ANNOUNCEMENT_CREATED,

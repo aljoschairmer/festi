@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { groupPath } from "../lib/routes";
 
 export async function leaveGroup(groupId: string) {
   const session = await getCurrentUser();
@@ -59,7 +60,7 @@ export async function leaveGroup(groupId: string) {
     },
   });
 
-  revalidatePath(`/dashboard/community/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   // A pending member leaving is really a cancelled join request: remove the
   // unseen request notification instead of logging a "left the group" event.
