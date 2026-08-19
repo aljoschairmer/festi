@@ -9,6 +9,7 @@ import type { PlaceResult } from "../types";
 
 type LocationSearchProps = {
   onSelect: (place: PlaceResult) => void;
+  onQueryChange?: (value: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
   initialQuery?: string;
@@ -16,6 +17,7 @@ type LocationSearchProps = {
 
 export function LocationSearch({
   onSelect,
+  onQueryChange,
   placeholder,
   autoFocus,
   initialQuery,
@@ -68,6 +70,7 @@ export function LocationSearch({
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
+            onQueryChange?.(event.target.value);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}

@@ -143,6 +143,9 @@ export function RiderDetailsEditor({
           onSelect={(place) =>
             setDraft((d) => ({ ...d, location: place.name }))
           }
+          onQueryChange={(value) =>
+            setDraft((d) => ({ ...d, location: value }))
+          }
         />
       </Row>
 
