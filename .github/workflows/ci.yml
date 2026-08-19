@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A newer push supersedes an in-flight run on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `postinstall` runs `prisma generate`, which the typecheck needs.
+      - name: Install
+        run: npm ci
+
+      - name: Lint (Biome)
+        run: npm run lint
+
+      # `next typegen` first: RouteContext<"..."> is generated into
+      # .next/types, which tsconfig includes. Without it tsc reports
+      # "Cannot find name 'RouteContext'" in the two API routes.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          # The build must not need real credentials. These only satisfy
+          # code that reads them at module scope; nothing connects.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  # Guards the migrations: Prisma must consider schema and migrations in
+  # sync, so a hand-written migration cannot silently drift from the schema.
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      # Compares the freshly migrated database against schema.prisma.
+      # Exit code 2 means "there is a difference", i.e. a migration is
+      # missing or a hand-written one drifted from the schema.
+      # (Prisma 7 dropped --to-schema-datamodel and --shadow-database-url;
+      # verified against prisma@7.8 locally.)
+      - name: Schema and migrations agree
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
