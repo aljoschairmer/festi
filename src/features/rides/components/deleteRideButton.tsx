@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { deleteRide } from "../actions/deleteRide";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 
 export function DeleteRideButton({ rideId }: { rideId: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -30,8 +32,10 @@ export function DeleteRideButton({ rideId }: { rideId: string }) {
       return result;
     },
     onSuccess: (result) => {
+      invalidateRideQueries(queryClient);
       toast.success(result.message);
       router.push("/dashboard/community-rides");
+      router.refresh();
     },
     onError: (error) => {
       toast.error(error.message);

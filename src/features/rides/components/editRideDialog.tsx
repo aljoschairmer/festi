@@ -34,6 +34,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { updateRide } from "../actions/updateRide";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import { type UpdateRideFormValues, updateRideFormSchema } from "../schemas";
 import type { RideDetail, RideDifficulty, RidePace } from "../types";
 
@@ -107,7 +108,7 @@ export function EditRideDialog({ ride }: { ride: EditableRide }) {
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       toast.success(result.message);
       router.refresh();
       setOpen(false);

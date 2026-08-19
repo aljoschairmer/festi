@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { markAttendance } from "../actions/markAttendance";
 import { respondToJoinRequest } from "../actions/respondToJoinRequest";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import type { RideCreator, RideParticipantInfo } from "../types";
 
 type RideParticipantsProps = {
@@ -74,7 +75,7 @@ export function RideParticipants({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       router.refresh();
       toast.success(result.message);
     },
@@ -92,7 +93,7 @@ export function RideParticipants({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       router.refresh();
       toast.success(result.message);
     },
