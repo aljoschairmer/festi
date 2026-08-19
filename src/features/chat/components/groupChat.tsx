@@ -51,6 +51,22 @@ const emojis = [
   "😡",
 ];
 
+/** Accessible names for the emoji picker buttons (the glyph alone is not one). */
+const emojiNames: Record<string, string> = {
+  "😀": "grinning face",
+  "😂": "face with tears of joy",
+  "😍": "smiling face with heart-eyes",
+  "🔥": "fire",
+  "🚴": "cyclist",
+  "💪": "flexed biceps",
+  "👍": "thumbs up",
+  "❤️": "red heart",
+  "🎉": "party popper",
+  "😎": "smiling face with sunglasses",
+  "😢": "crying face",
+  "😡": "enraged face",
+};
+
 export function GroupChat({ groupId }: { groupId: string }) {
   const form = useForm<MessageFormData>({
     resolver: zodResolver(MessageSchema),
@@ -180,7 +196,12 @@ export function GroupChat({ groupId }: { groupId: string }) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="icon">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Pick emoji"
+            >
               <SmileIcon className="size-4" />
             </Button>
           </PopoverTrigger>
@@ -193,6 +214,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label={emojiNames[emoji] ?? emoji}
                   onClick={() => {
                     const currentValue = form.getValues("content");
 
@@ -212,6 +234,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
         <Button
           disabled={mutation.isPending || !form.watch("content").trim()}
           type="submit"
+          aria-label="Send message"
         >
           <SendIcon className="size-4" />
         </Button>
