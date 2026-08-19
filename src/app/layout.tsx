@@ -11,6 +11,10 @@ const raleway = Raleway({
 });
 
 export const metadata: Metadata = {
+  // Absolute base so Open Graph/Twitter image and canonical URLs resolve.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL ?? "https://festicycling.com",
+  ),
   title: "Festi - Your Cycling Community",
   description:
     "Plan rides, connect with cyclists, and explore new routes together.",
