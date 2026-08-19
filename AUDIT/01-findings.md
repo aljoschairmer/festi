@@ -15,11 +15,11 @@ Ausnahmen und Einschränkungen:
 
 | Fund | Status |
 | --- | --- |
-| F-01 (Feed 21,5 s) | **teilweise** — die Ursachen sind angegangen (20 Composite-Indizes, `take`-Limits, Timeouts), aber der Kern ist die Serialisierung der Server Actions plus ein frischer Postgres-Connect pro Query (`maxUses: 1`, Review B-01). Das ist ein Architektur-Umbau, kein Patch: die Header-Zähler gehören aus dem Layout in einen gemeinsamen Endpunkt oder in RSC, und vor Postgres gehört ein Pooler (Hyperdrive/PgBouncer). Bewusst nicht im Rahmen dieser Runde. |
+| F-01 (Feed 21,5 s) | **zurückgezogen** — Messartefakt: mein Testverkehr lief über einen US-Egress (`colo=IAD`), der Worker also fern der europäischen Datenbank. Details unten. Die trotzdem sinnvollen Fixes (20 Composite-Indizes, `take`-Limits, Timeouts) sind drin und schaden nicht. |
 | F-02 (öffentliche Fahrten) | behoben — `isPublic` ist opt-in. **Die Migration setzt auch Bestandsdaten auf privat**, weil niemand zugestimmt hatte; bestehende geteilte Links brechen dadurch und müssen vom Creator neu aktiviert werden. |
-| F-05 (Profil lädt langsam) | teilweise — Indizes und `take` helfen, das clientseitige Laden bleibt (Review C-06). |
+| F-05 (Profil lädt langsam) | **Zeitangabe zurückgezogen** (gleiches Messartefakt wie F-01). Der funktionale Teil ist behoben: ein nicht existierendes Profil liefert jetzt einen echten 404 statt client-seitig „Loading". |
 | F-14 (kein Dark/Light-Umschalter) | **nicht behoben** — die App ist bewusst dunkel; ein zweites Theme ist eine Designentscheidung, keine Fehlerbehebung. Die Kontraste im vorhandenen Theme sind gefixt. |
-| F-16 (Logout-Fehlermeldung) | **nicht behoben** — die Meldung entsteht durch eine Server Action, die nach dem Invalidieren der Session zurückkommt. Der Presence-Heartbeat müsste beim Abmelden gestoppt werden; das hängt an derselben Layout-Umbaufrage wie F-01. |
+| F-16 (Logout-Fehlermeldung) | **nicht behoben** — eine Server Action kommt nach dem Invalidieren der Session zurück. Der Presence-Heartbeat müsste beim Abmelden gestoppt werden. Reproduzierbar unabhängig von der Latenz, aber ein Umbau am Layout. |
 | F-24 (Font-Preload-Warnung) | **nicht behoben** — die Warnung kommt aus Next' eigenem Font-Handling, nicht aus Anwendungscode. |
 | F-28 (`.env.example`) | **nicht behoben** — die Liste steht in der README; eine `.env.example` anzulegen ist sinnvoll, aber ich wollte keine Datei mit Platzhaltern anlegen, die wie echte Konfiguration aussieht, ohne das mit dir abzustimmen. |
 
@@ -37,7 +37,7 @@ Ausnahmen und Einschränkungen:
 
 | ID | Titel | Schwere |
 | --- | --- | :--: |
-| F-01 | Dashboard-Feed braucht 21,5 s bis zum ersten Inhalt — Server Actions laufen strikt seriell | **P0** |
+| F-01 | ~~Dashboard-Feed braucht 21,5 s~~ — **zurückgezogen**, Messartefakt der Testumgebung | — |
 | F-02 | Jede Fahrt ist per Default öffentlich: Startort, Termin und Klarname ohne Login abrufbar | **P0** |
 | F-03 | 404-Seite ist die ungebrandete Next.js-Standardseite | P1 |
 | F-04 | `/rides/{unbekannt}` antwortet mit HTTP 200 statt 404 | P1 |
@@ -65,63 +65,72 @@ Ausnahmen und Einschränkungen:
 | F-26 | Überschriften-Sprung H1 → H3 auf der Ride-Detailseite | P3 |
 | F-27 | Bilder ohne `alt` auf Ride- und Gruppendetail | P3 |
 | F-28 | Keine `.env.example` im `festi`-Repo | P2 |
-| F-29 | Neuer Kommentar erscheint erst nach über 12 s in der offenen Liste | P2 |
+| F-29 | ~~Neuer Kommentar erscheint erst nach über 12 s~~ — **Zeitangabe zurückgezogen** (siehe F-01) | — |
 
 ---
 
 ## P0
 
-### F-01 — Dashboard-Feed braucht 21,5 s bis zum ersten Inhalt · **P0**
+### F-01 — ~~Dashboard-Feed braucht 21,5 s~~ · **ZURÜCKGEZOGEN**
 
-**Repro**
-1. Als `test@aljoschairmer.com` anmelden.
-2. `/dashboard` aufrufen und mitstoppen, wann die drei Skeleton-Karten durch Inhalt ersetzt werden.
+**Dieser Fund war falsch.** Die Messung ist ein Artefakt meiner Testumgebung,
+kein Produktfehler. Der Betreiber sieht die Latenz nicht, und die Nachmessung
+gibt ihm recht.
 
-**Erwartet:** Inhalt in 1–3 s.
-**Tatsächlich:** **21,5 s.** Reproduzierbar über mehrere Läufe (`DOMContentLoaded`
-allein schwankte über isolierte Wiederholungen zwischen 2,9 s und 4,2 s).
-
-**Messung** (Playwright, Produktions-Deployment):
+**Was ich übersehen hatte:** Der gesamte Browser-Verkehr dieses Audits lief
+über einen Egress-Proxy in den USA. Cloudflare bedient mich deshalb aus
+`IAD` (Washington), nachgewiesen über `/cdn-cgi/trace`:
 
 ```
-DOMContentLoaded                         3 807 ms
-Server-Action  0020efa9   start  6 693 → ende  9 958   (3 265 ms)
-Server-Action  00463d0b   start  9 957 → ende 12 831   (2 874 ms)
-Server-Action  004256d8   start 12 831 → ende 16 675   (3 844 ms)
-Feed sichtbar                           21 512 ms
+colo=IAD
+loc=US
+cf-ray: a2db1fdb1fd17000-IAD
 ```
 
-Die Startzeit jeder Action ist exakt die Endzeit der vorherigen
-(9957→9958, 12831→12831): **Next.js serialisiert Server-Action-Requests.**
-Pro Dashboard-Seitenaufruf feuern 5–8 solcher Actions à 2,7–4,7 s.
+Der Worker lief also in Washington, während die Postgres-Datenbank in
+Europa steht. Zusammen mit `maxUses: 1` (jede Query öffnet eine eigene
+Verbindung, siehe unten) kostet jede Query einen vollen Verbindungsaufbau
+über den Atlantik — TCP + TLS + Postgres-Auth sind rund 4–5 Roundtrips.
+Bei ~95 ms RTT sind das ~400–500 ms **pro Query**. Aus Deutschland, mit
+Worker und Datenbank in derselben Region, sind dieselben 4–5 Roundtrips
+~10–50 ms.
 
-Vier davon laufen auf *jeder* Seite, weil sie im Layout hängen und damit
-noch vor jeder seitenspezifischen Abfrage in der Warteschlange stehen:
-`NotificationSheet`, `DirectChatHeaderButton`, `FollowerListSheet`
-(alle aus `src/components/headerButtonGroup.tsx`) und
-`PresenceHeartbeat` (`src/app/dashboard/layout.tsx:24`).
+**Die Messung, die das zeigt.** Alle 51 Requests eines Seitenaufrufs liefen
+über *dieselbe* Verbindung (`connectEnd − connectStart = 0` bei allen), der
+Proxy-Aufschlag ist also für alle identisch:
 
-Die ~3 s pro Action sind kein Query-Problem — `getFeed` lieferte
-`{"items":[],"nextCursor":null}`, also ein leeres Ergebnis. Der Aufwand
-steckt im Verbindungsaufbau: `src/lib/prisma.ts` erzeugt pro Request
-einen frischen Prisma-Client mit `maxUses: 1` (bewusst wegen Workers,
-siehe Review B-01).
+| | TTFB |
+| --- | --- |
+| Statische Dateien (25×, Cloudflare-Edge) | min 104 ms · **median 150 ms** · max 334 ms |
+| Server Actions **ohne** DB-Zugriff | **48 – 102 ms** — schneller als die statischen Dateien |
+| Server Actions **mit** DB-Zugriff | 1 147 – 4 603 ms |
 
-**Warum P0:** Das ist die Startseite nach jedem Login. 21 s ohne Inhalt
-liest sich wie ein Ausfall.
+Wäre der Proxy die Ursache, müssten alle Requests gleich betroffen sein.
+Ein Teil der Server Actions kommt aber in unter 100 ms zurück. Der Proxy
+kostet also ~100–150 ms; alles darüber ist die Distanz Worker ↔ Datenbank.
 
-**Fix-Richtung**
-1. Die drei Header-Zähler und den Heartbeat aus dem synchronen Pfad nehmen
-   — ein gemeinsamer Endpunkt oder ein `<Suspense>`-gerenderter Server-Teil
-   statt drei Client-Queries.
-2. Den Feed serverseitig vorrendern (RSC) statt ihn per TanStack Query aus
-   einer Server Action zu holen — dann steht die erste Seite mit dem HTML.
-3. Verbindungs-Setup entschärfen: Hyperdrive oder ein PgBouncer vor
-   Postgres, damit `maxUses: 1` nicht jedes Mal einen TCP+TLS+Auth-Roundtrip
-   kostet.
+**Was übrig bleibt — und zwar als P3, nicht als P0:** Der Code ist
+latenzempfindlich. `src/lib/prisma.ts` setzt `maxUses: 1`, wodurch jede
+einzelne Query eine frische Postgres-Verbindung öffnet und wieder wegwirft
+(nachgelesen in `pg-pool/index.js:387` — der Zähler läuft pro
+Checkout-Zyklus — und `@prisma/adapter-pg/dist/index.js:654`, wo normale
+Queries direkt über `pool.query()` gehen). Solange Worker und Datenbank in
+derselben Region liegen, fällt das nicht auf. Es fällt auf, sobald sie es
+nicht tun — etwa wenn Cloudflare einen Nutzer aus einem anderen Kontinent
+bedient. Ein Pooler (Hyperdrive, PgBouncer) würde das entkoppeln; das ist
+eine Optimierung für später, kein Fehler.
 
-📸 `screenshots/1440-dashboard.jpg`, `screenshots/1440-dashboard-25s.jpg`,
-`screenshots/375-dashboard.jpg`
+*(Transaktionen sind davon übrigens ausgenommen: `startTransaction` hält
+eine Verbindung bis zum Commit. Die `$transaction`-Blöcke aus den
+B-Fixes sind dadurch nebenbei günstiger als die Einzelqueries vorher.)*
+
+**Folgen für den Rest dieses Berichts:** Jede Aussage über Ladezeiten
+stammt aus derselben Umgebung und ist damit ebenfalls nicht
+aussagekräftig. Betroffen sind F-05 (Profil), F-21 (Ladezustände, soweit
+es um Dauer geht) und F-29 (Kommentar erscheint verzögert). Die
+*funktionalen* Befunde dieser Punkte bleiben gültig — dass es keine
+`loading.tsx` gab, dass ein nicht existierendes Profil client-seitig statt
+per `notFound()` behandelt wurde —, die *Zeitangaben* nicht.
 
 ---
 

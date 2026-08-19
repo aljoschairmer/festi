@@ -26,6 +26,16 @@ Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
 | `festi-backend` (Route Engine) | `AUDIT-FINDINGS.md` | R-01 … R-12 |
 | `festi-routes` (Routen-Bibliothek) | `AUDIT-FINDINGS.md` | L-01 … L-08 |
 
+## Wichtige Einschränkung der Messumgebung
+
+Der gesamte Browser- und HTTP-Verkehr dieses Audits lief über einen
+Egress-Proxy in den USA. Cloudflare hat mich deshalb aus Washington
+bedient (`colo=IAD`), während die Datenbank in Europa steht. **Alle
+Zeitangaben sind dadurch verzerrt** und sagen nichts über die Erfahrung
+eines Nutzers in Deutschland aus. Funktionale, strukturelle und
+Sicherheitsbefunde sind davon nicht betroffen. Wo Zeitangaben eine Rolle
+spielten, sind die Funde zurückgezogen und als solche markiert.
+
 ## Methode
 
 * **Phase 0** — Repos gelesen, Frontend lokal gestartet, Live-Engine gegen
@@ -45,8 +55,8 @@ Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
 
 | | |
 | --- | --- |
-| Funde Phase 1 + 2 | 29 (2 × P0, 15 × P1, 9 × P2, 4 × P3) |
-| Funde gezielte UI-Suche | 16 (5 × P1, 9 × P2, 2 × P3) |
+| Funde Phase 1 + 2 | 29, davon 2 zurückgezogen (F-01 Messartefakt, F-29 Zeitangabe) |
+| Funde gezielte UI-Suche | 16, davon 3 zurückgezogen (U-09/U-10/U-11 Fehlalarme) |
 | Funde Phase 3 (Code-Review) | 121 über fünf Reports |
 | Geprüfte Seiten | 22 Routen × bis zu 3 Viewports |
 | Screenshots | 129 |
@@ -54,9 +64,11 @@ Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
 
 ## Die fünf wichtigsten Punkte
 
-1. **Der Dashboard-Feed braucht ~21 s bis zum ersten Inhalt** — Next.js
-   serialisiert die Server Actions, und im Layout hängen vier, die auf
-   jeder Seite vor der eigentlichen Abfrage laufen (`01-findings.md`, F-01).
+1. ~~**Der Dashboard-Feed braucht ~21 s bis zum ersten Inhalt**~~ —
+   **zurückgezogen.** Messartefakt: mein Testverkehr lief über einen
+   US-Egress (`colo=IAD`), der Worker also fern der europäischen Datenbank.
+   Der Betreiber sieht die Latenz nicht. Belege und Gegenmessung in
+   `01-findings.md`, F-01.
 2. **Jede Fahrt ist per Default öffentlich** — Startort, Termin und
    Klarname des Organisators ohne Login abrufbar (F-02, Review `A-03`).
 3. **Autorisierungslücken**: `kickGroupMember` prüft die Gruppen-Zugehörigkeit

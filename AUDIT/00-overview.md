@@ -219,7 +219,22 @@ Onboarding-Defekt (Finding F-30).
 
 ---
 
-## 6. Gemessene Basis-Performance (Produktion, 1440 px, Testaccount)
+## 6. Gemessene Basis-Performance — ⚠️ NICHT AUSSAGEKRÄFTIG
+
+> **Nachtrag.** Diese Zahlen stammen aus einer Umgebung, deren Verkehr über
+> einen US-Egress lief (`/cdn-cgi/trace` → `colo=IAD`, `loc=US`). Der
+> Cloudflare-Worker lief dadurch in Washington, die Postgres-Datenbank steht
+> in Europa — jede Query zahlte einen transatlantischen Verbindungsaufbau.
+> Aus Deutschland, mit Worker und Datenbank in derselben Region, treten
+> diese Werte nicht auf; der Betreiber sieht sie nicht. Details und die
+> Gegenmessung stehen in `01-findings.md` unter F-01.
+>
+> Was messbar bleibt: die **Anzahl** der Requests pro Seitenaufruf (5–8
+> Server Actions, vier davon auf jeder Seite aus dem Layout) und ihre
+> **Serialisierung**. Beides ist standortunabhängig — es kostet nur dort
+> spürbar Zeit, wo eine Anfrage teuer ist.
+
+### Ursprüngliche Messwerte (US-Egress, nur zur Dokumentation)
 
 | Messung | Wert |
 | --- | --- |
