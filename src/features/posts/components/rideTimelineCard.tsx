@@ -72,6 +72,7 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
               by{" "}
               <Link
                 href={profileHref}
+                prefetch={false}
                 className="pointer-events-auto font-medium text-foreground hover:underline"
               >
                 {creatorLabel}

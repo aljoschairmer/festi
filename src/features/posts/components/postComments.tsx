@@ -112,7 +112,7 @@ export function PostComments({ postId }: { postId: string }) {
               key={comment.id}
               className="flex gap-2 duration-300 animate-in fade-in"
             >
-              <Link href={profileHref(comment.author)}>
+              <Link href={profileHref(comment.author)} prefetch={false}>
                 <Avatar size="sm">
                   {comment.author.image && (
                     <AvatarImage
@@ -130,6 +130,7 @@ export function PostComments({ postId }: { postId: string }) {
                   <div className="flex items-center justify-between gap-2">
                     <Link
                       href={profileHref(comment.author)}
+                      prefetch={false}
                       className="text-xs font-medium hover:underline"
                     >
                       {comment.author.username ?? comment.author.name}

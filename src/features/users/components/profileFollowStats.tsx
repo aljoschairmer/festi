@@ -119,6 +119,7 @@ function FollowUserList({
         <Link
           key={user.id}
           href={`/dashboard/community/u/${user.id}`}
+          prefetch={false}
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-muted/50"
         >

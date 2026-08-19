@@ -35,6 +35,7 @@ function RiderChip({ user, host }: { user: RideCreator; host?: boolean }) {
   return (
     <Link
       href={`/dashboard/community/u/${user.id}`}
+      prefetch={false}
       className="flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 transition-colors hover:bg-muted"
     >
       <Avatar className="size-6">

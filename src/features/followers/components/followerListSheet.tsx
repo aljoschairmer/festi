@@ -84,7 +84,7 @@ function FollowerRow({
           aria-label={`Go to ${user.name}'s profile`}
         >
           <SheetClose asChild>
-            <Link href={`/dashboard/community/u/${user.id}`}>
+            <Link href={`/dashboard/community/u/${user.id}`} prefetch={false}>
               <UserIcon className="size-4" />
             </Link>
           </SheetClose>

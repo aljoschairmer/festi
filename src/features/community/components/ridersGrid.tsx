@@ -117,7 +117,10 @@ export function RidersGrid() {
               className="duration-500 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
               style={{ animationDelay: `${(index % PAGE_SIZE) * 60}ms` }}
             >
-              <Link href={`/dashboard/community/u/${rider.id}`}>
+              <Link
+                href={`/dashboard/community/u/${rider.id}`}
+                prefetch={false}
+              >
                 <Card className="h-full transition hover:border-red-500/40 hover:bg-muted/40">
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="size-12">

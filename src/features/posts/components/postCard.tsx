@@ -99,7 +99,7 @@ export function PostCard({ post }: PostCardProps) {
         {/* Left: author, title, content */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex items-start gap-3">
-            <Link href={profileHref} aria-label={authorLabel}>
+            <Link href={profileHref} prefetch={false} aria-label={authorLabel}>
               <Avatar>
                 {post.author.image && (
                   <AvatarImage src={post.author.image} alt={authorLabel} />
@@ -110,6 +110,7 @@ export function PostCard({ post }: PostCardProps) {
             <div className="min-w-0 flex-1">
               <Link
                 href={profileHref}
+                prefetch={false}
                 className="block truncate font-medium leading-tight hover:underline"
               >
                 {authorLabel}
