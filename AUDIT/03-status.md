@@ -1,0 +1,151 @@
+# 03 – Was ist behoben, was ist offen
+
+> Stand nach der Fix-Runde auf `claude/festi-e2e-audit-n10238`.
+> Gesamtbestand: **156 Funde** (F 29 · U 16 · A 19 · B 30 · C 26 · D 25 · E 21 · R 12 · L 8).
+
+## Kurzfassung
+
+| | Anzahl |
+| --- | ---: |
+| **Behoben** | ~62 |
+| **Zurückgezogen** (Fehlmessung / Fehlalarm) | 5 |
+| **Offen** | ~89 |
+
+Die Fix-Runde hat sich auf **Sicherheit, Datenkonsistenz und die konkreten
+UI-Defekte** konzentriert. Drei ganze Review-Bereiche sind weitgehend
+unangetastet: **C** (Frontend-Architektur), **D** (Design-System-Hygiene)
+und **E** (Code-Qualität, Tests, CI).
+
+---
+
+## Zurückgezogen
+
+| ID | Warum |
+| --- | --- |
+| **F-01** | „Feed 21,5 s" — Messartefakt. Mein Verkehr lief über einen US-Egress (`colo=IAD`), der Worker also fern der europäischen Datenbank. Siehe `01-findings.md`. |
+| **F-29** | Zeitangabe zur Kommentar-Verzögerung, gleiche Ursache. |
+| **U-09 / U-10 / U-11** | Checkboxen, Switch und Ride-Kartenlink haben korrekte Namen — der Chromium-AX-Baum belegt es. Mein Scanner prüfte `label[for]` nicht. |
+| *U-12* | Abgeschwächt: Platzhalter sind schwache Label, aber kein Verstoß. |
+
+---
+
+## Behoben
+
+**Sicherheit (15 von 19)** — A-01 gruppenübergreifende IDOR · A-02 Gruppen-Rides
+abgeschirmt · A-03 öffentliche Fahrten opt-in · A-04/A-05/A-11/A-13 Rate-Limits ·
+A-07 `proxy.ts` · A-08 `cf-connecting-ip` · A-09 Security-Header ·
+A-10 Port-Binding · A-12 HTML-Escaping in Mails · A-14 cookieCache ·
+A-15 Dev-Origins · A-16 Bildgröße durchgesetzt.
+
+**Daten (8 von 30)** — B-02 Waitlist-Transaktion · B-03 Race Conditions ·
+B-04 `take`-Limits · B-08 20 Composite-Indizes · B-12 fehlgeschlagene
+Generierung sichtbar · B-13 Fetch-Timeouts · B-19 R2-Aufräumen ·
+B-21 `@@unique([postId, position])`.
+
+**Funktion und UI** — F-02/03/04/06/09/10/11/12/13/15/20/22/23/25 ·
+U-01 bis U-08 · U-13 Kontraste · U-16 Rottöne teilweise.
+
+**Engine (5 von 12)** — R-01 Höhenmeter-Artefakte · R-02 Distanz-Scoring ·
+R-03 Lokalisierung · R-04 Coverage · R-11 Port-Binding. Tests 241 → 250.
+
+**Routen-Repo (3 von 8 + Datenfehler)** — L-04 Schema-Validierung ·
+L-05 Quota-Header · L-06 `.gitignore`. Dabei aufgedeckt: 14 Constraint-Werte
+in 12 Ideen erreichten die Engine nie.
+
+---
+
+## Offen — nach Dringlichkeit
+
+### 1. Keine Tests, keine CI · **das größte Loch**
+
+| ID | |
+| --- | --- |
+| E-01 | Frontend hat **null** automatisierte Tests — bei 82 Server Actions inklusive aller Auth- und Ownership-Logik. Genau die Logik, die ich gerade angefasst habe (Gruppen-Sichtbarkeit, Kapazität, Rate-Limits), ist ungetestet. |
+| E-02 | **Keine CI in allen drei Repos.** Nichts hindert daran, `tsc`-Fehler zu mergen. |
+| E-03 | Kein `typecheck`-Script; `tsc --noEmit` braucht zwei ungescriptete Vorschritte. |
+| E-06 | Engine: `test/` ist vom Typecheck ausgeschlossen, dort liegen 25 echte Typfehler. |
+| E-07 | Engine: Worker (0 %), GraphHopper-Client (2 %), Job-Queue (21 %) praktisch ungetestet. |
+
+**Das würde ich zuerst angehen.** Ohne CI ist jede weitere Änderung ein Blindflug.
+
+### 2. Frontend-Architektur (22 von 26 offen)
+
+| ID | |
+| --- | --- |
+| C-02 | ~16 Requests/Minute pro offenem Tab, allein aus dem Dashboard-Layout (zwei 10-s-Poller, 30-s-Follower-Liste, 30-s-Presence). Standortunabhängig — das ist echte Grundlast. |
+| C-01 / C-06 | Listen filtern und paginieren im Browser statt in der Datenbank; die Seiten rendern eine leere Shell und laden per Server-Action-POST nach. |
+| C-04 | `open-next.config.ts` ohne `incrementalCache`, während der Code auf `revalidate: 3600/1800` baut — die Pro-Seiten scrapen vermutlich bei jedem Request neu. *(zu verifizieren)* |
+| C-07 / E-04 / E-05 | `guards.ts` trägt `"use server"` → alle fünf Auth-Guards sind öffentliche Action-Endpunkte. |
+| C-08 | `QueryClient` ohne `defaultOptions`: `staleTime: 0` überall. |
+| C-10 | Fehlende Query-Invalidierungen nach Follow, Ride-Erstellung, Route-Speichern. |
+| C-11 | Zwei konkurrierende `useSession`-Implementierungen. |
+| C-12 | Kein `next/dynamic`; recharts landet statisch im Bundle. |
+| C-05 Rest | `global-error.tsx` und ein Root-`loading.tsx` fehlen weiterhin. |
+| C-14 – C-26 | Session-Mehrfachladen, 31 ungenutzte shadcn-Komponenten, Filterzustand nicht in der URL, `<img>` statt `next/image`, Partikel-Animation ohne Reduced-Motion, … |
+
+### 3. Design-System und A11y-Reste
+
+| ID | |
+| --- | --- |
+| D-08 | **291 hartkodierte Farbklassen** in 61 Dateien am Token-System vorbei (Ausgangswert 347 — die Tokens habe ich gefixt, die Call-Sites nicht). |
+| D-01 / D-11 / C-23 | Kein Theming: `.dark` ist wertgleich zu `:root`, kein Provider, 80 `dark:`-Utilities wirkungslos, Toasts folgen dem OS-Theme. |
+| D-10 | Scrollbar-Styling funktionslos — `hsl(var(--muted))` um OKLCH-Werte ist ungültiges CSS. Drei Zeilen. |
+| D-14 | `autoComplete` nur in 1 von 5 Formularen. |
+| D-15 | `FieldError` nicht per `aria-describedby` verknüpft. |
+| D-18 / C-21 | Partikel-Canvas ohne `aria-hidden` und ohne Reduced-Motion (WCAG 2.2.2, Level A). |
+| D-19 | Sidebar ohne `<nav>`-Landmark und ohne `aria-current`. |
+| D-22 | Autocomplete ohne Combobox-Semantik und Tastaturnavigation. |
+| D-23 / D-24 / D-25 | Eingabefelder ohne Namen, Karten/Diagramme ohne Textalternative, Sprach-Mix. |
+| U-07 | Partikel-Labels laufen durch den Fließtext der Landing Page. |
+| U-14 | Events: Quellen-Link liegt in der Klickfläche des Event-Buttons. |
+| U-15 | `line-clamp` schneidet ohne Hinweis ab. |
+
+### 4. Daten und Backend (22 von 30 offen)
+
+| ID | |
+| --- | --- |
+| B-01 | `maxUses: 1` — eine Verbindung pro Query. In einer Region unkritisch, über Kontinente teuer. Pooler (Hyperdrive/PgBouncer) wäre die Lösung. **P3, nicht P0** (siehe F-01). |
+| B-05 / B-07 | `include` statt `select` in Listen-Queries; volle Routen-Geometrie in jeder Zeile. |
+| B-06 | Feed-Cursor vergleicht IDs über zwei Tabellen hinweg. |
+| B-09 / B-10 / B-11 | Uneinheitliche Rückgabeformate; Read-Actions werfen für erwartete Zustände; rohe Upstream-Fehlertexte am Client. |
+| B-20 | Notifications zeigen auf gelöschte Entities (polymorph, kein FK). |
+| B-22 | `ProTelemetryFrame` wächst unbegrenzt, ohne Retention. |
+| B-26 | `syncCalendarEvents` ist eine offene Server Action mit globalem Lock. |
+| B-27 | Analytics: `distinct` im Speicher, teure Counts. |
+| B-24 / B-25 / B-28 / B-29 / B-30 | Statuscodes in `api/**`, kein 405 in der Engine, Idempotency-TTL, Job-Dauer im Fehlerpfad, Wetter zur falschen Zeit. |
+
+### 5. Engine-Reste (7 von 12 offen)
+
+R-05 Quota-Leck bei Fehlern · R-06 keine Job-Ownership (IDOR mit dem API-Key) ·
+R-07 Redis ohne Retry-Deckel · R-08 `/result` schleppt `gpx`+`fitBase64` mit ·
+R-09 `test/` ohne Typecheck · R-10 ungetestete Kernmodule · R-12 `distanceAlongRouteM`.
+
+### 6. Konventionen und Hygiene (E, fast vollständig offen)
+
+E-08 drei Rückgabekonventionen, 16 duplizierte `Result`-Typen ·
+E-09 neun kebab-case-Ausreißer · E-10 drei Sammel-Action-Dateien ·
+E-11 acht `input: unknown` · E-12 `kickGroupMember` ohne Zod *(Autorisierung ist
+gefixt, die Validierung fehlt weiter)* · E-14 ungenutzte Dependencies ·
+E-15 31 tote UI-Komponenten (3 418 LOC) · E-16 stale `eslint-disable` ·
+E-17 `console.log` leakt Auth-Fehler · E-18 eingecheckter 240-KB-Tarball ·
+E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
+
+---
+
+## Bewusst nicht gemacht
+
+| | Warum |
+| --- | --- |
+| **Light-Theme** (D-01, C-23) | Eine Designentscheidung, keine Fehlerbehebung. Die Kontraste im vorhandenen dunklen Theme sind gefixt. |
+| **`.env.example`** (F-28) | Möchte ich nicht ohne Absprache anlegen — eine Datei voller Platzhalter, die wie echte Konfiguration aussieht. |
+| **291 Farb-Call-Sites** (D-08) | Mechanisch, aber 61 Dateien mit Regressionsrisiko in Gradienten. Gehört in einen eigenen, reviewbaren PR. |
+| **31 tote UI-Komponenten löschen** (E-15) | Dito — eigener PR, damit der Diff lesbar bleibt. |
+| **`maxUses: 1`** (B-01) | Der Kommentar im Code beschreibt einen echten Workers-Bug. Ohne Deployment kann ich einen Umbau nicht gegentesten. |
+
+## Vorschlag für die Reihenfolge
+
+1. **CI aufsetzen** (E-02, E-03) — `tsc`, Biome, die 250 Engine-Tests. Ein Nachmittag, und danach ist alles Weitere abgesichert.
+2. **Tests für die gerade geänderte Sicherheitslogik** (E-01) — Gruppen-Sichtbarkeit, Kapazität, Rate-Limits. Das sind die Stellen, an denen ein Fehler wieder Daten preisgibt.
+3. **C-02 Polling-Grundlast** — 16 Requests/Minute pro Tab kosten unabhängig vom Standort.
+4. **D-10 Scrollbar** (drei Zeilen) und **U-07 Partikel-Lesbarkeit** — billig, sichtbar.
+5. Danach die großen mechanischen Blöcke (D-08, E-15) als eigene PRs.
