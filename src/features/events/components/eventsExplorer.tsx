@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getCalendarEvents } from "../actions/getCalendarEvents";
 import { syncCalendarEvents } from "../actions/syncCalendarEvents";
 import {
@@ -207,16 +208,26 @@ export function EventsExplorer() {
 
         <aside className="flex max-h-[420px] flex-col rounded-lg border lg:max-h-full lg:w-88">
           <div className="border-b px-3 py-2 text-xs text-muted-foreground">
-            {isLoading
-              ? "Loading events…"
-              : `${filtered.length} events · click one to locate it`}
+            {isLoading ? (
+              <Skeleton className="h-3.5 w-28" />
+            ) : (
+              `${filtered.length} events · click one to locate it`
+            )}
           </div>
 
-          <EventsList
-            events={filtered}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+          {isLoading ? (
+            <div className="flex flex-1 flex-col gap-2 p-3">
+              {["a", "b", "c", "d", "e"].map((key) => (
+                <Skeleton key={key} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <EventsList
+              events={filtered}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
+          )}
 
           <div className="flex flex-wrap gap-x-3 gap-y-1 border-t px-3 py-2">
             {EVENT_TYPE_GROUPS.map((entry) => (

@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getRiders } from "../actions/getRiders";
 import type { Rider } from "../types";
 
@@ -67,7 +68,13 @@ export function RidersGrid() {
   };
 
   if (isLoading)
-    return <p className="text-sm text-muted-foreground">Loading riders...</p>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["a", "b", "c"].map((key) => (
+          <Skeleton key={key} className="h-[84px] w-full rounded-xl" />
+        ))}
+      </div>
+    );
   if (isError)
     return (
       <div className="flex items-center gap-3">
