@@ -53,10 +53,18 @@ export function LoginForm() {
         password: data.password,
       });
       if (result.error) {
-        console.log(result.error);
+        if (result.error.code === "BANNED_USER") {
+          // Ban details are only disclosed after the credentials have been
+          // verified (better-auth already checked them for BANNED_USER).
+          const ban = await getBanInfo(data.email, data.password);
+          throw Object.assign(
+            new Error(result.error.message || "Sign in failed"),
+            { code: result.error.code, ban },
+          );
+        }
         throw Object.assign(
           new Error(result.error.message || "Sign in failed"),
-          { code: result.error.code, email: data.email },
+          { code: result.error.code },
         );
       }
     },
@@ -65,8 +73,11 @@ export function LoginForm() {
       router.push("/dashboard");
       router.refresh();
     },
-    onError: async (error) => {
-      const err = error as Error & { code?: string; email?: string };
+    onError: (error) => {
+      const err = error as Error & {
+        code?: string;
+        ban?: { reason: string | null; expires: string | null } | null;
+      };
 
       if (err.code === "EMAIL_NOT_VERIFIED") {
         toast.error("Email not verified", {
@@ -77,16 +88,16 @@ export function LoginForm() {
       }
 
       if (err.code === "BANNED_USER") {
-        const ban = await getBanInfo(err.email ?? "");
         toast.error("Your account has been banned.", {
           description: (
             <div>
               <p>
-                <strong>Reason: </strong> {ban?.reason ?? "No reason provided"}
+                <strong>Reason: </strong>{" "}
+                {err.ban?.reason ?? "No reason provided"}
               </p>
               <p>
                 <strong>Duration: </strong>
-                {formatBanExpiry(ban?.expires ?? null)}
+                {formatBanExpiry(err.ban?.expires ?? null)}
               </p>
             </div>
           ),
