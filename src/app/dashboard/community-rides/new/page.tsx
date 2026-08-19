@@ -33,10 +33,11 @@ export default async function NewRidePage({
   let generated = null;
   if (genJob && genIndex !== undefined) {
     const index = Number(genIndex);
-    const engineRoutes = Number.isInteger(index)
+    const engineResult = Number.isInteger(index)
       ? await getGenerationJobResult(genJob).catch(() => null)
       : null;
-    const engineRoute = engineRoutes?.[index];
+    const engineRoute =
+      engineResult?.status === "ok" ? engineResult.routes[index] : undefined;
     if (engineRoute) {
       const route = toRouteResult(engineRoute);
       const waypoints = sampleRouteWaypoints(
