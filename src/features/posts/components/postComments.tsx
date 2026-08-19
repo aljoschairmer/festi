@@ -138,10 +138,15 @@ export function PostComments({ postId }: { postId: string }) {
                       <button
                         type="button"
                         onClick={() => deleteMutation.mutate(comment.id)}
-                        className="text-muted-foreground transition-colors hover:text-destructive"
+                        disabled={deleteMutation.isPending}
+                        className="text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
                         aria-label="Delete comment"
                       >
-                        <Trash2Icon className="size-3.5" />
+                        {deleteMutation.isPending ? (
+                          <Loader2Icon className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2Icon className="size-3.5" />
+                        )}
                       </button>
                     )}
                   </div>
