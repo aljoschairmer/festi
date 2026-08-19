@@ -116,7 +116,6 @@ export function CreatePostForm({
         throw new Error(result.error);
       }
 
-      // Upload each attached image once the post id is known.
       for (let i = 0; i < images.length; i++) {
         const formData = new FormData();
         formData.append("image", images[i].blob, `${i}.webp`);
@@ -184,10 +183,6 @@ export function CreatePostForm({
             <AvatarFallback>{initials || "U"}</AvatarFallback>
           </Avatar>
 
-          {/* `min-w-0`: a flex child defaults to `min-width: auto` and so
-              cannot shrink below its content. Without it a single long word
-              (or a pasted route URL) widens this column and drags the
-              Write/Preview tabs and the submit button out of the viewport. */}
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <Field data-invalid={!!errors.title}>
               <FieldLabel htmlFor="post-title" className="sr-only">

@@ -3,13 +3,9 @@ import "server-only";
 import { headers } from "next/headers";
 
 /**
- * The caller's IP address.
- *
- * Order matters. On Cloudflare, `cf-connecting-ip` is written by the edge and
- * cannot be set by the client; `x-forwarded-for` *can* be — a client that
- * sends its own `X-Forwarded-For` prepends a value Cloudflare then keeps.
- * Reading the forwarded header first therefore let anyone forge the address
- * recorded in the audit log and sidestep any per-IP counting built on it.
+ * The caller's IP, preferring headers the client cannot set. Order matters:
+ * `x-forwarded-for` is forgeable, `cf-connecting-ip` is written by the edge.
+ * Null outside a request scope.
  */
 export async function getClientIp(): Promise<string | null> {
   try {
@@ -22,7 +18,6 @@ export async function getClientIp(): Promise<string | null> {
       null
     );
   } catch {
-    // Called outside a request scope (e.g. a scheduled job).
     return null;
   }
 }

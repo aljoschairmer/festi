@@ -55,7 +55,7 @@ export async function putObject(
     body: body as BodyInit,
     headers: {
       "Content-Type": contentType,
-      // Long cache; we bust it with a version query param on the stored URL.
+
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
@@ -79,7 +79,6 @@ export async function deleteObject(key: string): Promise<void> {
   }
 }
 
-/** Builds the public URL for a stored object key. */
 export function publicUrl(key: string): string {
   const { publicUrl } = getR2();
   return `${publicUrl}/${key}`;
@@ -102,7 +101,6 @@ export function keyFromPublicUrl(url: string): string | null {
   }
 }
 
-// Encode each path segment but keep the slashes that define the folder layout.
 function encodeKey(key: string): string {
   return key
     .split("/")

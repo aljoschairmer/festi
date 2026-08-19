@@ -27,14 +27,13 @@ const RANGES: TimeRange[] = ["24h", "7d", "30d", "90d"];
 export function AnalyticsDashboard() {
   const [range, setRange] = useState<TimeRange>("7d");
 
-  // Better Auth session — surfaces who is viewing and when it was last synced.
   const { data: session } = useSession();
 
   const { data, isLoading, isFetching, isError, refetch } =
     useQuery<AnalyticsData>({
       queryKey: ["admin-analytics", range],
       queryFn: () => getAnalytics(range),
-      // Keep "online now" reasonably fresh.
+
       refetchInterval: 30_000,
       staleTime: 15_000,
     });

@@ -42,7 +42,6 @@ export async function getFeed(
   });
   const followingIds = following.map((f) => f.followingId);
 
-  // "following" includes your own content; "discover" excludes both.
   const authorFilter =
     scope === "following"
       ? { in: [...followingIds, userId] }
@@ -57,10 +56,8 @@ export async function getFeed(
       }
     : {};
 
-  // Group rides stay inside their group, even in the timeline.
   const rideVisibility = rideVisibilityFilter(userId);
 
-  // One extra row per source tells us whether older items remain.
   const [posts, rides] = await Promise.all([
     prisma.post.findMany({
       where: { authorId: authorFilter, ...cursorFilter },
@@ -84,10 +81,9 @@ export async function getFeed(
       },
     }),
     prisma.ride.findMany({
-      // Group rides stay inside their group, even in the timeline.
       where: {
         creatorId: authorFilter,
-        // `AND`: `cursorFilter` and the visibility rule both use `OR`.
+
         AND: [cursorFilter, rideVisibility],
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],

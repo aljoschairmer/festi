@@ -43,7 +43,6 @@ function truncateLabel(label: string): string {
 function FlagGlyph({ marker }: { marker: ElevationMarker }) {
   const color = MARKER_COLORS[marker.kind];
   if (marker.kind === "finish") {
-    // 3x2 checkered flag.
     const cell = 4;
     return (
       <g>
@@ -95,7 +94,7 @@ function FlagGlyph({ marker }: { marker: ElevationMarker }) {
       </g>
     );
   }
-  // Plain pennant (start).
+
   return (
     <path d={`M0 0 L11 ${FLAG_HEIGHT / 2} L0 ${FLAG_HEIGHT} Z`} fill={color} />
   );
@@ -188,9 +187,6 @@ export function ElevationChart({
         </span>
       </div>
       <div className={hasMarkers ? "h-44 w-full" : "h-32 w-full"}>
-        {/* `minWidth`/`minHeight`: the container is measured before the
-            surrounding panel has laid out, which made Recharts warn about a
-            -1 × -1 chart and flash an empty box on first paint. */}
         <ResponsiveContainer
           width="100%"
           height="100%"
@@ -200,7 +196,6 @@ export function ElevationChart({
           <AreaChart
             data={data}
             margin={{
-              // The flag zone lives in the top margin, above the plot area.
               top: hasMarkers ? FLAG_ZONE_HEIGHT : 4,
               right: 8,
               bottom: 0,
@@ -223,7 +218,7 @@ export function ElevationChart({
                 onHover(data[idx]);
                 return;
               }
-              // Fallback: match by the active x-axis label (distance).
+
               if (s.activeLabel != null) {
                 const label = Number(s.activeLabel);
                 const match = data.find((p) => p.distance === label);
@@ -290,7 +285,7 @@ export function ElevationChart({
                 strokeDasharray="2 3"
                 label={renderMarkerFlag(
                   marker,
-                  // Mirror labels near the right edge so they stay inside.
+
                   marker.km > maxDistance * 0.82 ? "right" : "left",
                 )}
               />

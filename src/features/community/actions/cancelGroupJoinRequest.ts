@@ -58,7 +58,6 @@ export async function cancelGroupJoinRequest(groupId: string) {
 
   revalidatePath(groupPath(groupId));
 
-  // Remove the unseen join-request notification to avoid request/cancel spam.
   await Notifier.remove({
     type: NotificationType.GROUP_JOIN_REQUESTED,
     userId: group.createdById,

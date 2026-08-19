@@ -71,7 +71,6 @@ export async function getStageReplay(
 
     return { frames: downsampleFrames(frames) };
   } catch {
-    // A missing table / dead database degrades to "no replay available".
     return { frames: [] };
   }
 }

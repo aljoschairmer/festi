@@ -79,8 +79,6 @@ async function fetchKmzStages(
   const routeUrl = competition?.routeUrl;
   if (typeof routeUrl !== "string" || routeUrl.length === 0) return null;
 
-  // The KMZ sits on a plain CDN; the 1h fetch cache matches the other
-  // slow-changing race data (oversized responses simply skip the cache).
   const response = await fetch(routeUrl, { next: { revalidate: 3600 } });
   if (!response.ok) return null;
   const kml = extractKml(await response.arrayBuffer());
@@ -132,7 +130,6 @@ async function fetchGpxStages(
     return [toStage(route.points, route.distanceMeters, null, race.name)];
   }
 
-  // Stage numbers and place names come from the (cached) ASO program.
   const labels = new Map<number, string>();
   let numbers: number[] = [];
   if (race.asoRace) {
@@ -150,9 +147,7 @@ async function fetchGpxStages(
             : base,
         );
       }
-    } catch {
-      // Fall back to probing below.
-    }
+    } catch {}
   }
   if (numbers.length === 0) {
     numbers = Array.from({ length: 21 }, (_, index) => index + 1);
@@ -232,7 +227,6 @@ export async function getRaceMap(
   }
   if (gpxStages.length > 0) return toRaceMap(gpxStages, "gpx");
 
-  // A single KMZ line beats no map at all.
   if (kmzStages && kmzStages.length > 0) return toRaceMap(kmzStages, "tissot");
   return null;
 }

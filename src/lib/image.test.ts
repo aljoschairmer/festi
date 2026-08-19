@@ -11,23 +11,22 @@ import { MAX_IMAGE_DIMENSION, validateImageUpload } from "./image";
 
 function pngWith(width: number, height: number): Uint8Array {
   const bytes = new Uint8Array(33);
-  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0); // signature
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
   const view = new DataView(bytes.buffer);
-  view.setUint32(8, 13); // IHDR length
-  bytes.set([0x49, 0x48, 0x44, 0x52], 12); // "IHDR"
+  view.setUint32(8, 13);
+  bytes.set([0x49, 0x48, 0x44, 0x52], 12);
   view.setUint32(16, width);
   view.setUint32(20, height);
   return bytes;
 }
 
 function jpegWith(width: number, height: number): Uint8Array {
-  // SOI, then a SOF0 frame header carrying the dimensions.
   const bytes = new Uint8Array(20);
-  bytes.set([0xff, 0xd8, 0xff], 0); // SOI + marker prefix so sniffing passes
-  bytes[3] = 0xc0; // SOF0
+  bytes.set([0xff, 0xd8, 0xff], 0);
+  bytes[3] = 0xc0;
   const view = new DataView(bytes.buffer);
-  view.setUint16(4, 11); // segment length
-  bytes[6] = 8; // sample precision
+  view.setUint16(4, 11);
+  bytes[6] = 8;
   view.setUint16(7, height);
   view.setUint16(9, width);
   return bytes;
@@ -103,7 +102,6 @@ describe("validateImageUpload — content sniffing", () => {
   });
 
   it("reports the sniffed type, not the claimed one", async () => {
-    // A PNG announced as JPEG must be stored as PNG.
     const result = await validateImageUpload(
       asFile(pngWith(10, 10), "image/jpeg"),
     );

@@ -1,13 +1,3 @@
-/**
- * Server-sent-events plumbing: the parts every stream needs and none of the
- * parts that differ between them.
- *
- * Extracted from `api/pro/live/[race]/[year]/[stage]/route.ts`, which grew
- * this logic first. That route is left on its own copy — it interleaves two
- * upstream lanes and is working in production; this helper exists for the
- * chat streams and is written so that route could adopt it later.
- */
-
 /** Comment frames keep intermediaries from reaping an idle connection. */
 const HEARTBEAT_MS = 20_000;
 
@@ -35,20 +25,14 @@ export type SseSender = {
 };
 
 /**
- * Wraps `run` in an event-stream response.
- *
- * `run` owns the lifetime of the stream: the connection stays open until it
- * returns or the client goes away, whichever happens first. It must check
- * `signal.aborted` around anything long-lived — writing after the client
- * leaves is silently dropped, but a loop that ignores the signal never ends.
+ * Wraps `run` in an event-stream response. `run` owns the stream's lifetime
+ * and must check `signal.aborted` around anything long-lived: writes after
+ * the client leaves are dropped, but a loop ignoring the signal never ends.
  */
 export function sseResponse(
   request: Request,
   run: (sender: SseSender) => Promise<void>,
 ): Response {
-  // One controller tied to everything long-lived in the handler: client
-  // disconnect (request.signal / cancel), a dead enqueue, or `run` finishing
-  // all funnel through it so nothing leaks.
   const abort = new AbortController();
   request.signal.addEventListener("abort", () => abort.abort());
   const encoder = new TextEncoder();
@@ -60,7 +44,6 @@ export function sseResponse(
         try {
           controller.enqueue(encoder.encode(frame));
         } catch {
-          // Enqueue on a closed stream — the client is gone.
           abort.abort();
         }
       };
@@ -73,9 +56,7 @@ export function sseResponse(
         clearInterval(heartbeat);
         try {
           controller.close();
-        } catch {
-          // Already closed or errored.
-        }
+        } catch {}
       });
 
       write(`retry: ${RECONNECT_DELAY_MS}\n\n`);
@@ -85,9 +66,7 @@ export function sseResponse(
           write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
         signal: abort.signal,
       })
-        .catch(() => {
-          // Closing makes EventSource retry with a fresh handler.
-        })
+        .catch(() => {})
         .finally(() => abort.abort());
     },
     cancel() {
@@ -98,8 +77,7 @@ export function sseResponse(
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      // `no-transform` keeps proxies from buffering or compressing the
-      // stream, which would hold events back from the client.
+
       "Cache-Control": "no-cache, no-transform",
       "X-Accel-Buffering": "no",
     },

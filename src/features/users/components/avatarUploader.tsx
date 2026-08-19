@@ -35,7 +35,7 @@ export function AvatarUploader({ name, image }: AvatarUploaderProps) {
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = ""; // allow re-selecting the same file
+    event.target.value = "";
     if (!file) return;
 
     setUploading(true);

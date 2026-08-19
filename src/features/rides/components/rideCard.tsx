@@ -15,8 +15,6 @@ import type { RideListItem } from "../types";
 import { RideJoinButton } from "./rideJoinButton";
 import { RouteThumbnail } from "./routeThumbnail";
 
-// RideSummary is a superset of RideListItem, so callers with a full summary
-// (group rides, timelines) can keep passing it.
 type RideCardProps = {
   ride: RideListItem;
 };
@@ -90,10 +88,6 @@ export function RideCard({ ride }: RideCardProps) {
         </p>
       </CardContent>
 
-      {/* `flex-wrap`: the card clips its overflow (for the rounded
-          thumbnail), so a footer that cannot wrap silently swallows the join
-          button once the buttons stop fitting side by side — which is what
-          happens at 200% text zoom. */}
       <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t py-3">
         <Button asChild variant="outline" size="sm">
           <Link href={href}>View Route</Link>

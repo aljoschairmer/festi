@@ -40,7 +40,6 @@ export async function requestJoinRide(
     return { success: false, error: "Ride not found." };
   }
 
-  // A group ride is only joinable by approved members of that group.
   if (!(await canViewRide(session.user.id, ride))) {
     return { success: false, error: "Ride not found." };
   }
@@ -76,7 +75,6 @@ export async function requestJoinRide(
     };
   }
 
-  // A full ride queues new requests on the waitlist instead of rejecting them.
   let isFull = false;
   if (ride.maxParticipants !== null) {
     const approvedCount = await prisma.rideParticipant.count({
@@ -87,7 +85,6 @@ export async function requestJoinRide(
   const status = isFull ? "WAITLISTED" : "PENDING";
 
   if (existing) {
-    // A previously declined request can be asked again.
     await prisma.rideParticipant.update({
       where: { rideId_userId: { rideId, userId: session.user.id } },
       data: { status },

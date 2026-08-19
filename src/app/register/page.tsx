@@ -8,7 +8,6 @@ export default async function RegisterPage({
 }) {
   const { returnTo } = await searchParams;
   return (
-    // The skip link targets this landmark; without it the page has no `main`.
     <main id="main-content" tabIndex={-1}>
       <RegisterForm returnTo={sanitizeReturnTo(returnTo)} />
     </main>

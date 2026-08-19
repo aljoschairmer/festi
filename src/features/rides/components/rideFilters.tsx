@@ -173,7 +173,6 @@ function NearPlaceSearch({
     enabled: query.trim().length >= 2 && open,
   });
 
-  // Close the dropdown on outside click.
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {

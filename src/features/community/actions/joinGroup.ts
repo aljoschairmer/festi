@@ -72,8 +72,6 @@ export async function joinGroup(groupId: string) {
         },
       });
     } catch (error) {
-      // Double submit — the request already exists, which is what the user
-      // wanted anyway.
       if (!isUniqueViolation(error)) throw error;
       return {
         success: true,

@@ -58,8 +58,7 @@ export async function getGroupMessages(groupId: string) {
 
   return {
     currentUserId: session.user.id,
-    // Fetched newest-first to keep the latest 100; reversed back to
-    // ascending order for rendering.
+
     messages: messages.reverse().map((message) => ({
       id: message.id,
       content: message.content,

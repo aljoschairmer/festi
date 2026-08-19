@@ -11,7 +11,6 @@ type Result =
   | { success: true; liked: boolean; likeCount: number }
   | { success: false; error: string };
 
-/** Toggles the current user's like on a post. */
 export async function togglePostLike(postId: string): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) {
@@ -39,7 +38,7 @@ export async function togglePostLike(postId: string): Promise<Result> {
   if (existing) {
     await prisma.postLike.delete({ where: { id: existing.id } });
     liked = false;
-    // Undo the unseen like notification so the author isn't spammed.
+
     await Notifier.remove({
       type: NotificationType.POST_LIKED,
       userId: post.authorId,
@@ -53,8 +52,6 @@ export async function togglePostLike(postId: string): Promise<Result> {
         data: { postId, userId: session.user.id },
       });
     } catch (error) {
-      // Double-click: the row already exists. That is the state the user
-      // wanted, so report success instead of leaking a raw P2002.
       if (!isUniqueViolation(error)) throw error;
       return {
         success: true,

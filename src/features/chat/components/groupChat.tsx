@@ -79,8 +79,6 @@ export function GroupChat({ groupId }: { groupId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
-  // The stream is the update path; `refetchInterval` is only the fallback
-  // for when it is not connected (C-02).
   const { refetchInterval } = useChatStream<ChatData>(
     `/api/chat/group/${groupId}`,
     ["group-chat", groupId],

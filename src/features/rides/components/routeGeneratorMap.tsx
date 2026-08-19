@@ -229,8 +229,7 @@ export function RouteGeneratorMap() {
       if (pollError) return false;
       const data = query.state.data;
       if (!data) return 1000;
-      // Keep polling through transient failures until the tolerance
-      // counter (incremented in the effects below) is exhausted.
+
       if (!data.success) {
         return pollFailuresRef.current < MAX_POLL_FAILURES ? 1000 : false;
       }
@@ -244,13 +243,6 @@ export function RouteGeneratorMap() {
   useEffect(() => {
     if (!statusData) return;
 
-    // Two different failures hide behind this one poll, and each needs the
-    // other's handling.
-    //
-    // A failed *response* (network blip, a 500) is usually transient, so it
-    // is counted rather than surfaced: only MAX_POLL_FAILURES in a row are
-    // worth interrupting the user for, and then persistently, because a
-    // toast that fades is easy to miss.
     if (!statusData.success) {
       pollFailuresRef.current += 1;
       if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
@@ -261,9 +253,6 @@ export function RouteGeneratorMap() {
       return;
     }
 
-    // A successful response can still carry a job that ended in FAILED or
-    // CANCELLED. Treating "success" as "keep waiting" is what left the
-    // spinner running forever over an empty panel with no explanation.
     pollFailuresRef.current = 0;
     const state = statusData.status.state;
     if (state === "FAILED") {
@@ -279,9 +268,6 @@ export function RouteGeneratorMap() {
     }
   }, [statusData]);
 
-  // Transport-level failures of the status request itself (the action
-  // threw instead of returning success:false) count against the same
-  // tolerance — errorUpdatedAt ticks once per failed fetch.
   const transportErrorAt = statusQuery.errorUpdatedAt;
   useEffect(() => {
     if (transportErrorAt === 0) return;
@@ -297,9 +283,7 @@ export function RouteGeneratorMap() {
   const status = statusData?.success ? statusData.status : null;
   const options: GeneratedRouteOption[] | null =
     status?.state === "SUCCEEDED" ? (status.options ?? null) : null;
-  // Terminal engine states are surfaced explicitly instead of silently
-  // resetting the panel — a job cancelled by `regenerate`/`switchMode`
-  // never shows up here because those already moved `jobId` on.
+
   const terminalFailure =
     status?.state === "FAILED" || status?.state === "CANCELLED"
       ? (status.errorDetail ??
@@ -426,8 +410,6 @@ export function RouteGeneratorMap() {
 
   const weather = selected?.weather ?? null;
 
-  // One badge per forecast sample, skipping the start (it sits under the
-  // start marker) — its values are in the summary panel anyway.
   const weatherMarkers: WeatherMarkerData[] = useMemo(
     () =>
       (selected?.weather?.points ?? []).slice(1).map((point, index) => ({
@@ -480,7 +462,6 @@ export function RouteGeneratorMap() {
         onAddWaypoint={handleMapTap}
       />
 
-      {/* Ride-time weather for the selected route. */}
       {weather && selected && (
         <div className="absolute top-4 right-14 z-10 flex flex-col gap-1 rounded-xl border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
           <span className="flex items-center gap-2 font-medium text-sm">
@@ -524,7 +505,6 @@ export function RouteGeneratorMap() {
         </div>
       )}
 
-      {/* Floating control panel, Komoot-style on the left. */}
       <div className="absolute top-4 left-4 z-10 flex max-h-[calc(100%-2rem)] w-[min(22rem,calc(100%-2rem))] flex-col gap-3 overflow-y-auto">
         <div className="flex flex-col gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -577,10 +557,6 @@ export function RouteGeneratorMap() {
             Use my location
           </Button>
 
-          {/* `flex-wrap` + `min-w-0`: the six category chips are wider than a
-              phone-sized panel. Without these the strip refused to shrink and
-              shoved the distance field roughly 80px off screen — where it was
-              unreachable, because the panel clips instead of scrolling. */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex min-w-0 flex-1 basis-full rounded-lg border p-0.5 sm:basis-auto">
               {CATEGORIES.map((item) => (

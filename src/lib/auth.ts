@@ -32,8 +32,7 @@ export const auth = betterAuth({
     max: 5,
   },
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
-  // Development hosts must not be trusted in production — they widen the
-  // set of origins allowed to drive the auth endpoints.
+
   trustedOrigins: [
     ...(process.env.NODE_ENV === "development"
       ? ["http://localhost:3000"]
@@ -53,7 +52,7 @@ export const auth = betterAuth({
         html: getPasswordResetEmailHtml(url, user.name),
       });
     },
-    // Fires after a password reset completes successfully.
+
     onPasswordReset: async ({ user }) => {
       await Logger.log(
         ActivityAction.USER_CHANGED_PASSWORD,
@@ -65,8 +64,7 @@ export const auth = betterAuth({
         },
       );
     },
-    // Notify the real account owner when someone tries to sign up with their
-    // email (part of the email enumeration protection flow).
+
     onExistingUserSignUp: async ({ user }) => {
       await sendEmail({
         to: user.email,
@@ -74,7 +72,7 @@ export const auth = betterAuth({
         html: getExistingAccountEmailHtml(user.name),
       });
     },
-    // Handle email enumeration protection with admin plugin fields
+
     customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
       ...coreFields,
       role: "user",
@@ -86,8 +84,6 @@ export const auth = betterAuth({
     }),
   },
   emailVerification: {
-    // 24 hours — matches the expiry stated in the verification email copy.
-    // (better-auth's default is only 1 hour.)
     expiresIn: 60 * 60 * 24,
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail({
@@ -112,14 +108,14 @@ export const auth = betterAuth({
     },
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes
+      maxAge: 60 * 5,
     },
   },
-  // Logs a successful login whenever a new session is created.
+
   databaseHooks: {
     session: {
       create: {
@@ -133,9 +129,7 @@ export const auth = betterAuth({
       },
     },
   },
-  // Captures failed sign-in / sign-up attempts. On failure better-auth stores
-  // the thrown APIError on `ctx.context.returned`, which still reaches the
-  // after hook.
+
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       const path = ctx.path;

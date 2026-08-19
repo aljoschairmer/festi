@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 
 interface Stop {
   name: string;
-  x: number; // percentage of width
-  y: number; // percentage of height
+  x: number;
+  y: number;
 }
 
 interface Route {
@@ -14,7 +14,6 @@ interface Route {
   stops: Stop[];
 }
 
-// Per-stop animation parameters
 interface StopAnimation {
   speedX: number;
   speedY: number;
@@ -24,7 +23,6 @@ interface StopAnimation {
   phaseY: number;
 }
 
-// Generate unique animation parameters for each stop
 function generateStopAnimations(routes: Route[]): StopAnimation[][] {
   return routes.map((route, routeIndex) =>
     route.stops.map((_, stopIndex) => ({
@@ -38,7 +36,6 @@ function generateStopAnimations(routes: Route[]): StopAnimation[][] {
   );
 }
 
-// Define routes with famous cities as stops
 const ROUTES: Route[] = [
   {
     name: "Alpine Classic",
@@ -104,7 +101,6 @@ const ROUTES: Route[] = [
   },
 ];
 
-// Pre-generate animation params for all stops
 const STOP_ANIMATIONS = generateStopAnimations(ROUTES);
 
 export function ParticleBackground() {
@@ -115,14 +111,13 @@ export function ParticleBackground() {
   const hoveredStopRef = useRef<{ route: number; stop: number } | null>(null);
   const dimensionsRef = useRef({ width: 0, height: 0 });
 
-  // Drag state - now per stop
   const isDraggingRef = useRef(false);
   const dragStopRef = useRef<{ route: number; stop: number } | null>(null);
-  // Stop offsets: [routeIndex][stopIndex] = { x, y }
+
   const stopOffsetsRef = useRef<{ x: number; y: number }[][]>(
     ROUTES.map((route) => route.stops.map(() => ({ x: 0, y: 0 }))),
   );
-  // Stop velocities for momentum: [routeIndex][stopIndex] = { vx, vy }
+
   const stopVelocitiesRef = useRef<{ vx: number; vy: number }[][]>(
     ROUTES.map((route) => route.stops.map(() => ({ vx: 0, vy: 0 }))),
   );
@@ -143,14 +138,13 @@ export function ParticleBackground() {
     const handleMouseMove = (e: MouseEvent) => {
       const newMouse = { x: e.clientX, y: e.clientY };
 
-      // Handle dragging individual stop
       if (isDraggingRef.current && dragStopRef.current !== null) {
         const dx = newMouse.x - mouseRef.current.x;
         const dy = newMouse.y - mouseRef.current.y;
         const { route, stop } = dragStopRef.current;
         stopOffsetsRef.current[route][stop].x += dx;
         stopOffsetsRef.current[route][stop].y += dy;
-        // Track velocity for momentum
+
         stopVelocitiesRef.current[route][stop].vx = dx * 0.2;
         stopVelocitiesRef.current[route][stop].vy = dy * 0.2;
       }
@@ -162,14 +156,13 @@ export function ParticleBackground() {
       if (e.touches[0]) {
         const newMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 
-        // Handle dragging individual stop
         if (isDraggingRef.current && dragStopRef.current !== null) {
           const dx = newMouse.x - mouseRef.current.x;
           const dy = newMouse.y - mouseRef.current.y;
           const { route, stop } = dragStopRef.current;
           stopOffsetsRef.current[route][stop].x += dx;
           stopOffsetsRef.current[route][stop].y += dy;
-          // Track velocity for momentum
+
           stopVelocitiesRef.current[route][stop].vx = dx * 0.8;
           stopVelocitiesRef.current[route][stop].vy = dy * 0.8;
         }
@@ -222,32 +215,26 @@ export function ParticleBackground() {
       const time = Date.now() / 1000;
       const { width, height } = dimensionsRef.current;
 
-      // Apply physics: velocity and friction for all stops
       for (let r = 0; r < ROUTES.length; r++) {
         for (let s = 0; s < ROUTES[r].stops.length; s++) {
           const vel = stopVelocitiesRef.current[r][s];
           const offset = stopOffsetsRef.current[r][s];
 
-          // Apply velocity to offset
           offset.x += vel.vx;
           offset.y += vel.vy;
 
-          // Apply friction (slow down)
           vel.vx *= 0.85;
           vel.vy *= 0.85;
 
-          // Stop if very slow
           if (Math.abs(vel.vx) < 0.01) vel.vx = 0;
           if (Math.abs(vel.vy) < 0.01) vel.vy = 0;
         }
       }
 
-      // Update cursor based on hover state
       if (!isDraggingRef.current) {
         canvas.style.cursor = hoveredStopRef.current ? "grab" : "default";
       }
 
-      // Find hovered stop (check with animated positions)
       hoveredStopRef.current = null;
       hoveredRouteRef.current = null;
 
@@ -259,7 +246,6 @@ export function ParticleBackground() {
           const stopOffset = stopOffsetsRef.current[routeIndex][stopIndex];
           const anim = STOP_ANIMATIONS[routeIndex][stopIndex];
 
-          // Per-stop floating animation
           const floatX =
             Math.sin(time * anim.speedX + anim.phaseX) * anim.amplitudeX;
           const floatY =
@@ -281,11 +267,9 @@ export function ParticleBackground() {
         if (hoveredRouteRef.current !== null) break;
       }
 
-      // Draw each route
       ROUTES.forEach((route, routeIndex) => {
         const isHovered = hoveredRouteRef.current === routeIndex;
 
-        // Each stop has its own floating animation and drag offset
         const routeStops = route.stops.map((stop, stopIndex) => {
           const stopOffset = stopOffsetsRef.current[routeIndex][stopIndex];
           const anim = STOP_ANIMATIONS[routeIndex][stopIndex];
@@ -301,7 +285,6 @@ export function ParticleBackground() {
           };
         });
 
-        // Draw route path
         if (routeStops.length > 1) {
           ctx.beginPath();
           ctx.moveTo(routeStops[0].x, routeStops[0].y);
@@ -316,7 +299,6 @@ export function ParticleBackground() {
           ctx.lineJoin = "round";
           ctx.stroke();
 
-          // Draw direction indicators (always visible, more prominent when hovered)
           for (let i = 0; i < routeStops.length - 1; i++) {
             const start = routeStops[i];
             const end = routeStops[i + 1];
@@ -326,12 +308,10 @@ export function ParticleBackground() {
             const length = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx);
 
-            // Animated pulse position along segment (always running)
             const pulseProgress = (time * 0.5 + i * 0.4 + routeIndex * 0.2) % 1;
             const pulseX = start.x + dx * pulseProgress;
             const pulseY = start.y + dy * pulseProgress;
 
-            // Draw animated direction dot (faint when not hovered)
             const dotSize = isHovered
               ? 6 + Math.sin(pulseProgress * Math.PI) * 2
               : 3 + Math.sin(pulseProgress * Math.PI) * 1;
@@ -340,7 +320,6 @@ export function ParticleBackground() {
             ctx.fillStyle = isHovered ? route.color : `${route.color}40`;
             ctx.fill();
 
-            // Draw small arrow at dot position
             ctx.save();
             ctx.translate(pulseX, pulseY);
             ctx.rotate(angle);
@@ -354,7 +333,6 @@ export function ParticleBackground() {
             ctx.fill();
             ctx.restore();
 
-            // Draw static direction arrows along path (only when hovered for full visibility)
             const numArrows = Math.floor(length / 60);
             for (let j = 1; j <= numArrows; j++) {
               const progress = j / (numArrows + 1);
@@ -378,7 +356,6 @@ export function ParticleBackground() {
           }
         }
 
-        // Draw stops
         route.stops.forEach((stop, stopIndex) => {
           const stopOffset = stopOffsetsRef.current[routeIndex][stopIndex];
           const anim = STOP_ANIMATIONS[routeIndex][stopIndex];
@@ -394,7 +371,6 @@ export function ParticleBackground() {
             hoveredStopRef.current?.route === routeIndex &&
             hoveredStopRef.current?.stop === stopIndex;
 
-          // Draw glow for hovered stop
           if (isStopHovered) {
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, 50);
             gradient.addColorStop(0, `${route.color}40`);
@@ -405,16 +381,13 @@ export function ParticleBackground() {
             ctx.fill();
           }
 
-          // Draw stop circle
           const radius = isStopHovered ? 12 : isHovered ? 10 : 8;
 
-          // Outer ring
           ctx.beginPath();
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fillStyle = isHovered ? route.color : `${route.color}70`;
           ctx.fill();
 
-          // Inner circle
           ctx.beginPath();
           ctx.arc(x, y, radius - 3, 0, Math.PI * 2);
           ctx.fillStyle = isStopHovered
@@ -424,13 +397,11 @@ export function ParticleBackground() {
               : "#0a0a0a";
           ctx.fill();
 
-          // Always draw stop name
           const fontSize = isStopHovered ? 13 : isHovered ? 12 : 10;
           ctx.font = `${isStopHovered || isHovered ? "600 " : "500 "}${fontSize}px var(--font-raleway), system-ui, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
 
-          // Text shadow for readability
           ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.fillText(stop.name, x + 1, y + radius + 5);
 
@@ -442,14 +413,12 @@ export function ParticleBackground() {
           ctx.fillText(stop.name, x, y + radius + 4);
         });
 
-        // Draw route name label when hovered
         if (isHovered && routeStops.length > 0) {
           const firstStop = routeStops[0];
           ctx.font = "bold 14px var(--font-raleway), system-ui, sans-serif";
           ctx.textAlign = "left";
           ctx.textBaseline = "bottom";
 
-          // Background for text
           const textWidth = ctx.measureText(route.name).width;
           ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.fillRect(firstStop.x - 5, firstStop.y - 38, textWidth + 10, 22);
@@ -459,7 +428,6 @@ export function ParticleBackground() {
         }
       });
 
-      // Draw hint text
       if (hoveredRouteRef.current === null) {
         ctx.font = "11px var(--font-raleway), system-ui, sans-serif";
         ctx.textAlign = "center";

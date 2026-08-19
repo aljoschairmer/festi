@@ -1,8 +1,5 @@
 import { Resend } from "resend";
 
-// Fail loudly at boot when email is not configured: better-auth swallows
-// send-hook errors, so without this warning users register "successfully"
-// but never receive their verification email and are locked out silently.
 if (!process.env.RESEND_API_KEY) {
   console.warn(
     "[email] RESEND_API_KEY is not set — verification and password-reset " +
@@ -11,7 +8,6 @@ if (!process.env.RESEND_API_KEY) {
   );
 }
 
-// Lazy initialization to avoid build-time errors when API key is not set
 let resend: Resend | null = null;
 
 function getResendClient(): Resend {
@@ -49,8 +45,6 @@ function escapeHtml(value: string): string {
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   const client = getResendClient();
 
-  // Use Resend's test sender for development (can only send to your own email)
-  // For production, set EMAIL_FROM to your verified domain email
   const from = process.env.EMAIL_FROM || "Festi <onboarding@resend.dev>";
 
   const { data, error } = await client.emails.send({
@@ -82,25 +76,25 @@ export function getVerificationEmailHtml(url: string, userName: string) {
             <div style="display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border-radius: 12px; line-height: 48px; font-size: 24px;">🚴</div>
             <h1 style="margin: 16px 0 0; font-size: 24px; font-weight: bold;">FESTI</h1>
           </div>
-          
+
           <h2 style="margin: 0 0 16px; font-size: 20px; text-align: center;">Verify your email address</h2>
-          
+
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
             Hey ${escapeHtml(userName)}, welcome to the cycling community! Click the button below to verify your email and start planning your next ride.
           </p>
-          
+
           <div style="text-align: center; margin: 32px 0;">
             <a href="${url}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
               Verify Email
             </a>
           </div>
-          
+
           <p style="color: #71717a; font-size: 14px; text-align: center; margin: 24px 0 0;">
             If you didn't create an account with Festi, you can safely ignore this email.
           </p>
-          
+
           <hr style="border: none; border-top: 1px solid rgba(239, 68, 68, 0.2); margin: 32px 0;">
-          
+
           <p style="color: #52525b; font-size: 12px; text-align: center; margin: 0;">
             This link will expire in 24 hours.
           </p>
@@ -124,25 +118,25 @@ export function getPasswordResetEmailHtml(url: string, userName: string) {
             <div style="display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border-radius: 12px; line-height: 48px; font-size: 24px;">🚴</div>
             <h1 style="margin: 16px 0 0; font-size: 24px; font-weight: bold;">FESTI</h1>
           </div>
-          
+
           <h2 style="margin: 0 0 16px; font-size: 20px; text-align: center;">Reset your password</h2>
-          
+
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
             Hey ${escapeHtml(userName)}, we received a request to reset your password. Click the button below to choose a new password.
           </p>
-          
+
           <div style="text-align: center; margin: 32px 0;">
             <a href="${url}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
               Reset Password
             </a>
           </div>
-          
+
           <p style="color: #71717a; font-size: 14px; text-align: center; margin: 24px 0 0;">
             If you didn't request a password reset, you can safely ignore this email.
           </p>
-          
+
           <hr style="border: none; border-top: 1px solid rgba(239, 68, 68, 0.2); margin: 32px 0;">
-          
+
           <p style="color: #52525b; font-size: 12px; text-align: center; margin: 0;">
             This link will expire in 1 hour.
           </p>

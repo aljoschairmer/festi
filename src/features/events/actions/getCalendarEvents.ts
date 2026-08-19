@@ -43,8 +43,7 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
     website: event.website,
     lat: event.lat,
     lng: event.lng,
-    // On the list, struck-through upcoming events are cancelled ones (past
-    // events are already filtered out by the date bound above).
+
     cancelled: event.cancelled || event.struckThrough,
     cancelReason: event.cancelReason,
   }));

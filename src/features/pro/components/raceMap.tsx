@@ -78,7 +78,6 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
     stageHrefRef.current = stageHref;
   });
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -120,7 +119,7 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
             "line-opacity": 0.85,
           },
         });
-        // Wide invisible twin so the thin lines are easy to hover/tap.
+
         map.addLayer({
           id: STAGES_HIT_LAYER_ID,
           type: "line",
@@ -193,7 +192,6 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
     };
   }, [router]);
 
-  // Render the stage lines, numbered start markers, and fit the view.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;

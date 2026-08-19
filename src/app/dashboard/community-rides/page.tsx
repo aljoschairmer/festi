@@ -5,8 +5,6 @@ import { getRides } from "@/features/rides/actions/getRides";
 import { RideFilters } from "@/features/rides/components/rideFilters";
 
 export default async function RidesPage() {
-  // First page server-side so the list renders without a client round-trip;
-  // further pages are appended client-side via "Load more".
   const initialPage = await getRides();
 
   return (

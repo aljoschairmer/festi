@@ -177,7 +177,6 @@ export function EditGroupDialog({
                 className="group relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/30 outline-none ring-primary/50 transition-colors hover:border-primary/50 focus-visible:ring-2"
               >
                 {imagePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   // biome-ignore lint/performance/noImgElement: local blob-URL preview via URL.createObjectURL — next/image cannot optimize object URLs
                   <img
                     src={imagePreview}

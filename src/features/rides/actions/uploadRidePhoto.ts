@@ -78,7 +78,6 @@ export async function uploadRidePhoto(
     return { success: false, error: validation.error };
   }
 
-  // Use a unique key so re-uploads never collide.
   const key = `rides/${rideId}/photos/${Date.now()}-${ride._count.photos}.webp`;
 
   try {

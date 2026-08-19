@@ -38,7 +38,6 @@ export async function deleteGroup(groupId: string) {
     where: { id: groupId },
   });
 
-  // Best-effort cleanup of the cover image; never block deletion on storage.
   try {
     await deleteObject(`groups/${groupId}/cover.webp`);
   } catch (error) {

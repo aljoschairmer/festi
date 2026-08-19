@@ -41,7 +41,7 @@ export function RidesGrid({ filters = {}, initialPage }: RidesGridProps) {
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    // The server-rendered first page is only valid for the unfiltered list.
+
     initialData:
       !hasActiveFilters && initialPage
         ? { pages: [initialPage], pageParams: [undefined] }

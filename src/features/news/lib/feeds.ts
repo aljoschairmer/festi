@@ -100,7 +100,6 @@ export async function fetchCyclingNews(): Promise<NewsArticle[]> {
     r.status === "fulfilled" ? r.value : [],
   );
 
-  // De-duplicate by link and sort newest first.
   const seen = new Set<string>();
   const unique = articles.filter((a) => {
     if (seen.has(a.link)) return false;
@@ -114,6 +113,5 @@ export async function fetchCyclingNews(): Promise<NewsArticle[]> {
     return tb - ta;
   });
 
-  // Only keep articles that have a usable image.
   return unique.filter((a) => !!a.image).slice(0, 60);
 }

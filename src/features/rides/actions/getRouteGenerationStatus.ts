@@ -57,9 +57,6 @@ export async function getRouteGenerationStatus(
       };
     }
     if (result.status === "running") {
-      // The status said SUCCEEDED but the result is not stored yet —
-      // report the job as still running so the client keeps polling
-      // instead of failing a nearly-finished generation.
       return {
         success: true,
         status: {

@@ -200,7 +200,6 @@ export async function getDirectMessages(
     areMutualFollowers(myId, partnerId),
   ]);
 
-  // Mark partner's messages to me as read.
   await prisma.directMessage.updateMany({
     where: { senderId: partnerId, recipientId: myId, readAt: null },
     data: { readAt: new Date() },
@@ -216,8 +215,7 @@ export async function getDirectMessages(
       isOnline: isOnline(partner.lastSeenAt),
     },
     canMessage,
-    // Fetched newest-first to keep the latest 100; reversed back to
-    // ascending order for rendering.
+
     messages: messages.reverse().map((message) => ({
       id: message.id,
       content: message.content,

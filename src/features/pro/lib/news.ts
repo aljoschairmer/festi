@@ -42,7 +42,7 @@ export function publicationToArticle(
   if (SKIPPED_TYPES.has(publication.type ?? "")) return null;
   const title = publication.title?.trim();
   if (!title) return null;
-  // `text` is an array of HTML paragraphs (sometimes a plain string sneaks in).
+
   const raw = publication.text;
   const parts = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
   const paragraphs = parts.map(toPlainText).filter((part) => part.length > 0);

@@ -9,7 +9,7 @@
  */
 
 export const CLIENT_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-export const CLIENT_MAX_INPUT_BYTES = 15 * 1024 * 1024; // generous pre-compression cap
+export const CLIENT_MAX_INPUT_BYTES = 15 * 1024 * 1024;
 
 export type ProcessImageOptions = {
   /** Max width/height of the output (image is scaled to fit, keeping ratio). */

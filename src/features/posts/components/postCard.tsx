@@ -41,7 +41,6 @@ export function PostCard({ post }: PostCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  // Optimistic like state, re-synced when the feed refetches.
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   useEffect(() => {
@@ -64,7 +63,6 @@ export function PostCard({ post }: PostCardProps) {
       setLikeCount(result.likeCount);
     },
     onError: (error) => {
-      // Revert optimistic change.
       setLiked(post.likedByMe);
       setLikeCount(post.likeCount);
       toast.error(error.message);
@@ -96,7 +94,6 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <article className="rounded-xl border border-primary/20 bg-card p-5 transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-5 lg:flex-row">
-        {/* Left: author, title, content */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex items-start gap-3">
             <Link href={profileHref} prefetch={false} aria-label={authorLabel}>
@@ -168,7 +165,6 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </div>
 
-        {/* Right: images */}
         {post.images.length > 0 && (
           <div className="lg:w-56 lg:shrink-0">
             <PostGallery post={post} />
@@ -176,7 +172,6 @@ export function PostCard({ post }: PostCardProps) {
         )}
       </div>
 
-      {/* Footer: likes & comments */}
       <div className="mt-4 flex items-center gap-1 border-t pt-3">
         <Button
           variant="ghost"

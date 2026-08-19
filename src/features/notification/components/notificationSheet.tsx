@@ -163,14 +163,14 @@ export function notificationHref(
   if (targetType === "Group" && targetId) {
     return `/dashboard/community/g/${targetId}`;
   }
-  // Follows carry no target — link to the actor's rider profile instead.
+
   if (
     notification.type === NotificationType.USER_FOLLOWED &&
     notification.actor
   ) {
     return `/dashboard/community/u/${notification.actor.id}`;
   }
-  // Post notifications have no permalink target (posts live in the feed).
+
   return null;
 }
 
@@ -257,7 +257,6 @@ const NotificationSheet = () => {
     },
   });
 
-  // When the sheet opens, mark everything as seen.
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once per open
   useEffect(() => {
     if (open && unread > 0) {

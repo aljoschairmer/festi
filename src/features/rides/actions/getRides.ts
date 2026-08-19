@@ -27,15 +27,9 @@ function haversineKm(
 }
 
 /**
- * Returns scheduled rides ordered by start time, with the approved
- * participant count and the current user's join status. Cancelled rides are
- * hidden. Accepts optional discovery filters: case-insensitive search over
- * title/start location, exact pace/difficulty match, and `includePast` to
- * also return rides that already started (default: upcoming only).
- *
- * Results are cursor-paginated (`cursor` = id of the last ride of the
- * previous page, `take` = page size, default 20) and limited to the fields
- * the ride cards render, so the list stays cheap as the table grows.
+ * Scheduled rides visible to the caller, ordered by start time, with the
+ * approved participant count and the caller's join status. Cursor-paginated
+ * and limited to the fields the ride cards render.
  */
 export async function getRides(input?: unknown): Promise<RideListPage> {
   const session = await getCurrentUser();
@@ -46,8 +40,6 @@ export async function getRides(input?: unknown): Promise<RideListPage> {
   const parsed = rideFiltersSchema.safeParse(input ?? {});
   const filters: RideFiltersInput = parsed.success ? parsed.data : {};
 
-  // Proximity filter: cheap bounding box in SQL, exact haversine below.
-  // Rides without stored coordinates are excluded when a radius is set.
   const near =
     filters.nearLat !== undefined &&
     filters.nearLng !== undefined &&
@@ -65,12 +57,6 @@ export async function getRides(input?: unknown): Promise<RideListPage> {
     : 0;
 
   const where: Prisma.RideWhereInput = {
-    // Group rides are members-only (same semantics as getGroupRides):
-    // discovery must not list another group's rides. Public rides
-    // (groupId: null) and the user's own rides are unaffected.
-    //
-    // `AND`, not a spread: the visibility rule and the search filter below
-    // both use `OR`, and spreading would silently drop one of them.
     AND: [rideVisibilityFilter(session.user.id)],
     status: "SCHEDULED",
     ...(filters.includePast ? {} : { startTime: { gte: new Date() } }),
@@ -105,14 +91,12 @@ export async function getRides(input?: unknown): Promise<RideListPage> {
 
   const take = filters.take ?? RIDES_PAGE_SIZE;
 
-  // Only the fields the ride cards render (routeGeometry stays for the
-  // thumbnails); description/waypoints/gpx-sized fields are not selected.
   const rows = await prisma.ride.findMany({
     where,
-    // id tiebreaker keeps the order stable for cursor pagination.
+
     orderBy: [{ startTime: "asc" }, { id: "asc" }],
     ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-    take: take + 1, // one extra row to detect whether another page exists
+    take: take + 1,
     select: {
       id: true,
       title: true,
@@ -146,8 +130,7 @@ export async function getRides(input?: unknown): Promise<RideListPage> {
 
   const hasMore = rows.length > take;
   const pageRows = hasMore ? rows.slice(0, take) : rows;
-  // The cursor comes from the unfiltered page so the proximity filter below
-  // can never stall pagination on a page that filters down to zero rows.
+
   const nextCursor = hasMore
     ? (pageRows[pageRows.length - 1]?.id ?? null)
     : null;

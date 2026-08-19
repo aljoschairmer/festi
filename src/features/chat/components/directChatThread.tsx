@@ -71,8 +71,6 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
-  // The stream is the update path; `refetchInterval` is only the fallback
-  // for when it is not connected (C-02).
   const { refetchInterval } = useChatStream<DirectMessagesResult>(
     `/api/chat/direct/${partnerId}`,
     ["direct-chat", partnerId],
@@ -88,8 +86,6 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
   const partner = data?.partner;
   const canMessage = data?.canMessage ?? false;
 
-  // Opening/refreshing the thread marks messages read, so keep the unread
-  // badge and conversation previews in sync.
   // biome-ignore lint/correctness/useExhaustiveDependencies: react to new reads
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: UNREAD_BADGES_KEY });

@@ -55,8 +55,6 @@ export function LoginForm({ returnTo }: { returnTo?: string | null }) {
       });
       if (result.error) {
         if (result.error.code === "BANNED_USER") {
-          // Ban details are only disclosed after the credentials have been
-          // verified (better-auth already checked them for BANNED_USER).
           const ban = await getBanInfo(data.email, data.password);
           throw Object.assign(
             new Error(result.error.message || "Sign in failed"),
@@ -116,7 +114,6 @@ export function LoginForm({ returnTo }: { returnTo?: string | null }) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      {/* Back Arrow */}
       <Link
         href="/"
         className="absolute top-6 left-6 z-10 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -125,11 +122,9 @@ export function LoginForm({ returnTo }: { returnTo?: string | null }) {
         Back
       </Link>
 
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 via-background to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-transparent" />
 
-      {/* Interactive Particles */}
       <ParticleBackground />
 
       <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">

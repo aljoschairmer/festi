@@ -154,7 +154,6 @@ export function RideMap({
   const lastWeatherKeyRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Keep the latest values available inside handlers bound once on the map.
   useEffect(() => {
     addWaypointRef.current = onAddWaypoint;
     insertWaypointRef.current = onInsertWaypoint;
@@ -173,7 +172,6 @@ export function RideMap({
     routeCoordinates,
   ]);
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -195,8 +193,7 @@ export function RideMap({
         center: initialCenterRef.current ?? DEFAULT_MAP_CENTER,
         zoom: initialCenterRef.current ? 13 : DEFAULT_MAP_ZOOM,
         attributionControl: { compact: true },
-        // Placing waypoints relies on single clicks; double-click zoom would
-        // fire when adding points quickly and fight the interaction.
+
         doubleClickZoom: !interactiveRef.current,
       });
       mapRef.current = map;
@@ -204,15 +201,12 @@ export function RideMap({
 
       map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-      // Keep the canvas sized to its container (e.g. when the step animates in
-      // or the layout changes), so the map never renders blank/mis-sized.
       const observedMap = map;
       resizeObserver = new ResizeObserver(() => observedMap.resize());
       if (containerRef.current) {
         resizeObserver.observe(containerRef.current);
       }
 
-      // Drag-to-shape state, scoped to this map instance.
       let dragTempMarker: Marker | null = null;
       let dragInsertIndex = 0;
       let dragPrev: Waypoint | null = null;
@@ -248,8 +242,6 @@ export function RideMap({
         ];
         dragTempMarker?.setLngLat(point);
 
-        // Dashed line from the previous waypoint through the dragged point to
-        // the next waypoint, previewing where the new point will sit.
         const coords: [number, number][] = [];
         if (dragPrev) {
           coords.push([dragPrev.lng, dragPrev.lat]);
@@ -277,8 +269,6 @@ export function RideMap({
         setDragLine([]);
         highlightRoute(false);
 
-        // Suppress the click that MapLibre emits right after the drag so it
-        // doesn't also append a waypoint.
         justDraggedRoute = true;
         setTimeout(() => {
           justDraggedRoute = false;
@@ -294,8 +284,7 @@ export function RideMap({
         if (!map) {
           return;
         }
-        // Alternative candidates sit below the main route line so the
-        // selected route always reads as the primary one.
+
         map.addSource(ALT_SOURCE_ID, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -355,7 +344,7 @@ export function RideMap({
             "line-opacity": 0.85,
           },
         });
-        // Wide, invisible layer on top of the line to make it easy to grab.
+
         map.addLayer({
           id: ROUTE_HIT_LAYER_ID,
           type: "line",
@@ -367,7 +356,7 @@ export function RideMap({
             "line-opacity": 0,
           },
         });
-        // Dashed preview line shown while dragging a new point.
+
         map.addSource(DRAG_SOURCE_ID, {
           type: "geojson",
           data: {
@@ -389,7 +378,6 @@ export function RideMap({
           },
         });
 
-        // Highlight point (e.g. driven by hovering the elevation graph).
         map.addSource(HIGHLIGHT_SOURCE_ID, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -406,7 +394,6 @@ export function RideMap({
           },
         });
 
-        // Overlay dots (e.g. live rider positions) with a hover/tap popup.
         map.addSource(DOTS_SOURCE_ID, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -416,7 +403,6 @@ export function RideMap({
           type: "circle",
           source: DOTS_SOURCE_ID,
           layout: {
-            // Draw larger dots (e.g. jersey wearers) on top of the peloton.
             "circle-sort-key": ["coalesce", ["get", "radius"], 6],
           },
           paint: {
@@ -445,13 +431,12 @@ export function RideMap({
           content.className =
             "flex items-center gap-2 text-xs text-neutral-900";
           if (props.imageUrl) {
-            // Photo (e.g. a rider head-shot) next to the text block.
             const image = document.createElement("img");
             image.src = props.imageUrl;
             image.alt = "";
             image.className =
               "size-9 shrink-0 rounded-full bg-neutral-100 object-cover";
-            // A dead CDN link should not leave a broken-image icon behind.
+
             image.onerror = () => image.remove();
             content.appendChild(image);
           }
@@ -478,7 +463,7 @@ export function RideMap({
           if (map) map.getCanvas().style.cursor = "";
           dotsPopup.remove();
         });
-        // Tap support on touch devices, where mouseenter never fires.
+
         map.on("click", DOTS_LAYER_ID, showDotPopup);
 
         map.on("mouseenter", ROUTE_HIT_LAYER_ID, () => {
@@ -499,8 +484,6 @@ export function RideMap({
             return;
           }
 
-          // If the press starts on/near an existing waypoint, let the marker
-          // handle the drag instead of inserting a new point.
           const activeMap = map;
           const nearWaypoint = waypointsRef.current.some((wp) => {
             const projected = activeMap.project([wp.lng, wp.lat]);
@@ -515,7 +498,6 @@ export function RideMap({
             return;
           }
 
-          // Prevent the map from panning while we drag the route.
           downEvent.preventDefault();
           isDraggingRoute = true;
           dragInsertIndex = computeInsertIndex(
@@ -566,7 +548,6 @@ export function RideMap({
     };
   }, []);
 
-  // Render waypoint markers.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -597,14 +578,12 @@ export function RideMap({
         const isStart = index === 0;
         const isEnd = waypoints.length > 1 && index === waypoints.length - 1;
 
-        // For a round trip the start and end share a location — render one
-        // combined marker and skip the duplicate end.
         if (isRoundTrip && isEnd) {
           return;
         }
 
         const interactiveMarker = interactiveRef.current;
-        // Start = green, end = blue, intermediate stops = red.
+
         const bgClass = isStart
           ? "bg-green-500"
           : isEnd
@@ -618,8 +597,7 @@ export function RideMap({
               : isEnd
                 ? "E"
                 : String(index + 1);
-        // Outer element is positioned by MapLibre (inline transform); the inner
-        // element handles the hover scale so the two transforms don't clash.
+
         const el = document.createElement("div");
         const inner = document.createElement("div");
         inner.className =
@@ -660,7 +638,6 @@ export function RideMap({
     };
   }, [waypoints, ready]);
 
-  // Update the route line whenever the geometry changes.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -680,7 +657,6 @@ export function RideMap({
     }
   }, [routeCoordinates, ready]);
 
-  // Update the alternative candidate lines (route generator).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -703,10 +679,6 @@ export function RideMap({
     }
   }, [alternatives, ready]);
 
-  // Fly to a requested center (e.g. the just-located start position).
-  // Deliberately not gated on `ready`: the camera works before the style
-  // has loaded, and the value is deduped so re-renders with a fresh array
-  // identity don't restart the animation mid-flight.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !centerOn) {
@@ -720,9 +692,6 @@ export function RideMap({
     map.flyTo({ center: centerOn, zoom: Math.max(map.getZoom(), 12) });
   }, [centerOn]);
 
-  // Weather badges along the route. Plain DOM markers, so they work even
-  // before the style has loaded; deduped by value because the array gets
-  // a fresh identity on every render.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {
@@ -760,7 +729,7 @@ export function RideMap({
         if (data.windDeg !== undefined) {
           const arrow = document.createElement("span");
           arrow.textContent = "↑";
-          // The glyph points north; rotate it to where the wind blows TO.
+
           arrow.style.transform = `rotate(${(data.windDeg + 180) % 360}deg)`;
           arrow.style.display = "inline-block";
           el.appendChild(arrow);
@@ -781,8 +750,6 @@ export function RideMap({
     };
   }, [weatherMarkers]);
 
-  // Fit the viewport to the given coordinates (e.g. a freshly generated
-  // route) whenever they change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !fitTo || fitTo.length < 2) {
@@ -807,7 +774,6 @@ export function RideMap({
     );
   }, [fitTo, ready]);
 
-  // Update the highlight marker (elevation-graph hover).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -831,7 +797,6 @@ export function RideMap({
     }
   }, [highlight, ready]);
 
-  // Update the overlay dots (live rider positions) whenever they change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -858,8 +823,6 @@ export function RideMap({
     }
   }, [dots, ready]);
 
-  // Fit the view to the route. Only on read-only previews — auto-fitting while
-  // the user is placing waypoints fights their clicks by zooming/panning.
   useEffect(() => {
     if (interactive) {
       return;

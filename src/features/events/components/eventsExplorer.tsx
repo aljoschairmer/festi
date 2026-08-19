@@ -56,10 +56,6 @@ export function EventsExplorer() {
     queryFn: () => getCalendarEvents(),
   });
 
-  // Sync pump: each call does one bounded unit of scraping server-side and
-  // reports how much detail work remains; keep polling until it hits zero.
-  // The interval doubles as pacing towards rad-net's rate limiting, so keep
-  // it generous — coordinates trickle onto the map while the page is open.
   const { data: sync } = useQuery({
     queryKey: ["radnet-sync"],
     queryFn: () => syncCalendarEvents(),
@@ -76,7 +72,6 @@ export function EventsExplorer() {
     refetchOnWindowFocus: false,
   });
 
-  // Each completed sync step may have added events or coordinates.
   useEffect(() => {
     if (sync) {
       queryClient.invalidateQueries({ queryKey: ["radnet-events"] });
@@ -100,7 +95,7 @@ export function EventsExplorer() {
         if (region !== ALL && event.lvAbbr !== region) {
           return false;
         }
-        // ISO dates compare correctly as strings.
+
         if (fromDate && event.date < fromDate) {
           return false;
         }

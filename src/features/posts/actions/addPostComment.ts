@@ -12,7 +12,6 @@ type Result =
   | { success: true; comment: PostComment }
   | { success: false; error: string };
 
-/** Adds a comment to a post. */
 export async function addPostComment(
   postId: string,
   content: string,

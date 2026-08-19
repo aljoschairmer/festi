@@ -103,7 +103,6 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
 
   return (
     <Sidebar className="border-r border-primary/20">
-      {/* Header */}
       <SidebarHeader className="h-14 justify-center border-b border-primary/20 px-4">
         <div className="flex items-center gap-3">
           <span className="text-xl font-bold tracking-tight">FESTI</span>
@@ -115,9 +114,7 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
         </div>
       </SidebarHeader>
 
-      {/* Main Content */}
       <SidebarContent>
-        {/* Content Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground">
             Content
@@ -127,7 +124,6 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground">
             Account
@@ -138,7 +134,6 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer - Admin section at bottom */}
       {isAdmin && (
         <SidebarFooter className="mt-auto">
           <SidebarGroup className="border-t border-primary/20 pt-2">

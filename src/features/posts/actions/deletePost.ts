@@ -33,9 +33,6 @@ export async function deletePost(postId: string): Promise<Result> {
 
   await prisma.post.delete({ where: { id: postId } });
 
-  // The image rows cascade, but the R2 objects do not — they used to stay in
-  // the bucket forever. Best effort: a failed cleanup must not fail the
-  // delete the user asked for.
   await Promise.allSettled(
     post.images
       .map((image) => keyFromPublicUrl(image.url))

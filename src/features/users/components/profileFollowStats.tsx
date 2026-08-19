@@ -30,17 +30,12 @@ export function ProfileFollowStats({
     null,
   );
 
-  // The counts come from the server render; the full lists are only needed
-  // once the user opens one of them. Fetching them on an interval meant a
-  // second 30-second poll of every follower record just for two numbers that
-  // were already on the page.
   const { data } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
     enabled: openList !== null,
   });
 
-  // Everyone who follows me / everyone I follow (mutuals belong to both).
   const followers = data ? [...data.mutual, ...data.followers] : [];
   const following = data ? [...data.mutual, ...data.following] : [];
 

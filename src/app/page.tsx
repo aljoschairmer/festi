@@ -12,23 +12,12 @@ export default function HomePage() {
       tabIndex={-1}
       className="relative flex min-h-screen items-center justify-center overflow-hidden"
     >
-      {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-900/70 via-background to-red-950/50" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-red-600/40 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-red-600/30 via-transparent to-transparent" />
 
-      {/* Interactive Particles */}
       <ParticleBackground />
 
-      {/*
-        The particle graph draws city labels across the whole canvas, so at
-        375px names like "Basel" and "Marseille" run straight through the
-        paragraph below. This gives the copy its own ground. A radial fade
-        rather than a solid panel: a panel would show a hard edge over the
-        gradients, and the labels outside the text block are the point of
-        the animation. Wider and flatter below `sm`, where the copy fills
-        almost the whole width and a 70% ellipse leaves the edges uncovered.
-      */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_125%_38%_at_50%_48%,color-mix(in_oklch,var(--background)_90%,transparent)_35%,transparent_80%)] sm:bg-[radial-gradient(ellipse_70%_45%_at_50%_45%,color-mix(in_oklch,var(--background)_85%,transparent)_25%,transparent_70%)]"

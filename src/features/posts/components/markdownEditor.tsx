@@ -69,8 +69,6 @@ export function MarkdownEditor({
   };
 
   return (
-    // `min-w-0` stops an unbroken word or a pasted route URL from widening
-    // the editor (and with it the surrounding dialog).
     <div className="min-w-0 rounded-md border border-input">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-input p-1.5">
         <div className="flex items-center gap-0.5">

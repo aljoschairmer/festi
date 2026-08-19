@@ -28,9 +28,6 @@ export async function kickGroupMember(input: {
     return { success: false as const, error: "Group not found." };
   }
 
-  // Scoped to the group the caller was authorised against. Looking the row
-  // up by its own id alone let an owner of *any* group remove members from
-  // *every* group — member ids are handed to every member in the UI.
   const member = await prisma.groupMember.findFirst({
     where: { id: input.memberId, groupId: input.groupId },
     select: {
@@ -48,8 +45,6 @@ export async function kickGroupMember(input: {
     return { success: false as const, error: "Member not found." };
   }
 
-  // The owner can kick anyone (except themselves); moderators can kick
-  // regular members only.
   const isOwner = group.createdById === session.user.id;
   const callerRole = await getGroupRole(input.groupId, session.user.id);
 
@@ -75,7 +70,6 @@ export async function kickGroupMember(input: {
     };
   }
 
-  // `deleteMany` so the group stays in the `where` — belt and braces.
   await prisma.groupMember.deleteMany({
     where: { id: input.memberId, groupId: input.groupId },
   });

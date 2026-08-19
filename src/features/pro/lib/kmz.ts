@@ -19,8 +19,6 @@ export function extractKml(archive: ArrayBuffer): string | null {
   if (bytes.length < 22) return null;
   const view = new DataView(archive);
 
-  // The end-of-central-directory record sits at the end, possibly followed by
-  // a comment (max 64 KiB) — scan backwards for its signature.
   let eocd = -1;
   const scanEnd = Math.max(0, bytes.length - 22 - 65535);
   for (let offset = bytes.length - 22; offset >= scanEnd; offset--) {
@@ -52,8 +50,7 @@ export function extractKml(archive: ArrayBuffer): string | null {
     if (!name.toLowerCase().endsWith(".kml")) continue;
     if (localOffset + 30 > bytes.length) continue;
     if (view.getUint32(localOffset, true) !== LOCAL_SIGNATURE) continue;
-    // The local header's own name/extra lengths can differ from the central
-    // directory's — the data starts after the local copies.
+
     const localNameLength = view.getUint16(localOffset + 26, true);
     const localExtraLength = view.getUint16(localOffset + 28, true);
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
@@ -104,7 +101,6 @@ export function parseKmlLines(xml: string): KmlLine[] {
       }
     }
 
-    // A single tuple is a Point placemark, not a route line.
     if (points.length >= 2) {
       lines.push({ name, points });
     }

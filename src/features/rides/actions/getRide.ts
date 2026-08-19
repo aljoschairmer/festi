@@ -45,17 +45,12 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
     return null;
   }
 
-  // A ride posted to a group is readable by that group only — treat
-  // "not a member" the same as "does not exist".
   if (!(await canViewRide(session.user.id, ride))) {
     return null;
   }
 
   const isCreator = ride.creatorId === session.user.id;
 
-  // Group rides are members-only (same semantics as getGroupRides): without
-  // this check any signed-in user could read another group's ride — including
-  // participant identities and route geometry — by guessing the id.
   if (ride.groupId && !isCreator) {
     const membership = await prisma.groupMember.findFirst({
       where: {
@@ -83,8 +78,6 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
 
   const waypoints = ride.waypoints as unknown as Waypoint[];
 
-  // Prefer the profile stored at creation (positions match the saved route).
-  // Fall back to recomputing from waypoints for older rides that lack it.
   let elevationProfile: ElevationPoint[] = [];
   const stored = ride.elevationProfile as unknown as ElevationPoint[] | null;
   if (Array.isArray(stored) && stored.length >= 2) {

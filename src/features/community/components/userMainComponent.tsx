@@ -77,7 +77,6 @@ const UserMainComponent = () => {
             )}
       </p>
 
-      {/* Rider details */}
       <div className="rounded-xl border p-4">
         <h2 className="mb-3 font-heading text-lg font-semibold">
           Rider details

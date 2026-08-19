@@ -127,8 +127,6 @@ export function RidePlanner({
     streetPoints: RoutePlaceName[];
   } | null;
 }) {
-  // Street names and landmarks survive edits: even after the tour
-  // switches to manual planning, nearby points keep their names.
   const highlights = initialGenerated?.highlights ?? [];
   const streetPoints = initialGenerated?.streetPoints ?? [];
   const router = useRouter();
@@ -199,7 +197,6 @@ export function RidePlanner({
     },
   });
 
-  // Groups the rider can post to — loaded once the details step is reached.
   const { data: rideGroups = [] } = useQuery({
     queryKey: ["my-ride-groups"],
     queryFn: () => getMyRideGroups(),
@@ -227,9 +224,7 @@ export function RidePlanner({
     mutationFn: async (values: RideFormValues) => {
       const result = await createRide({
         ...values,
-        // The datetime-local value has no offset; resolving it in the
-        // browser timezone and sending full ISO keeps the intended wall
-        // time intact across the client→server boundary.
+
         startTime: new Date(values.startTime).toISOString(),
         startLocation: startPlace?.name ?? "",
         waypoints,
@@ -258,9 +253,6 @@ export function RidePlanner({
 
   const calcMutate = calcMutation.mutate;
 
-  // Recalculate the route (debounced) whenever the points or profile
-  // change. Generated routes are engine-owned — no BRouter recalculation
-  // until a manual edit clears the generation reference.
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -294,7 +286,6 @@ export function RidePlanner({
   const addWaypoint = (waypoint: Waypoint) => {
     dropGeneration();
     setWaypoints((current) => {
-      // In round-trip mode, insert before the returning end point.
       if (roundTrip && current.length >= 2) {
         const next = [...current];
         next.splice(next.length - 1, 0, waypoint);
@@ -305,11 +296,10 @@ export function RidePlanner({
   };
 
   const removeWaypoint = (index: number) => {
-    // The start point (index 0) is locked once chosen.
     if (index === 0 && startPlace) {
       return;
     }
-    // The returning end point is locked in round-trip mode.
+
     if (roundTrip && index === waypoints.length - 1) {
       return;
     }
@@ -344,7 +334,7 @@ export function RidePlanner({
     setWaypoints((current) => {
       const next = [...current];
       next[index] = waypoint;
-      // In a round trip, keep start and end in sync (same location).
+
       if (roundTrip && next.length > 1) {
         const lastIndex = next.length - 1;
         if (index === 0) {
@@ -395,7 +385,6 @@ export function RidePlanner({
     setWaypoints(roundTrip ? [start, start] : [start]);
   };
 
-  // Going back to step 1 resets the built route to a clean slate.
   const backToStart = () => {
     setGeneration(null);
     setRoute(null);
@@ -463,9 +452,6 @@ export function RidePlanner({
                   </span>
                 </label>
 
-                {/* `flex-wrap` + `whitespace-normal`: on a narrow phone the
-                    trailing hint used to push the button past the viewport
-                    edge instead of moving to its own line. */}
                 <Button
                   variant="outline"
                   className="h-auto flex-wrap justify-start py-2 text-left whitespace-normal"
@@ -500,7 +486,6 @@ export function RidePlanner({
           >
             <Card className="overflow-hidden lg:flex lg:h-[calc(100dvh-9rem)] lg:flex-col">
               <CardContent className="flex min-h-0 flex-1 flex-col p-0">
-                {/* Toolbar above the map: profile selector + live stats */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
                   <Select
                     value={profile}

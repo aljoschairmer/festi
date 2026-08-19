@@ -50,16 +50,13 @@ function storeConsent(choice: ConsentChoice) {
       STORAGE_KEY,
       JSON.stringify({ choice, at: Date.now() }),
     );
-  } catch {
-    // Ignore storage errors (e.g. private mode); banner just won't persist.
-  }
+  } catch {}
   window.dispatchEvent(
     new CustomEvent<ConsentChoice>(CONSENT_CHANGED_EVENT, { detail: choice }),
   );
 }
 
 export function CookieConsent() {
-  // `null` = not yet determined (avoids a flash before we read storage).
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const bannerRef = useRef<HTMLDivElement | null>(null);
@@ -67,15 +64,11 @@ export function CookieConsent() {
   useEffect(() => {
     setMounted(true);
     if (getConsentChoice() === null) {
-      // Defer one tick so the enter transition plays.
       const t = setTimeout(() => setVisible(true), 400);
       return () => clearTimeout(t);
     }
   }, []);
 
-  // Publish the rendered height so the footer can sit above the banner
-  // instead of behind it. It has to be measured rather than assumed: the
-  // banner is one row on a desktop and stacks on a phone.
   useEffect(() => {
     const root = document.documentElement;
     const clear = () => root.style.removeProperty(HEIGHT_VAR);

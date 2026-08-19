@@ -68,8 +68,6 @@ export function waypointHighlightNames(
     return waypoints.map(() => null);
   }
 
-  // Collect all (waypoint, highlight) pairs within range, closest first,
-  // then assign greedily so one landmark never labels two points.
   const pairs: { waypointIndex: number; name: string; distM: number }[] = [];
   for (let i = 0; i < waypoints.length; i++) {
     for (const highlight of named) {

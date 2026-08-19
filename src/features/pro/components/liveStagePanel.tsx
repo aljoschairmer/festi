@@ -65,7 +65,7 @@ function LiveBadge() {
 
 function LiveInfoStrip({ data }: { data: ProLiveStageData }) {
   const info = data.info;
-  // Spread of the race: the biggest gap among GPS-tracked riders.
+
   const maxGap = data.riders.reduce(
     (max, rider) => Math.max(max, rider.secToFirstRider ?? 0),
     0,
@@ -250,21 +250,15 @@ export function LiveStagePanel({
 
     const open = () => {
       if (source) return;
-      // Every event is a complete snapshot, so reconnects (EventSource
-      // retries automatically) need no patch replay — the next event
-      // re-syncs the panel.
+
       source = new EventSource(
         `/api/pro/live/${encodeURIComponent(raceKey)}/${year}/${stageNumber}`,
       );
       source.addEventListener("snapshot", (event) => {
         try {
           setData(JSON.parse((event as MessageEvent<string>).data));
-        } catch {
-          // A malformed frame keeps the previous snapshot; never crash.
-        }
+        } catch {}
       });
-      // Errors are left to EventSource's built-in retry; the last snapshot
-      // stays on screen meanwhile.
     };
 
     const close = () => {
@@ -272,8 +266,6 @@ export function LiveStagePanel({
       source = null;
     };
 
-    // Hold the connection only while the tab is visible — each open stream
-    // costs a running worker invocation.
     const onVisibilityChange = () => {
       if (document.hidden) {
         close();
@@ -292,7 +284,6 @@ export function LiveStagePanel({
 
   const live = data?.live === true;
   const dots = useMemo(() => {
-    // POI dots have a smaller radius, so the rider dots draw on top of them.
     const poiDots = poisToDots(pois);
     if (live && data) return [...poiDots, ...ridersToDots(data.riders)];
     return poiDots.length > 0 ? poiDots : undefined;
@@ -320,8 +311,7 @@ export function LiveStagePanel({
             </CardContent>
           </Card>
         )}
-        {/* The absolute wrapper caps the feed at the map column's height on
-            large screens; on mobile it stacks below with its own scroll. */}
+
         <div className="relative">
           <StageNewsFeed
             articles={data?.news?.length ? data.news : (news ?? [])}

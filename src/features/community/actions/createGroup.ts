@@ -14,8 +14,6 @@ export async function createGroup(input: GroupFormData) {
     return { success: false as const, error: "You must be signed in." };
   }
 
-  // Runtime validation: types are erased at runtime and this is a public
-  // endpoint, so we never trust the client-provided input.
   const parsed = groupFormSchema.safeParse(input);
   if (!parsed.success) {
     return {

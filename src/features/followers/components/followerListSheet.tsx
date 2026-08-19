@@ -132,17 +132,11 @@ const FollowerListSheet = () => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
 
-  // `getFollowConnections` returns the *complete* follower, following and
-  // mutual lists with no `take`. Polling that every 30 seconds from a sheet
-  // nobody opened was the single most expensive idle request in the app, so
-  // it now runs only while the sheet is on screen. Follow and unfollow
-  // invalidate the key, so what is on screen still stays current.
   const { data, isLoading, isError } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
     enabled: open,
-    // While it is open, refresh it: 2 requests a minute for an open panel is
-    // a different proposition from 2 a minute for a panel nobody opened.
+
     refetchInterval: 30_000,
   });
 

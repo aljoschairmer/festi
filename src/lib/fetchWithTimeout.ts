@@ -4,14 +4,9 @@ import "server-only";
 export const DEFAULT_FETCH_TIMEOUT_MS = 10_000;
 
 /**
- * `fetch` with a deadline.
- *
- * None of the outbound calls in the app had one. A slow or wedged upstream
- * (the route engine, BRouter, MapTiler, rad-net, an RSS host) therefore
- * pinned the server action open for as long as the platform allowed, instead
- * of failing quickly with something the UI can show.
- *
- * An existing `signal` on `init` is respected — whichever fires first wins.
+ * `fetch` with a deadline, so a wedged upstream cannot pin a server action
+ * open. An existing `signal` on `init` still applies; whichever fires first
+ * wins.
  */
 export async function fetchWithTimeout(
   input: string | URL | Request,

@@ -12,7 +12,6 @@ type Result =
   | { success: true; message: string }
   | { success: false; error: string };
 
-/** Updates the current user's biking profile information. */
 export async function updateProfile(input: unknown): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) {

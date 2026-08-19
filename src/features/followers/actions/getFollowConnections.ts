@@ -37,13 +37,12 @@ export async function getFollowConnections(): Promise<FollowConnections> {
   const myId = session.user.id;
 
   const [followingRows, followerRows] = await Promise.all([
-    // People I follow.
     prisma.follow.findMany({
       where: { followerId: myId },
       orderBy: { createdAt: "desc" },
       select: { following: { select: userSelect } },
     }),
-    // People who follow me.
+
     prisma.follow.findMany({
       where: { followingId: myId },
       orderBy: { createdAt: "desc" },
@@ -68,11 +67,10 @@ export async function getFollowConnections(): Promise<FollowConnections> {
   const followingIds = new Set(followingMapped.map((user) => user.id));
   const followerIds = new Set(followerMapped.map((user) => user.id));
 
-  // Mutual = users I follow who also follow me.
   const mutual = followingMapped.filter((user) => followerIds.has(user.id));
-  // Following only = I follow them, but they don't follow back.
+
   const following = followingMapped.filter((user) => !followerIds.has(user.id));
-  // Followers only = they follow me, but I don't follow back.
+
   const followers = followerMapped.filter((user) => !followingIds.has(user.id));
 
   return { mutual, following, followers };

@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Keep Prisma + the pg driver out of the server bundle so workerd resolves
-  // their Cloudflare-specific exports (e.g. pg-cloudflare) at runtime instead
-  // of esbuild trying (and failing) to bundle them.
   serverExternalPackages: [
     "@prisma/client",
     ".prisma/client",
@@ -27,7 +24,7 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
-      // R2 media, MapTiler tiles and the article thumbnails in the news feed.
+
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "connect-src 'self' https: blob:",
@@ -48,7 +45,7 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            // Geolocation stays on: the route generator uses "use my location".
+
             value: "camera=(), microphone=(), payment=(), geolocation=(self)",
           },
           {
@@ -63,7 +60,6 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-// Enables the Cloudflare bindings/env locally when running `next dev`.
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 initOpenNextCloudflareForDev();

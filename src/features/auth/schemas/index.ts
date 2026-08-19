@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// Unicode letters (incl. combining marks), spaces, hyphens, apostrophes —
-// covers real names (José, O'Connor, Anne-Marie) while keeping HTML/mail
-// injection characters out of the name that lands in transactional emails.
 const namePattern = /^[\p{L}\p{M}' -]+$/u;
 
 const passwordSchema = z
@@ -20,9 +17,7 @@ export const loginSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  // Sign-in deliberately does not enforce the password policy: it would
-  // leak the policy to anyone and lock out accounts whose password predates
-  // the current rule. The server decides whether the password is right.
+
   password: z.string().min(1, "Password is required"),
 });
 

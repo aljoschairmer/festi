@@ -113,7 +113,6 @@ export async function getNotificationHistory(
   };
 }
 
-/** Marks all of the current user's notifications as seen. */
 export async function markNotificationsSeen(): Promise<void> {
   const session = await getCurrentUser();
   if (!session) return;

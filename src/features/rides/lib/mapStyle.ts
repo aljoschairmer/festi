@@ -7,35 +7,34 @@ import type { StyleSpecification } from "maplibre-gl";
  * vector schema (MapTiler or keyless OpenFreeMap).
  */
 
-// Neutral-cool dark cartography palette.
 const COLORS = {
-  land: "#1b1e23", // base ground, slightly cool
-  water: "#12222e", // deep desaturated blue, distinct but calm
+  land: "#1b1e23",
+  water: "#12222e",
   waterway: "#1d3644",
-  wood: "#1a2320", // subtle green-gray for a bit of life
+  wood: "#1a2320",
   park: "#19211c",
-  residential: "#202429", // a touch lighter than land
+  residential: "#202429",
   buildingFill: "#252a30",
   buildingOutline: "#2d333a",
   roadMinor: "#2c3138",
   roadPath: "#343c44",
   roadTertiaryInner: "#3a424b",
   roadTertiaryCasing: "#23272d",
-  roadPrimaryInner: "#414a54", // dimmed
+  roadPrimaryInner: "#414a54",
   roadPrimaryCasing: "#262b31",
-  roadMotorwayInner: "#48515c", // dimmed so highways don't glare
+  roadMotorwayInner: "#48515c",
   roadMotorwayCasing: "#262b31",
   railway: "#2e343b",
   boundary: "#454d57",
-  text: "#eef1f5", // bright for legibility
-  textHalo: "#0a0d11", // dark halo for strong contrast
-  textMuted: "#b3bcc8", // brighter so street names read
+  text: "#eef1f5",
+  textHalo: "#0a0d11",
+  textMuted: "#b3bcc8",
   textWater: "#7fa3ba",
-  // Hillshade relief tones (tuned for the dark ground).
+
   hillshadeShadow: "#04060a",
   hillshadeHighlight: "#454e59",
   hillshadeAccent: "#0a0d11",
-  // Contour lines (subtle warm tone to read as elevation).
+
   contour: "#5c5348",
   contourLabel: "#9d9078",
 };
@@ -75,7 +74,7 @@ function buildStyle(): StyleSpecification {
     glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
     sources: {
       [VECTOR_SOURCE]: buildVectorSource(),
-      // Global elevation tiles (Terrarium encoding, keyless) for hillshading.
+
       terrain: {
         type: "raster-dem",
         tiles: [
@@ -86,7 +85,7 @@ function buildStyle(): StyleSpecification {
         maxzoom: 13,
         attribution: "Elevation: Mapzen / Terrarium",
       },
-      // Contour lines require a MapTiler key (no keyless source available).
+
       ...(maptilerKey
         ? {
             contours: {
@@ -151,7 +150,6 @@ function buildStyle(): StyleSpecification {
         },
       },
       {
-        // Shaded relief so mountains and valleys are visible.
         id: "hillshade",
         type: "hillshade",
         source: "terrain",
@@ -162,7 +160,7 @@ function buildStyle(): StyleSpecification {
           "hillshade-accent-color": COLORS.hillshadeAccent,
         },
       },
-      // Contour lines + elevation labels (only when a MapTiler key is set).
+
       ...(maptilerKey
         ? [
             {
@@ -537,7 +535,6 @@ function buildStyle(): StyleSpecification {
   } as StyleSpecification;
 }
 
-/** Returns the custom app-themed MapLibre style. */
 export function getMapStyle(): StyleSpecification {
   return buildStyle();
 }

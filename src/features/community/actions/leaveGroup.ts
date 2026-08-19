@@ -62,8 +62,6 @@ export async function leaveGroup(groupId: string) {
 
   revalidatePath(groupPath(groupId));
 
-  // A pending member leaving is really a cancelled join request: remove the
-  // unseen request notification instead of logging a "left the group" event.
   if (membership.status === "PENDING") {
     await Notifier.remove({
       type: NotificationType.GROUP_JOIN_REQUESTED,
@@ -89,7 +87,6 @@ export async function leaveGroup(groupId: string) {
     },
   );
 
-  // Remove the unseen "joined your group" notification to avoid join/leave spam.
   await Notifier.remove({
     type: NotificationType.GROUP_JOINED,
     userId: group.createdById,

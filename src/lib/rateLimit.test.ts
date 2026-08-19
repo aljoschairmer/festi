@@ -69,7 +69,6 @@ describe("consumeRateLimit", () => {
   });
 
   it("never reports a retry of zero seconds while blocked", async () => {
-    // A window that has just expired must not produce "retry in 0s".
     queryRaw.mockResolvedValueOnce([
       { count: 99, expiresAt: new Date(Date.now() - 5_000) },
     ]);
@@ -79,7 +78,6 @@ describe("consumeRateLimit", () => {
   });
 
   it("fails open when the limiter itself is broken", async () => {
-    // A limiter that is down must not take registration down with it.
     queryRaw.mockRejectedValueOnce(new Error("connection refused"));
     await expect(consumeRateLimit("k", window)).resolves.toEqual({
       allowed: true,
@@ -88,9 +86,6 @@ describe("consumeRateLimit", () => {
   });
 
   it("answers the same whether or not housekeeping blows up", async () => {
-    // Pruning runs on a random fraction of calls. It must not be able to
-    // change the verdict — the whole limiter used to sit in one try block,
-    // so a synchronous throw from the prune path failed the call open.
     deleteMany.mockImplementation(() => {
       throw new Error("relation does not exist");
     });
@@ -119,7 +114,7 @@ describe("limitByIp", () => {
     getClientIp.mockResolvedValueOnce("203.0.113.7");
     queryRaw.mockResolvedValueOnce([{ count: 1, expiresAt: new Date() }]);
     await limitByIp("register", { limit: 5, windowSec: 60 });
-    // The key is interpolated into the tagged template as a parameter.
+
     expect(queryRaw.mock.calls[0]).toContain("register:203.0.113.7");
   });
 
@@ -127,7 +122,7 @@ describe("limitByIp", () => {
     getClientIp.mockResolvedValueOnce(null);
     queryRaw.mockResolvedValueOnce([{ count: 1, expiresAt: new Date() }]);
     await limitByIp("register", { limit: 5, windowSec: 60 });
-    // Stricter, not laxer — the right direction when we cannot tell callers apart.
+
     expect(queryRaw.mock.calls[0]).toContain("register:unknown");
   });
 });

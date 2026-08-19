@@ -49,7 +49,6 @@ export function RidersGrid() {
     );
   }, [riders, search]);
 
-  // Reset paging whenever the search changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on search change
   useEffect(() => {
     setVisible(PAGE_SIZE);
@@ -60,7 +59,7 @@ export function RidersGrid() {
 
   const loadMore = () => {
     setLoadingMore(true);
-    // Small delay so the loading animation is visible before revealing.
+
     setTimeout(() => {
       setVisible((v) => v + PAGE_SIZE);
       setLoadingMore(false);

@@ -403,8 +403,7 @@ export function buildStreetPoints(
       coordinates.length - 1,
       turns[t + 1]?.pointIndex ?? coordinates.length - 1,
     );
-    // Sample the segment sparsely — enough that any waypoint on it finds
-    // a nearby named point, without ballooning the payload.
+
     const step = Math.max(1, Math.floor((to - from) / 4) || 1);
     for (let i = from; i <= to && points.length < maxPoints; i += step) {
       const c = coordinates[i];

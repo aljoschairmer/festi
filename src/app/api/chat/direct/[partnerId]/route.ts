@@ -6,17 +6,9 @@ import { streamOnChange } from "@/features/chat/lib/chatStream";
 import { sseResponse } from "@/lib/sse";
 
 /**
- * A direct-message thread as a stream, replacing its 2s polling (C-02).
- *
- * `getDirectMessages` marks the partner's messages as read as a side effect,
- * which used to run 30 times a minute per open thread. Here it only runs when
- * the revision moved, so the write happens when a message actually arrives
- * rather than on a timer.
- *
- * `canMessage` (mutual follow) is read with each snapshot rather than being
- * part of the revision token. Unfollowing mid-conversation is rare enough to
- * settle on the next message or reconnect, and probing the follow graph every
- * two seconds to catch it would cost more than it is worth.
+ * A direct-message thread as a stream. `getDirectMessages` marks the
+ * partner's messages read as a side effect, so that write now happens when a
+ * message arrives rather than on a timer.
  */
 export async function GET(
   request: Request,

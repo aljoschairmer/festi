@@ -139,7 +139,6 @@ export async function getAnalytics(range?: string): Promise<AnalyticsData> {
     `,
   ]);
 
-  // Resolve top actor user details.
   const topActorIds = topActorsRaw
     .map((row) => row.actorId)
     .filter((id): id is string => id !== null);
@@ -180,7 +179,6 @@ export async function getAnalytics(range?: string): Promise<AnalyticsData> {
     }),
   );
 
-  // Build warnings from anomaly signals.
   const warnings: AnalyticsWarning[] = [];
 
   if (failedLogins24h > 0) {

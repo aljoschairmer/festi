@@ -57,7 +57,7 @@ export function splitBike(value: string | null | undefined): {
       if (bike === `${brand} ${model}`) return { brand, model };
     }
   }
-  // Custom entry: keep the whole thing as the model, no known brand.
+
   return { brand: null, model: bike };
 }
 

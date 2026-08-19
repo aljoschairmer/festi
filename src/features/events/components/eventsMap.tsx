@@ -123,7 +123,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     eventsRef.current = events;
   }, [events]);
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -239,7 +238,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     };
   }, []);
 
-  // Push filtered events into the source whenever they change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -251,7 +249,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     }
   }, [events, ready]);
 
-  // Fly to the event selected in the list and open its popup.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !selectedId) {
@@ -279,7 +276,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
         .setDOMContent(buildPopupContent(event))
         .addTo(activeMap);
     })();
-    // Reads events via eventsRef so list refetches don't re-fly the map.
   }, [selectedId, ready]);
 
   return <div ref={containerRef} className="h-full w-full" />;

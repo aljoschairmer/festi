@@ -52,10 +52,6 @@ export async function leaveRide(rideId: string): Promise<LeaveRideResult> {
     return { success: false, error: "You are not part of this ride." };
   }
 
-  // One transaction: leaving and promoting the next rider must not be able
-  // to half-happen, or the freed spot stays blocked with a waitlist behind
-  // it. `updateMany` with the status in the `where` also makes the promotion
-  // idempotent, so two concurrent leaves cannot promote the same rider twice.
   const nextInLine = await prisma.$transaction(async (tx) => {
     await tx.rideParticipant.delete({
       where: { rideId_userId: { rideId, userId: session.user.id } },

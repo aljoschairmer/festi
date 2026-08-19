@@ -49,8 +49,6 @@ export async function getRideGpx(rideId: string): Promise<Result> {
     };
   }
 
-  // Prefer the stored elevation profile (lat/lng + elevation); fall back to
-  // the plain 2D polyline for legacy rides without one.
   const profile = ride.elevationProfile as
     | { lat: number; lng: number; elevation: number }[]
     | null;

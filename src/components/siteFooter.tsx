@@ -10,9 +10,6 @@ export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer
       className={`flex flex-col items-center gap-2 text-sm text-muted-foreground transition-[margin] duration-500 ease-out sm:flex-row sm:justify-between ${className ?? ""}`}
-      // The cookie banner is `fixed bottom-0`; without this offset it covers
-      // the Imprint/Privacy/Terms links. The variable is published by
-      // `CookieConsent` only while the banner is on screen.
       style={{ marginBottom: "var(--cookie-banner-height, 0px)" }}
     >
       <p>&copy; {new Date().getFullYear()} Festi</p>

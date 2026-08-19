@@ -9,45 +9,22 @@ export type RateLimitResult = {
   retryAfterSec: number;
 };
 
-/**
- * Chance of pruning expired rows on any given call.
- *
- * Without this the table only ever grows: one row per key, and keys are
- * per-IP or per-user, so they are unbounded in practice. Doing it inline on a
- * fraction of calls keeps it free of a scheduler — there is no cron in a
- * Worker — and the `expiresAt` index makes the delete cheap when it does run.
- */
+/** Chance of pruning expired rows on a call. There is no cron in a Worker. */
 const PRUNE_PROBABILITY = 0.01;
 
-/**
- * Deletes expired rows on a fraction of calls. Fire and forget, and inside
- * its own `try` — housekeeping must not delay the caller and must not be
- * able to change the answer, not even by throwing on the way to the promise.
- */
+/** Fire and forget, and self-contained: housekeeping must never change the answer. */
 function pruneOccasionally(): void {
   if (Math.random() >= PRUNE_PROBABILITY) return;
   try {
     void prisma.rateLimit
       .deleteMany({ where: { expiresAt: { lt: new Date() } } })
-      .catch(() => {
-        // Best effort: an expired row costs a little space, nothing else.
-      });
-  } catch {
-    // Same, for a synchronous throw.
-  }
+      .catch(() => {});
+  } catch {}
 }
 
 /**
- * Fixed-window counter backed by Postgres.
- *
- * better-auth ships a rate limiter, but it only guards requests that travel
- * through its router. Server actions that call `auth.api.*` directly — most
- * importantly registration — bypass it, which left an unauthenticated path
- * that can send mail through Resend without any limit at all.
- *
- * A single statement does the whole thing: the upsert either starts a fresh
- * window or increments the current one, so concurrent calls cannot both read
- * a stale count. Postgres serialises the conflicting upserts for us.
+ * Fixed-window counter backed by Postgres, incremented in one upsert so
+ * concurrent calls cannot both read a stale count. Fails open.
  */
 export async function consumeRateLimit(
   key: string,
@@ -86,7 +63,6 @@ export async function consumeRateLimit(
     }
     return { allowed: true, retryAfterSec: 0 };
   } catch {
-    // A limiter that is itself down must not take the feature with it.
     return { allowed: true, retryAfterSec: 0 };
   }
 }

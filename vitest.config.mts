@@ -9,8 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
-      // `server-only` throws when imported outside a server bundle. Under
-      // Vitest we *are* on the server, so it is stubbed out.
+
       "server-only": fileURLToPath(
         new URL("./test/serverOnlyStub.ts", import.meta.url),
       ),

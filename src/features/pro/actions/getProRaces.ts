@@ -15,7 +15,7 @@ function deriveStatus(
   if (!startDate || !endDate) return "unknown";
   const now = Date.now();
   if (now < Date.parse(startDate)) return "upcoming";
-  // Include the whole final day.
+
   if (now > Date.parse(endDate) + DAY_MS) return "finished";
   return "live";
 }
@@ -26,7 +26,7 @@ async function summarizeRace(
 ): Promise<ProRaceSummary> {
   if (!race.asoRace) throw new Error("No ASO source configured.");
   const aso = createAsoClient(race.asoRace, year);
-  // Teams fail soft: a race without a published startlist still gets a card.
+
   const [stages, teams] = await Promise.all([
     aso.getStages(),
     aso.getTeams().catch(() => []),

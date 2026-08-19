@@ -53,8 +53,6 @@ export default async function GroupPage({
         },
       },
       members: {
-        // Only approved members count as members; pending join requests are
-        // fetched separately and never leave the server for non-owners.
         where: { status: "APPROVED" },
         include: {
           user: {
@@ -92,8 +90,6 @@ export default async function GroupPage({
       })
     : null;
 
-  // Join requests are visible to the owner and moderators — never to anyone
-  // else (they never leave the server otherwise).
   const canManage =
     isOwner ||
     (ownMembership?.status === "APPROVED" &&

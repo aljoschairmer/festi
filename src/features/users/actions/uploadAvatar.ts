@@ -50,7 +50,6 @@ export async function uploadAvatar(formData: FormData): Promise<Result> {
     return { success: false, error: "Failed to upload image. Try again." };
   }
 
-  // Cache-busting version so clients fetch the new image despite the stable key.
   const imageUrl = `${publicUrl(key)}?v=${Date.now()}`;
 
   await prisma.user.update({

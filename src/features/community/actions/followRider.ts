@@ -49,8 +49,6 @@ export async function followRider(values: FollowUserFormData) {
       },
     });
   } catch (error) {
-    // Already following — the double click produced the state the user asked
-    // for, so do not surface a database error.
     if (!isUniqueViolation(error)) throw error;
     return { success: true as const, message: "You are now following them." };
   }

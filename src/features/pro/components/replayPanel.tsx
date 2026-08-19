@@ -88,7 +88,7 @@ export function ReplayPanel({
             />
           </CardContent>
         </Card>
-        {/* Height-capped to the map column on large screens. */}
+
         <div className="relative">
           <StageNewsFeed
             articles={news ?? []}
@@ -105,7 +105,6 @@ export function ReplayPanel({
           variant="outline"
           size="icon"
           onClick={() => {
-            // Restart from the top when play is hit at the end.
             if (!playing && clampedIndex >= frames.length - 1) {
               setFrameIndex(0);
             }

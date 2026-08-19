@@ -41,7 +41,6 @@ export function buildRiderIndex(
 ): Map<number, RiderIdentity> {
   const index = new Map<number, RiderIdentity>();
   for (const competitor of competitors) {
-    // The allCompetitors bind mixes team records in; riders reference a team.
     if (!competitor.$team || typeof competitor.bib !== "number") continue;
     const team = AsoClient.resolveRef(competitor.$team, teams);
     const name = [competitor.firstname, competitor.lastname]
@@ -113,7 +112,6 @@ export function mapTelemetry(
     });
   }
 
-  // Head of the race = the tracked rider with the least distance to go.
   let head: AsoTelemetryRider | null = null;
   for (const rider of telemetry.Riders ?? []) {
     if (typeof rider.kmToFinish !== "number") continue;

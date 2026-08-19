@@ -18,7 +18,6 @@ export function guardTerrainSource(map: MapLibreMap): void {
       return;
     }
 
-    // Only degrade once; repeated tile errors are expected after failure.
     map.off("error", onError);
     try {
       map.setTerrain(null);
@@ -28,9 +27,7 @@ export function guardTerrainSource(map: MapLibreMap): void {
       if (map.getSource(TERRAIN_SOURCE_ID)) {
         map.removeSource(TERRAIN_SOURCE_ID);
       }
-    } catch {
-      // Map already disposed or style reloaded; nothing left to clean up.
-    }
+    } catch {}
   };
 
   map.on("error", onError);

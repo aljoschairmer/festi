@@ -22,9 +22,6 @@ export default async function DashboardLayout({
       <PresenceHeartbeat />
       <AppSidebar userRole={session.user.role || "user"} />
       <SidebarInset className="bg-background">
-        {/* `overflow-hidden` + `min-w-0`: at large text sizes the breadcrumb
-            and the user menu together are wider than the header, and they
-            pushed the whole page 23px past the viewport edge. */}
         <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
@@ -41,7 +38,6 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        {/* SidebarInset already renders the <main> landmark. */}
         <div id="main-content" tabIndex={-1} className="flex-1 p-6">
           {children}
         </div>

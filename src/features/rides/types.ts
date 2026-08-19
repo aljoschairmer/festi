@@ -40,7 +40,6 @@ export type PlaceResult = {
   lng: number;
 };
 
-/** Result of a routing request, returned by the `calculateRoute` action. */
 export type RouteResult = {
   /** Total distance in meters. */
   distance: number;

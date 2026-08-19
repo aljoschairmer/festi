@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-// `visibility.ts` imports the Prisma client at module scope, so the mock has
-// to be registered before the import is resolved.
 const findFirst = vi.fn();
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -37,16 +35,12 @@ describe("rideVisibilityFilter", () => {
   });
 
   it("offers exactly three ways in, and no unconditional one", () => {
-    // The clause is the whole boundary: any extra branch is a way to see a
-    // ride, so a new one has to be a deliberate change, not a silent one.
     const where = rideVisibilityFilter("user-1");
     expect(where.OR).toHaveLength(3);
     expect(JSON.stringify(where.OR)).toContain('"status":"APPROVED"');
   });
 
   it("never matches a group ride on membership alone, ignoring status", () => {
-    // A `some: { userId }` without the status would let a pending join
-    // request read the group's rides.
     const serialised = JSON.stringify(rideVisibilityFilter("user-1").OR);
     expect(serialised).not.toContain('{"userId":"user-1"}}');
   });
@@ -60,7 +54,7 @@ describe("canViewRide", () => {
       creatorId: "someone-else",
     });
     expect(ok).toBe(true);
-    // No membership lookup needed.
+
     expect(findFirst).not.toHaveBeenCalled();
   });
 

@@ -4,14 +4,9 @@ import { isOnline } from "@/features/followers/lib/presence";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Cheap "has anything changed?" tokens for the chat streams.
- *
- * Count plus newest timestamp catches inserts and deletes alike, which is
- * everything chat does to a message — they are never edited. Both queries are
- * covered by indexes added in B-08: `group_message(groupId, createdAt)` and
- * `direct_message(senderId, recipientId, createdAt)`.
+ * Changes whenever a message is added or removed. Messages are never edited,
+ * so a count and the newest timestamp are enough.
  */
-
 export async function groupChatRevision(groupId: string): Promise<string> {
   const { _count, _max } = await prisma.groupMessage.aggregate({
     where: { groupId },
@@ -22,6 +17,7 @@ export async function groupChatRevision(groupId: string): Promise<string> {
   return `${_count._all}:${_max.createdAt?.getTime() ?? 0}`;
 }
 
+/** Also changes when the partner's online state flips, which the header shows. */
 export async function directChatRevision(
   myId: string,
   partnerId: string,
@@ -37,11 +33,7 @@ export async function directChatRevision(
       _count: { _all: true },
       _max: { createdAt: true },
     }),
-    // The thread header shows a live online dot, so presence has to be part
-    // of the token — otherwise it would only ever refresh when a message
-    // happened to arrive. The derived boolean, not the raw timestamp: a
-    // heartbeat every 30 seconds would otherwise look like a change every
-    // 30 seconds and push the whole thread for nothing.
+
     prisma.user.findUnique({
       where: { id: partnerId },
       select: { lastSeenAt: true },

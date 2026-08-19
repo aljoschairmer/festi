@@ -76,7 +76,6 @@ export async function updateRide(
   const nextDifficulty = difficulty ?? null;
   const nextMaxParticipants = maxParticipants ?? null;
 
-  // Track what actually changed for the activity log.
   const changes: Record<string, { from: string | null; to: string | null }> =
     {};
   if (title !== ride.title) {
@@ -131,7 +130,6 @@ export async function updateRide(
     },
   );
 
-  // A new start time affects everyone coming along — let approved riders know.
   if (startTimeChanged) {
     const approved = await prisma.rideParticipant.findMany({
       where: { rideId, status: "APPROVED" },

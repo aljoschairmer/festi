@@ -39,8 +39,6 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
           : "border-primary/40 shadow-sm ring-1 ring-primary/20",
       )}
     >
-      {/* Full-card click target to the ride page. Interactive elements below
-          sit above it via z-10. */}
       <Link
         href={href}
         aria-label={ride.title}
@@ -48,7 +46,6 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
       />
 
       <div className="pointer-events-none relative z-10 flex flex-col gap-5 lg:flex-row">
-        {/* Left: ride details */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {isPast ? (
@@ -136,7 +133,6 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
           </div>
         </div>
 
-        {/* Right: route preview */}
         <div className="h-36 overflow-hidden rounded-lg border lg:h-auto lg:max-h-44 lg:w-56 lg:shrink-0">
           <RouteThumbnail routeGeometry={ride.routeGeometry} />
         </div>

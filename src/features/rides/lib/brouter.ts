@@ -153,7 +153,6 @@ export async function fetchRoute(
   }
 
   if (!response.ok) {
-    // BRouter returns a plain-text error body for unroutable requests.
     const message = await response.text().catch(() => "");
     throw new Error(
       message.trim() ||
@@ -176,7 +175,6 @@ export async function fetchRoute(
   const duration = Number.parseInt(props["total-time"] ?? "0", 10);
   const { gain, loss } = computeElevation(coordinates);
 
-  // Encode as a polyline of [lat, lng] pairs; `coordinates` are [lng, lat, ele].
   const routeGeometry = polyline.encode(
     coordinates.map(([lng, lat]) => [lat, lng]),
   );

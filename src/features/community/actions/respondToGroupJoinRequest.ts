@@ -43,7 +43,6 @@ export async function respondToGroupJoinRequest(
     return { success: false as const, error: "Group not found." };
   }
 
-  // Owners and moderators respond to join requests.
   if (!(await canManageGroup(groupId, session.user.id))) {
     return {
       success: false as const,
@@ -113,7 +112,6 @@ export async function respondToGroupJoinRequest(
     };
   }
 
-  // Reject deletes the row so the user can request to join again later.
   await prisma.groupMember.delete({
     where: { id: memberId },
   });

@@ -41,7 +41,7 @@ export function teamImages(team: AsoTeam | undefined): ProTeamImages {
   if (!team) return EMPTY_TEAM_IMAGES;
   return {
     logoUrl: str(team.logo) ?? str(team.logo_live),
-    // The small jersey render reads better at the sizes we display.
+
     jerseyUrl: str(team.jersey_sm) ?? str(team.jersey),
     color: usableColor(team.color),
   };
@@ -55,8 +55,7 @@ export function riderPhotoUrl(competitor: AsoCompetitor): string | null {
 /** Normalizes a rider name into a comparable key (A-Z0-9 only, order-free). */
 function normalizeRiderName(value: string | null | undefined): string | null {
   if (!value) return null;
-  // Sort the name tokens so "VINGEGAARD Jonas" (Tissot) and "Jonas Vingegaard"
-  // (ASO) collapse to the same key regardless of first/last-name order.
+
   const key = value
     .toUpperCase()
     .split(/[^A-Z0-9]+/)

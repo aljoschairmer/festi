@@ -2,7 +2,6 @@ import type { ElevationPoint, Waypoint } from "@/features/rides/types";
 
 export type ProRaceStatus = "upcoming" | "live" | "finished" | "unknown";
 
-/** A race card on the Pro Racing hub. */
 export type ProRaceSummary = {
   key: string;
   name: string;

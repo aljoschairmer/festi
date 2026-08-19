@@ -76,8 +76,7 @@ type LogInput = {
 async function getRequestContext() {
   try {
     const h = await headers();
-    // `cf-connecting-ip` first — `x-forwarded-for` is client-settable, so the
-    // audit trail (and the brute-force detection built on it) was forgeable.
+
     const ipAddress = await getClientIp();
     const userAgent = h.get("user-agent");
     return { ipAddress, userAgent };
@@ -118,7 +117,6 @@ export const Logger = {
         },
       });
     } catch (error) {
-      // Logging must never break the action that triggered it.
       console.error("[Logger] Failed to write activity log:", error);
     }
   },

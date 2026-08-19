@@ -29,9 +29,6 @@ export default function ImprintPage() {
           </p>
         </header>
 
-        {/* TODO(Betreiber): Dieses Impressum ist unvollständig. Alle
-            [TODO: ...]-Marker durch die echten Betreiberangaben ersetzen,
-            bevor die Seite öffentlich betrieben wird. */}
         <section className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
           This imprint is incomplete. Replace every <Todo>…</Todo> marker with
           the operator's actual details before operating this service publicly.
@@ -39,20 +36,16 @@ export default function ImprintPage() {
 
         <Section title="Information pursuant to § 5 DDG">
           <p className="font-medium text-foreground">Festi</p>
-          {/* TODO(Betreiber): Vollständigen Namen bzw. Firmennamen und
-              Rechtsform des Betreibers eintragen (§ 5 Abs. 1 Nr. 1 DDG). */}
+
           <p>
             Operator: <Todo>full name / company name and legal form</Todo>
           </p>
-          {/* TODO(Betreiber): Ladungsfähige Anschrift eintragen — Straße,
-              Hausnummer, PLZ, Ort (§ 5 Abs. 1 Nr. 2 DDG). Eine Anschrift
-              "auf Anfrage" genügt den Anforderungen nicht. */}
+
           <p>
             Postal address:{" "}
             <Todo>serviceable address (street, number, postal code, city)</Todo>
           </p>
-          {/* TODO(Betreiber): Bei juristischen Personen die
-              vertretungsberechtigte Person nennen (§ 5 Abs. 1 Nr. 3 DDG). */}
+
           <p>
             Authorised representative:{" "}
             <Todo>authorised representative (for legal entities)</Todo>
@@ -64,16 +57,12 @@ export default function ImprintPage() {
               className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
-            </a>
-            {/* TODO(Betreiber): Ggf. Telefonnummer für eine schnelle
-                Kontaktaufnahme ergänzen (§ 5 Abs. 1 Nr. 2 DDG). */}{" "}
+            </a>{" "}
             <Todo>optional: phone number for immediate contact</Todo>
           </p>
         </Section>
 
         <Section title="Responsible for content">
-          {/* TODO(Betreiber): Name und Anschrift der/des Verantwortlichen
-              nach § 18 Abs. 2 MStV eintragen. */}
           <p>
             Responsible for the content of this service pursuant to &sect; 18
             Abs. 2 MStV: <Todo>name and address of the responsible person</Todo>

@@ -11,7 +11,6 @@ const raleway = Raleway({
 });
 
 export const metadata: Metadata = {
-  // Absolute base so Open Graph/Twitter image and canonical URLs resolve.
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL ?? "https://festicycling.com",
   ),
@@ -52,8 +51,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${raleway.variable} h-full antialiased`}>
       <body className="min-h-screen bg-background text-foreground font-[family-name:var(--font-raleway)]">
-        {/* Keyboard users otherwise tab through the whole sidebar on every
-            page before reaching the content. */}
         <a
           href="#main-content"
           className="sr-only rounded-lg bg-popover px-4 py-2 text-sm font-medium text-popover-foreground ring-2 ring-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100"
