@@ -17,7 +17,7 @@ model User {
   id            String        @id
   name          String
   username      String?       @unique
-  email         String
+  email         String        @unique
   emailVerified Boolean       @default(false)
   image         String?
   role          String?       @default("user")
@@ -59,7 +59,6 @@ model User {
   postLikes    PostLike[]
   postComments PostComment[]
 
-  @@unique([email])
   @@map("user")
 }
 
