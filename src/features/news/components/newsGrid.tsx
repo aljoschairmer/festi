@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRightIcon, NewspaperIcon } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getNews } from "../actions/getNews";
@@ -45,10 +46,12 @@ export function NewsGrid() {
 
   if (articles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <NewspaperIcon className="mb-4 size-12 text-muted-foreground/50" />
-        <p className="text-muted-foreground">No articles available.</p>
-      </div>
+      <EmptyState
+        icon={NewspaperIcon}
+        title="No articles available."
+        description="New stories from the cycling world will show up here."
+        className="py-16"
+      />
     );
   }
 

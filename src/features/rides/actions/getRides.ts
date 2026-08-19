@@ -3,12 +3,12 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { visibleRidesFilter } from "../lib/visibility";
+import { rideVisibilityFilter } from "../lib/visibility";
 import { type RideFiltersInput, rideFiltersSchema } from "../schemas";
-import type { RideSummary, Waypoint } from "../types";
+import type { RideListPage } from "../types";
 
-/** Hard cap so one query cannot pull the whole rides table into memory. */
-const MAX_RIDES = 200;
+/** Default page size for the paginated rides list. */
+const RIDES_PAGE_SIZE = 20;
 
 /** Great-circle distance in kilometres. */
 function haversineKm(
@@ -32,8 +32,12 @@ function haversineKm(
  * hidden. Accepts optional discovery filters: case-insensitive search over
  * title/start location, exact pace/difficulty match, and `includePast` to
  * also return rides that already started (default: upcoming only).
+ *
+ * Results are cursor-paginated (`cursor` = id of the last ride of the
+ * previous page, `take` = page size, default 20) and limited to the fields
+ * the ride cards render, so the list stays cheap as the table grows.
  */
-export async function getRides(input?: unknown): Promise<RideSummary[]> {
+export async function getRides(input?: unknown): Promise<RideListPage> {
   const session = await getCurrentUser();
   if (!session) {
     throw new Error("You must be signed in.");
@@ -61,9 +65,13 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
     : 0;
 
   const where: Prisma.RideWhereInput = {
+    // Group rides are members-only (same semantics as getGroupRides):
+    // discovery must not list another group's rides. Public rides
+    // (groupId: null) and the user's own rides are unaffected.
+    //
     // `AND`, not a spread: the visibility rule and the search filter below
     // both use `OR`, and spreading would silently drop one of them.
-    AND: [await visibleRidesFilter(session.user.id)],
+    AND: [rideVisibilityFilter(session.user.id)],
     status: "SCHEDULED",
     ...(filters.includePast ? {} : { startTime: { gte: new Date() } }),
     ...(filters.search
@@ -95,15 +103,34 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
       : {}),
   };
 
-  const rides = await prisma.ride.findMany({
-    take: MAX_RIDES,
+  const take = filters.take ?? RIDES_PAGE_SIZE;
+
+  // Only the fields the ride cards render (routeGeometry stays for the
+  // thumbnails); description/waypoints/gpx-sized fields are not selected.
+  const rows = await prisma.ride.findMany({
     where,
-    orderBy: {
-      startTime: "asc",
-    },
-    include: {
+    // id tiebreaker keeps the order stable for cursor pagination.
+    orderBy: [{ startTime: "asc" }, { id: "asc" }],
+    ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+    take: take + 1, // one extra row to detect whether another page exists
+    select: {
+      id: true,
+      title: true,
+      startLocation: true,
+      startTime: true,
+      distance: true,
+      duration: true,
+      elevationGain: true,
+      routeGeometry: true,
+      status: true,
+      pace: true,
+      difficulty: true,
+      maxParticipants: true,
+      creatorId: true,
+      startLat: true,
+      startLng: true,
       creator: {
-        select: { id: true, name: true, username: true, image: true },
+        select: { name: true, username: true },
       },
       participants: {
         where: { userId: session.user.id },
@@ -112,44 +139,49 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
       _count: {
         select: {
           participants: { where: { status: "APPROVED" } },
-          photos: true,
         },
       },
     },
   });
 
+  const hasMore = rows.length > take;
+  const pageRows = hasMore ? rows.slice(0, take) : rows;
+  // The cursor comes from the unfiltered page so the proximity filter below
+  // can never stall pagination on a page that filters down to zero rows.
+  const nextCursor = hasMore
+    ? (pageRows[pageRows.length - 1]?.id ?? null)
+    : null;
+
   const filtered = near
-    ? rides.filter((ride) => {
+    ? pageRows.filter((ride) => {
         if (ride.startLat === null || ride.startLng === null) return false;
         return (
           haversineKm(near.lat, near.lng, ride.startLat, ride.startLng) <=
           near.radiusKm
         );
       })
-    : rides;
+    : pageRows;
 
-  return filtered.map((ride) => ({
-    id: ride.id,
-    title: ride.title,
-    description: ride.description,
-    startLocation: ride.startLocation,
-    startTime: ride.startTime.toISOString(),
-    distance: ride.distance,
-    duration: ride.duration,
-    elevationGain: ride.elevationGain,
-    elevationLoss: ride.elevationLoss,
-    routeGeometry: ride.routeGeometry,
-    waypoints: ride.waypoints as unknown as Waypoint[],
-    status: ride.status,
-    pace: (ride.pace ?? null) as RideSummary["pace"],
-    difficulty: (ride.difficulty ?? null) as RideSummary["difficulty"],
-    maxParticipants: ride.maxParticipants,
-    recurrenceId: ride.recurrenceId,
-    createdAt: ride.createdAt.toISOString(),
-    creator: ride.creator,
-    participantCount: ride._count.participants,
-    isCreator: ride.creatorId === session.user.id,
-    participantStatus: ride.participants[0]?.status ?? null,
-    photoCount: ride._count.photos,
-  }));
+  return {
+    rides: filtered.map((ride) => ({
+      id: ride.id,
+      title: ride.title,
+      startLocation: ride.startLocation,
+      startTime: ride.startTime.toISOString(),
+      distance: ride.distance,
+      duration: ride.duration,
+      elevationGain: ride.elevationGain,
+      routeGeometry: ride.routeGeometry,
+      status: ride.status,
+      pace: (ride.pace ?? null) as RideListPage["rides"][number]["pace"],
+      difficulty: (ride.difficulty ??
+        null) as RideListPage["rides"][number]["difficulty"],
+      maxParticipants: ride.maxParticipants,
+      creator: ride.creator,
+      participantCount: ride._count.participants,
+      isCreator: ride.creatorId === session.user.id,
+      participantStatus: ride.participants[0]?.status ?? null,
+    })),
+    nextCursor,
+  };
 }

@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryRaw = vi.fn();
+const deleteMany = vi.fn();
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     get $queryRaw() {
       return queryRaw;
+    },
+    rateLimit: {
+      get deleteMany() {
+        return deleteMany;
+      },
     },
   },
 }));
@@ -26,6 +32,7 @@ describe("consumeRateLimit", () => {
   beforeEach(() => {
     queryRaw.mockReset();
     getClientIp.mockReset();
+    deleteMany.mockReset();
   });
 
   const window = { limit: 3, windowSec: 900 };
@@ -78,6 +85,21 @@ describe("consumeRateLimit", () => {
       allowed: true,
       retryAfterSec: 0,
     });
+  });
+
+  it("answers the same whether or not housekeeping blows up", async () => {
+    // Pruning runs on a random fraction of calls. It must not be able to
+    // change the verdict — the whole limiter used to sit in one try block,
+    // so a synchronous throw from the prune path failed the call open.
+    deleteMany.mockImplementation(() => {
+      throw new Error("relation does not exist");
+    });
+    queryRaw.mockResolvedValue([{ count: 9, expiresAt: future() }]);
+    const results = await Promise.all(
+      Array.from({ length: 200 }, () => consumeRateLimit("k", window)),
+    );
+    expect(results.every((r) => r.allowed === false)).toBe(true);
+    deleteMany.mockReset();
   });
 
   it("fails open when the upsert returns nothing", async () => {

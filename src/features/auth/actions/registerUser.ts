@@ -37,6 +37,29 @@ export async function registerUser(input: RegisterFormData) {
 
   const { firstName, lastName, username, email, password } = parsed.data;
 
+  // A second, narrower bucket, keyed by address as well as caller. The
+  // per-IP limit above caps how many accounts one source can create; this
+  // one caps how often a *single* address can be mailed, which is the part
+  // that turns a signup form into a way to bomb someone else's inbox.
+  // Neither replaces the other: on its own, a per-address key is trivially
+  // evaded by varying the address.
+  //
+  // After parsing, because it needs the address; before the MX lookup and
+  // the sign-up orchestration, which are the expensive steps.
+  const addressLimit = await limitByIp(
+    `register-address:${email.toLowerCase()}`,
+    {
+      limit: 5,
+      windowSec: 60 * 60,
+    },
+  );
+  if (!addressLimit.allowed) {
+    return {
+      success: false as const,
+      error: "Too many registration attempts. Please try again later.",
+    };
+  }
+
   const emailValidation = await validateEmailDomain(email);
   if (!emailValidation.valid) {
     return {

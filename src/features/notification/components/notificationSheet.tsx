@@ -236,11 +236,17 @@ const NotificationSheet = () => {
 
   const { notifications: unread } = useUnreadBadges();
 
-  const { data: notifications, isLoading } = useQuery<NotificationItem[]>({
+  const {
+    data: notifications,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<NotificationItem[]>({
     queryKey: ["notifications"],
     queryFn: () => getNotifications(),
     enabled: open,
     refetchInterval: open ? 10000 : false,
+    refetchIntervalInBackground: false,
   });
 
   const markSeen = useMutation({
@@ -267,7 +273,7 @@ const NotificationSheet = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative gap-2 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+          className="relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-primary/10 hover:text-foreground"
           aria-label={
             unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
           }
@@ -301,6 +307,15 @@ const NotificationSheet = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                Something went wrong loading your notifications.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

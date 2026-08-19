@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { leaveRide } from "../actions/leaveRide";
 import { requestJoinRide } from "../actions/requestJoinRide";
 import { withdrawJoinRequest } from "../actions/withdrawJoinRequest";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import type { RideParticipantStatus, RideStatus } from "../types";
 
 type RideJoinButtonProps = {
@@ -58,7 +59,7 @@ export function RideJoinButton({
         return result;
       },
       onSuccess: (result) => {
-        queryClient.invalidateQueries({ queryKey: ["rides"] });
+        invalidateRideQueries(queryClient);
         router.refresh();
         toast.success(result.message);
       },

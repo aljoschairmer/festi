@@ -107,12 +107,28 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
   let route: Awaited<ReturnType<typeof fetchRoute>>;
   try {
     if (generation) {
-      const engineRoutes = await getGenerationJobResult(generation.jobId);
-      const engineRoute = engineRoutes?.[generation.routeIndex];
-      if (!engineRoute) {
+      const engineResult = await getGenerationJobResult(generation.jobId);
+      if (engineResult.status === "expired") {
+        // The engine drops results after ~30 min — tell the user plainly
+        // instead of failing with a generic save error.
         return {
           success: false,
           error: "The generated route has expired. Please generate it again.",
+        };
+      }
+      if (engineResult.status === "running") {
+        return {
+          success: false,
+          error:
+            "The route generation is still running. Please try again in a moment.",
+        };
+      }
+      const engineRoute = engineResult.routes[generation.routeIndex];
+      if (!engineRoute) {
+        return {
+          success: false,
+          error:
+            "The generated route could not be found. Please generate it again.",
         };
       }
       route = toRouteResult(engineRoute);

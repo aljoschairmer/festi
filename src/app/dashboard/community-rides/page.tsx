@@ -1,9 +1,14 @@
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getRides } from "@/features/rides/actions/getRides";
 import { RideFilters } from "@/features/rides/components/rideFilters";
 
-export default function RidesPage() {
+export default async function RidesPage() {
+  // First page server-side so the list renders without a client round-trip;
+  // further pages are appended client-side via "Load more".
+  const initialPage = await getRides();
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
@@ -21,7 +26,7 @@ export default function RidesPage() {
         </Button>
       </div>
 
-      <RideFilters />
+      <RideFilters initialPage={initialPage} />
     </div>
   );
 }

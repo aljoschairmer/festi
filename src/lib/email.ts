@@ -31,6 +31,21 @@ interface SendEmailOptions {
   html: string;
 }
 
+/**
+ * Escapes user-controlled text before it is interpolated into an HTML email.
+ * `userName` comes straight from the registration form, so without this a
+ * name like `<a href="https://phish.example">…` is sent as raw HTML inside a
+ * legitimately signed Festi mail — a phishing relay through our own domain.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   const client = getResendClient();
 
@@ -51,20 +66,6 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   }
 
   return data;
-}
-
-/**
- * Escapes user-controlled text before it goes into an HTML mail body.
- * `userName` comes straight from the registration form, so without this a
- * name can inject markup (or a link) into mail we send in Festi's name.
- */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 export function getVerificationEmailHtml(url: string, userName: string) {

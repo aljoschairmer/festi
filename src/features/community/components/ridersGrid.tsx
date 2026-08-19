@@ -11,9 +11,12 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getRiders } from "../actions/getRiders";
 import type { Rider } from "../types";
 
@@ -28,6 +31,7 @@ export function RidersGrid() {
     data: riders = [],
     isLoading,
     isError,
+    refetch,
   } = useQuery<Rider[]>({
     queryKey: ["riders"],
     queryFn: () => getRiders(),
@@ -64,15 +68,32 @@ export function RidersGrid() {
   };
 
   if (isLoading)
-    return <p className="text-sm text-muted-foreground">Loading riders...</p>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["a", "b", "c"].map((key) => (
+          <Skeleton key={key} className="h-[84px] w-full rounded-xl" />
+        ))}
+      </div>
+    );
   if (isError)
-    return <p className="text-sm text-destructive">Failed to load riders.</p>;
+    return (
+      <div className="flex items-center gap-3">
+        <p className="text-sm text-destructive">Failed to load riders.</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
       <div className="relative max-w-md">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Label htmlFor="riders-search" className="sr-only">
+          Search riders
+        </Label>
         <Input
+          id="riders-search"
           placeholder="Search riders..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -96,7 +117,10 @@ export function RidersGrid() {
               className="duration-500 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
               style={{ animationDelay: `${(index % PAGE_SIZE) * 60}ms` }}
             >
-              <Link href={`/dashboard/community/u/${rider.id}`}>
+              <Link
+                href={`/dashboard/community/u/${rider.id}`}
+                prefetch={false}
+              >
                 <Card className="h-full transition hover:border-primary/40 hover:bg-muted/40">
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="size-12">

@@ -28,9 +28,12 @@ import { Input } from "@/components/ui/input";
 import { registerUser } from "../actions/registerUser";
 import { type RegisterFormData, registerSchema } from "../schemas";
 
-export function RegisterForm() {
+export function RegisterForm({ returnTo }: { returnTo?: string | null }) {
   const [verificationSent, setVerificationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>("");
+  const loginHref = returnTo
+    ? `/login?returnTo=${encodeURIComponent(returnTo)}`
+    : "/login";
 
   const {
     register,
@@ -116,7 +119,7 @@ export function RegisterForm() {
             <p className="text-sm text-muted-foreground">
               Already verified?{" "}
               <Link
-                href="/login"
+                href={loginHref}
                 className="font-medium text-primary hover:text-primary-hover"
               >
                 Sign in
@@ -293,7 +296,7 @@ export function RegisterForm() {
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={loginHref}
               className="font-medium text-primary hover:text-primary-hover"
             >
               Sign in

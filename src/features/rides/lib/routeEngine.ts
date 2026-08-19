@@ -265,20 +265,29 @@ export async function getGenerationJobStatus(
 }
 
 /**
- * Routes of a SUCCEEDED job, best candidate first. Null when the job or
- * its result is gone (TTL) — callers should ask the user to regenerate.
+ * Outcome of fetching a job's routes. The engine distinguishes a job
+ * whose result is gone (404 — unknown or TTL-expired) from one that is
+ * simply not finished yet (409), and callers should too: "expired" asks
+ * the user to regenerate, "running" asks them to wait.
  */
+export type GenerationJobResult =
+  | { status: "ok"; routes: EngineRoute[] }
+  | { status: "expired" }
+  | { status: "running" };
+
+/** Routes of a SUCCEEDED job, best candidate first. */
 export async function getGenerationJobResult(
   jobId: string,
-): Promise<EngineRoute[] | null> {
+): Promise<GenerationJobResult> {
   const response = await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}/result`,
     { headers: engineHeaders(), cache: "no-store" },
   );
-  if (response.status === 404 || response.status === 409) return null;
+  if (response.status === 404) return { status: "expired" };
+  if (response.status === 409) return { status: "running" };
   if (!response.ok) throw await toUserSafeError(response);
   const payload = (await response.json()) as { routes: EngineRoute[] };
-  return payload.routes;
+  return { status: "ok", routes: payload.routes };
 }
 
 /** Cancels a pending or running job. Best-effort: errors are swallowed. */

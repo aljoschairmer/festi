@@ -14,37 +14,24 @@ import { prisma } from "@/lib/prisma";
  * approved membership (the creator always keeps access to their own ride).
  */
 
-/** Group ids the user is an approved member of. */
-export async function approvedGroupIds(userId: string): Promise<string[]> {
-  const memberships = await prisma.groupMember.findMany({
-    where: { userId, status: "APPROVED" },
-    select: { groupId: true },
-  });
-  return memberships.map((m) => m.groupId);
-}
-
 /**
  * `where` fragment restricting a ride query to what `userId` may see.
- * Combine with the caller's own filters via `AND`.
+ * Combine with the caller's own filters via `AND`, never by spreading — the
+ * search and cursor filters use `OR` too, and a spread silently drops one.
+ *
+ * The membership test is a relation filter rather than a pre-fetched list of
+ * group ids: it costs no extra round trip, it cannot go stale between the
+ * two queries, and it stays one indexed `EXISTS` instead of an `IN` list
+ * that grows with every group the user joins.
  */
-export function rideVisibilityFilter(
-  userId: string,
-  groupIds: string[],
-): Prisma.RideWhereInput {
+export function rideVisibilityFilter(userId: string): Prisma.RideWhereInput {
   return {
     OR: [
       { groupId: null },
       { creatorId: userId },
-      ...(groupIds.length > 0 ? [{ groupId: { in: groupIds } }] : []),
+      { group: { members: { some: { userId, status: "APPROVED" } } } },
     ],
   };
-}
-
-/** Convenience: load the memberships and build the filter in one step. */
-export async function visibleRidesFilter(
-  userId: string,
-): Promise<Prisma.RideWhereInput> {
-  return rideVisibilityFilter(userId, await approvedGroupIds(userId));
 }
 
 /** Whether a single ride is readable by `userId`. */

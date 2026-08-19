@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -17,6 +16,7 @@ import { DeleteRideButton } from "@/features/rides/components/deleteRideButton";
 import { EditRideDialog } from "@/features/rides/components/editRideDialog";
 import { GpxDownloadButton } from "@/features/rides/components/gpxDownloadButton";
 import { PublicRideLink } from "@/features/rides/components/publicRideLink";
+import { RideDate } from "@/features/rides/components/rideDate";
 import { RideJoinButton } from "@/features/rides/components/rideJoinButton";
 import { RideParticipants } from "@/features/rides/components/rideParticipants";
 import { RidePhotos } from "@/features/rides/components/ridePhotos";
@@ -55,7 +55,7 @@ export default async function RideDetailPage({
           <h1 className="text-2xl font-bold tracking-tight">{ride.title}</h1>
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <CalendarIcon className="size-3.5" />
-            {format(new Date(ride.startTime), "EEEE, MMM d yyyy 'at' HH:mm")}
+            <RideDate startTime={ride.startTime} style="long" />
           </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {isCancelled && <Badge variant="destructive">Cancelled</Badge>}

@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 type ErrorComponentProps = {
   /** Human-readable detail, if the caller has one worth showing. */
   error?: string;
-  /** Wired to Next's `unstable_retry` so the segment can re-render. */
+  /**
+   * Shows a retry button. Wired to Next's `unstable_retry` from an
+   * `error.tsx`, or to `() => query.refetch()` from a client component.
+   */
   onRetry?: () => void;
   /** Shown under the message; useful when reporting a bug. */
   digest?: string;

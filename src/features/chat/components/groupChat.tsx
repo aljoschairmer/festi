@@ -52,6 +52,22 @@ const emojis = [
   "😡",
 ];
 
+/** Accessible names for the emoji picker buttons (the glyph alone is not one). */
+const emojiNames: Record<string, string> = {
+  "😀": "grinning face",
+  "😂": "face with tears of joy",
+  "😍": "smiling face with heart-eyes",
+  "🔥": "fire",
+  "🚴": "cyclist",
+  "💪": "flexed biceps",
+  "👍": "thumbs up",
+  "❤️": "red heart",
+  "🎉": "party popper",
+  "😎": "smiling face with sunglasses",
+  "😢": "crying face",
+  "😡": "enraged face",
+};
+
 export function GroupChat({ groupId }: { groupId: string }) {
   const form = useForm<MessageFormData>({
     resolver: zodResolver(MessageSchema),
@@ -70,7 +86,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
     ["group-chat", groupId],
   );
 
-  const { data, isLoading } = useQuery<ChatData>({
+  const { data, isLoading, isError, refetch } = useQuery<ChatData>({
     queryKey: ["group-chat", groupId],
     queryFn: () => getGroupMessages(groupId),
     refetchInterval,
@@ -102,6 +118,15 @@ export function GroupChat({ groupId }: { groupId: string }) {
       <div className="  flex-1 space-y-4 overflow-y-auto p-4">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading messages...</p>
+        ) : isError ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3">
+            <p className="text-sm text-primary">
+              Failed to load the conversation.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
             No messages yet. Start the conversation.
@@ -188,7 +213,12 @@ export function GroupChat({ groupId }: { groupId: string }) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="icon">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Pick emoji"
+            >
               <SmileIcon className="size-4" />
             </Button>
           </PopoverTrigger>
@@ -201,6 +231,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label={emojiNames[emoji] ?? emoji}
                   onClick={() => {
                     const currentValue = form.getValues("content");
 
@@ -220,6 +251,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
         <Button
           disabled={mutation.isPending || !form.watch("content").trim()}
           type="submit"
+          aria-label="Send message"
         >
           <SendIcon className="size-4" />
         </Button>

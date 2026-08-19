@@ -3,53 +3,52 @@ import { describe, expect, it, vi } from "vitest";
 // `visibility.ts` imports the Prisma client at module scope, so the mock has
 // to be registered before the import is resolved.
 const findFirst = vi.fn();
-const findMany = vi.fn();
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     groupMember: {
       get findFirst() {
         return findFirst;
       },
-      get findMany() {
-        return findMany;
-      },
     },
   },
 }));
 
-const { rideVisibilityFilter, canViewRide, approvedGroupIds } = await import(
-  "./visibility"
-);
+const { rideVisibilityFilter, canViewRide } = await import("./visibility");
 
 /**
- * These guard the fix for A-02: rides posted to a group used to appear in
- * every signed-in user's list and were joinable by anyone.
+ * These guard the fix for A-02 / SEC-11: rides posted to a group used to
+ * appear in every signed-in user's list and were joinable by anyone.
  */
 describe("rideVisibilityFilter", () => {
   it("always allows rides without a group", () => {
-    const where = rideVisibilityFilter("user-1", []);
-    expect(where.OR).toContainEqual({ groupId: null });
+    expect(rideVisibilityFilter("user-1").OR).toContainEqual({ groupId: null });
   });
 
   it("always allows the user's own rides", () => {
-    const where = rideVisibilityFilter("user-1", []);
-    expect(where.OR).toContainEqual({ creatorId: "user-1" });
-  });
-
-  it("allows group rides only for the groups the user belongs to", () => {
-    const where = rideVisibilityFilter("user-1", ["group-a", "group-b"]);
-    expect(where.OR).toContainEqual({
-      groupId: { in: ["group-a", "group-b"] },
+    expect(rideVisibilityFilter("user-1").OR).toContainEqual({
+      creatorId: "user-1",
     });
   });
 
-  it("omits the group clause entirely without memberships", () => {
-    // An empty `in: []` would be harmless but pointless; more importantly it
-    // must never widen to "any group".
-    const where = rideVisibilityFilter("user-1", []);
-    const clauses = JSON.stringify(where.OR);
-    expect(clauses).not.toContain('groupId":{"in');
-    expect(where.OR).toHaveLength(2);
+  it("allows group rides only through an approved membership of that user", () => {
+    expect(rideVisibilityFilter("user-1").OR).toContainEqual({
+      group: { members: { some: { userId: "user-1", status: "APPROVED" } } },
+    });
+  });
+
+  it("offers exactly three ways in, and no unconditional one", () => {
+    // The clause is the whole boundary: any extra branch is a way to see a
+    // ride, so a new one has to be a deliberate change, not a silent one.
+    const where = rideVisibilityFilter("user-1");
+    expect(where.OR).toHaveLength(3);
+    expect(JSON.stringify(where.OR)).toContain('"status":"APPROVED"');
+  });
+
+  it("never matches a group ride on membership alone, ignoring status", () => {
+    // A `some: { userId }` without the status would let a pending join
+    // request read the group's rides.
+    const serialised = JSON.stringify(rideVisibilityFilter("user-1").OR);
+    expect(serialised).not.toContain('{"userId":"user-1"}}');
   });
 });
 
@@ -102,22 +101,6 @@ describe("canViewRide", () => {
     expect(findFirst).toHaveBeenLastCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ status: "APPROVED" }),
-      }),
-    );
-  });
-});
-
-describe("approvedGroupIds", () => {
-  it("asks only for approved memberships of that user", async () => {
-    findMany.mockResolvedValueOnce([
-      { groupId: "group-a" },
-      { groupId: "group-b" },
-    ]);
-    const ids = await approvedGroupIds("user-1");
-    expect(ids).toEqual(["group-a", "group-b"]);
-    expect(findMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        where: { userId: "user-1", status: "APPROVED" },
       }),
     );
   });

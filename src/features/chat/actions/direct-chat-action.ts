@@ -5,6 +5,7 @@ import { isOnline } from "@/features/followers/lib/presence";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { limitByUser } from "@/lib/rateLimit";
 import { type DirectMessageFormData, DirectMessageSchema } from "../schemas";
 
 const partnerSelect = {
@@ -230,6 +231,16 @@ export async function sendDirectMessage(values: DirectMessageFormData) {
   const session = await getCurrentUser();
   if (!session) {
     throw new Error("You must be signed in.");
+  }
+
+  const rateLimitResult = await limitByUser("chat", session.user.id, {
+    limit: 30,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    throw new Error(
+      "You're sending messages too quickly. Please wait a moment.",
+    );
   }
 
   const validatedFields = DirectMessageSchema.safeParse(values);

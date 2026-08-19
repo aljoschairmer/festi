@@ -14,6 +14,7 @@ import {
   DEFAULT_MAP_ZOOM,
   getMapStyle,
 } from "../lib/mapStyle";
+import { guardTerrainSource } from "../lib/terrain";
 import type { MapDot, Waypoint } from "../types";
 
 type RideMapProps = {
@@ -199,6 +200,7 @@ export function RideMap({
         doubleClickZoom: !interactiveRef.current,
       });
       mapRef.current = map;
+      guardTerrainSource(map);
 
       map.addControl(new maplibregl.NavigationControl(), "top-right");
 

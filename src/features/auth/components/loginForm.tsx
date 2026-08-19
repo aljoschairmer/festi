@@ -30,9 +30,10 @@ import { sessionQueryKey } from "../hooks/use-session";
 import { type LoginFormData, loginSchema } from "../schemas";
 import { formatBanExpiry } from "../utils/formatBanExpiry";
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const destination = returnTo ?? "/dashboard";
 
   const {
     register,
@@ -53,20 +54,31 @@ export function LoginForm() {
         password: data.password,
       });
       if (result.error) {
-        console.log(result.error);
+        if (result.error.code === "BANNED_USER") {
+          // Ban details are only disclosed after the credentials have been
+          // verified (better-auth already checked them for BANNED_USER).
+          const ban = await getBanInfo(data.email, data.password);
+          throw Object.assign(
+            new Error(result.error.message || "Sign in failed"),
+            { code: result.error.code, ban },
+          );
+        }
         throw Object.assign(
           new Error(result.error.message || "Sign in failed"),
-          { code: result.error.code, email: data.email },
+          { code: result.error.code },
         );
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      router.push("/dashboard");
+      router.push(destination);
       router.refresh();
     },
-    onError: async (error) => {
-      const err = error as Error & { code?: string; email?: string };
+    onError: (error) => {
+      const err = error as Error & {
+        code?: string;
+        ban?: { reason: string | null; expires: string | null } | null;
+      };
 
       if (err.code === "EMAIL_NOT_VERIFIED") {
         toast.error("Email not verified", {
@@ -77,16 +89,16 @@ export function LoginForm() {
       }
 
       if (err.code === "BANNED_USER") {
-        const ban = await getBanInfo(err.email ?? "");
         toast.error("Your account has been banned.", {
           description: (
             <div>
               <p>
-                <strong>Reason: </strong> {ban?.reason ?? "No reason provided"}
+                <strong>Reason: </strong>{" "}
+                {err.ban?.reason ?? "No reason provided"}
               </p>
               <p>
                 <strong>Duration: </strong>
-                {formatBanExpiry(ban?.expires ?? null)}
+                {formatBanExpiry(err.ban?.expires ?? null)}
               </p>
             </div>
           ),
@@ -181,7 +193,11 @@ export function LoginForm() {
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
-              href="/register"
+              href={
+                returnTo
+                  ? `/register?returnTo=${encodeURIComponent(returnTo)}`
+                  : "/register"
+              }
               className="font-medium text-primary hover:text-primary-hover"
             >
               Sign up

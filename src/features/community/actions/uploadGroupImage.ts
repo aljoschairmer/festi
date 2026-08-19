@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { validateImageUpload } from "@/lib/image";
 import { prisma } from "@/lib/prisma";
 import { publicUrl, putObject } from "@/lib/r2";
+import { limitByUser } from "@/lib/rateLimit";
 import { COMMUNITY_PATH, groupPath } from "../lib/routes";
 
 type Result =
@@ -24,6 +25,17 @@ export async function uploadGroupImage(
   const session = await getCurrentUser();
   if (!session) {
     return { success: false, error: "You must be signed in." };
+  }
+
+  const rateLimitResult = await limitByUser("upload", session.user.id, {
+    limit: 20,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    return {
+      success: false,
+      error: "Too many uploads. Please try again in a minute.",
+    };
   }
 
   if (!groupId) {

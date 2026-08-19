@@ -9,6 +9,7 @@ import type {
 } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import { getMapStyle } from "@/features/rides/lib/mapStyle";
+import { guardTerrainSource } from "@/features/rides/lib/terrain";
 import { eventColor, eventLocation, formatEventDate } from "../lib/eventTypes";
 import type { CalendarEvent } from "../types";
 
@@ -146,6 +147,7 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
         attributionControl: { compact: true },
       });
       mapRef.current = map;
+      guardTerrainSource(map);
 
       map.addControl(new maplibregl.NavigationControl(), "top-right");
       map.addControl(

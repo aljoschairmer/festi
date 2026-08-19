@@ -8,13 +8,18 @@ export async function checkUsernameAvailable(username: string): Promise<{
   error?: string;
 }> {
   // Unauthenticated and enumerable: without a cap this action walks the
-  // whole username space. Generous enough for a signup form typing checks.
-  const limit = await limitByIp("username-check", {
-    limit: 30,
-    windowSec: 60,
-  });
+  // whole username space. Generous enough for a signup form's typing checks;
+  // `registerUser` has its own stricter limit on top.
+  //
+  // A limited call reports the limit rather than answering "available": the
+  // check did not run, and the only consumer surfaces this `error` verbatim,
+  // so a cheerful "available" here would only fail at submit instead.
+  const limit = await limitByIp("username-check", { limit: 30, windowSec: 60 });
   if (!limit.allowed) {
-    return { available: true };
+    return {
+      available: false,
+      error: "Too many attempts. Please try again in a minute.",
+    };
   }
 
   try {

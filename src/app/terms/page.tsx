@@ -28,18 +28,24 @@ export default function TermsOfServicePage() {
           <p className="text-sm">Last updated: {LAST_UPDATED}</p>
         </header>
 
-        <section className="rounded-lg border border-border bg-card/50 p-4 text-sm">
-          This is a general template provided for convenience and does not
-          constitute legal advice. Please have it reviewed by a qualified lawyer
-          and adapt it to your service before relying on it in production.
+        {/* TODO(Betreiber): Diese AGB sind eine ungeprüfte Vorlage. Vor dem
+            Launch von einer Fachanwältin/einem Fachanwalt prüfen lassen und
+            alle [TODO: ...]-Marker auf dieser Seite ersetzen. */}
+        <section className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
+          This is an unreviewed template and does not constitute legal advice.
+          Before going live, have it reviewed by a qualified lawyer and replace
+          every <Todo>…</Todo> marker on this page with the operator's actual
+          details.
         </section>
 
         <Section title="1. Scope and Provider">
           <p>
             These Terms of Service ("Terms") govern the use of the Festi
-            platform ("Service"), operated by [Operator name], [Address],
-            Germany ("we", "us"). By creating an account or using the Service,
-            you agree to these Terms.
+            platform ("Service"), operated by{" "}
+            {/* TODO(Betreiber): Vollständiger Name/Firma, Rechtsform und
+                ladungsfähige Anschrift eintragen. */}
+            <Todo>operator name, legal form and address</Todo> ("we", "us"). By
+            creating an account or using the Service, you agree to these Terms.
           </p>
         </Section>
 
@@ -164,10 +170,25 @@ export default function TermsOfServicePage() {
         </Section>
 
         <Section title="13. Contact">
-          <p>Questions about these Terms: [contact@festicycling.com].</p>
+          {/* TODO(Betreiber): Kontakt-E-Mail-Adresse des Betreibers eintragen. */}
+          <p>
+            Questions about these Terms: <Todo>operator contact email</Todo>.
+          </p>
         </Section>
       </article>
     </main>
+  );
+}
+
+/**
+ * Visible placeholder for details the operator must fill in before launch.
+ * Renders highlighted so missing entries cannot be overlooked.
+ */
+function Todo({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-600 dark:text-amber-400">
+      [TODO: {children}]
+    </span>
   );
 }
 

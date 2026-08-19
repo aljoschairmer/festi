@@ -22,7 +22,10 @@ const UserMainComponent = () => {
 
   if (query.isError) {
     return (
-      <ErrorComponent error={query.error?.message ?? "An error occurred"} />
+      <ErrorComponent
+        error={query.error?.message ?? "An error occurred"}
+        onRetry={() => query.refetch()}
+      />
     );
   }
 

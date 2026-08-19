@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseLocalDateTime } from "../lib/format";
 
 export const waypointSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -88,6 +89,19 @@ export const generateRouteSchema = z
 
 export type GenerateRouteInput = z.infer<typeof generateRouteSchema>;
 
+/**
+ * Ride start time sent by the client. Accepts a `Date`, an ISO string
+ * with offset (what the ride forms submit — the browser resolves the
+ * user's timezone), or a naive `datetime-local` value as a documented
+ * fallback (see `parseLocalDateTime`).
+ */
+const rideStartTimeSchema = z.preprocess(
+  (value) => (typeof value === "string" ? parseLocalDateTime(value) : value),
+  z.date().refine((date) => date.getTime() > Date.now(), {
+    message: "Start time must be in the future.",
+  }),
+);
+
 /** Maximum number of weekly instances a recurring ride series can have. */
 export const MAX_RECURRENCE_WEEKS = 12;
 
@@ -122,9 +136,7 @@ export const createRideSchema = z.object({
     .max(1000, "Description must be at most 1000 characters")
     .optional()
     .or(z.literal("")),
-  startTime: z.coerce.date().refine((date) => date.getTime() > Date.now(), {
-    message: "Start time must be in the future.",
-  }),
+  startTime: rideStartTimeSchema,
   startLocation: z
     .string()
     .trim()
@@ -214,9 +226,7 @@ export const updateRideSchema = z.object({
     .max(5000, "Description must be at most 5000 characters")
     .optional()
     .or(z.literal("")),
-  startTime: z.coerce.date().refine((date) => date.getTime() > Date.now(), {
-    message: "Start time must be in the future.",
-  }),
+  startTime: rideStartTimeSchema,
   pace: ridePaceSchema.nullish(),
   difficulty: rideDifficultySchema.nullish(),
   maxParticipants: maxParticipantsSchema,
@@ -255,6 +265,10 @@ export const rideFiltersSchema = z.object({
   nearLat: z.number().min(-90).max(90).optional(),
   nearLng: z.number().min(-180).max(180).optional(),
   radiusKm: z.number().min(1).max(500).optional(),
+  /** Cursor pagination: id of the last ride from the previous page. */
+  cursor: z.string().min(1).optional(),
+  /** Page size (server defaults to 20 when omitted). */
+  take: z.number().int().min(1).max(50).optional(),
 });
 
 export type RideFiltersInput = z.infer<typeof rideFiltersSchema>;

@@ -1,0 +1,11 @@
+-- Make the unique constraint on "user"."email" explicit at the field level
+-- (`email String @unique`), replacing the model-level `@@unique([email])`.
+-- Both map to the same index "user_email_key", which already exists in the
+-- database (created by 20260702141902_add_username_field), so this is a
+-- guarded no-op.
+--
+-- NOTE: This migration was written by hand because the change was authored
+-- in a sandbox without a database connection. Run `npx prisma migrate dev`
+-- once a database is available to confirm the schema is in sync (it should
+-- report no further changes).
+CREATE UNIQUE INDEX IF NOT EXISTS "user_email_key" ON "user"("email");

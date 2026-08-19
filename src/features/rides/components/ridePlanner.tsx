@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -34,6 +34,7 @@ import { calculateRoute } from "../actions/calculateRoute";
 import { createRide } from "../actions/createRide";
 import { getMyRideGroups } from "../actions/getMyRideGroups";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import { type RideFormValues, rideFormSchema } from "../schemas";
 import type {
   PlaceResult,
@@ -131,6 +132,7 @@ export function RidePlanner({
   const highlights = initialGenerated?.highlights ?? [];
   const streetPoints = initialGenerated?.streetPoints ?? [];
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(
     initialRoute || initialGenerated ? "build" : "start",
   );
@@ -225,6 +227,10 @@ export function RidePlanner({
     mutationFn: async (values: RideFormValues) => {
       const result = await createRide({
         ...values,
+        // The datetime-local value has no offset; resolving it in the
+        // browser timezone and sending full ISO keeps the intended wall
+        // time intact across the client→server boundary.
+        startTime: new Date(values.startTime).toISOString(),
         startLocation: startPlace?.name ?? "",
         waypoints,
         profile,
@@ -241,6 +247,7 @@ export function RidePlanner({
       return result;
     },
     onSuccess: (result) => {
+      invalidateRideQueries(queryClient);
       toast.success(result.message);
       router.push(`/dashboard/community-rides/${result.rideId}`);
     },

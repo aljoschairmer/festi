@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { BikeIcon, ClockIcon, MapPinIcon, MountainIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +9,16 @@ import {
   formatDuration,
   formatElevation,
   formatPace,
+  formatRideDate,
 } from "../lib/format";
-import type { RideSummary } from "../types";
+import type { RideListItem } from "../types";
 import { RideJoinButton } from "./rideJoinButton";
 import { RouteThumbnail } from "./routeThumbnail";
 
+// RideSummary is a superset of RideListItem, so callers with a full summary
+// (group rides, timelines) can keep passing it.
 type RideCardProps = {
-  ride: RideSummary;
+  ride: RideListItem;
 };
 
 export function RideCard({ ride }: RideCardProps) {
@@ -42,7 +44,7 @@ export function RideCard({ ride }: RideCardProps) {
               {ride.title}
             </Link>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(ride.startTime), "EEEE, MMM d 'at' HH:mm")}
+              {formatRideDate(ride.startTime)}
             </p>
             {(ride.pace || ride.difficulty) && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">

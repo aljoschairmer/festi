@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/features/auth/guards";
-import { visibleRidesFilter } from "@/features/rides/lib/visibility";
+import { rideVisibilityFilter } from "@/features/rides/lib/visibility";
 import type { RideSummary, Waypoint } from "@/features/rides/types";
 import { prisma } from "@/lib/prisma";
 import type { FeedItem, PostSummary } from "../types";
@@ -58,7 +58,7 @@ export async function getFeed(
     : {};
 
   // Group rides stay inside their group, even in the timeline.
-  const rideVisibility = await visibleRidesFilter(userId);
+  const rideVisibility = rideVisibilityFilter(userId);
 
   // One extra row per source tells us whether older items remain.
   const [posts, rides] = await Promise.all([

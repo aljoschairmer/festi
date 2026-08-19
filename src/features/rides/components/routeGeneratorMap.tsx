@@ -57,6 +57,12 @@ const AVOID_OPTIONS = [
 
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
 
+/**
+ * Consecutive poll failures tolerated before the generation is surfaced
+ * as failed — a single dropped status request must not kill a running job.
+ */
+const MAX_POLL_FAILURES = 3;
+
 /** Display names for the engine's semantic route labels. */
 const LABEL_TEXT: Record<string, string> = {
   FASTEST: "Fastest",
@@ -167,6 +173,9 @@ export function RouteGeneratorMap() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [locating, setLocating] = useState(false);
+  /** Set only after MAX_POLL_FAILURES consecutive poll failures. */
+  const [pollError, setPollError] = useState<string | null>(null);
+  const pollFailuresRef = useRef(0);
   const requestKeyRef = useRef<string>(crypto.randomUUID());
   const activeJobRef = useRef<string | null>(null);
 
@@ -204,6 +213,8 @@ export function RouteGeneratorMap() {
     },
     onSuccess: (result) => {
       activeJobRef.current = result.jobId;
+      pollFailuresRef.current = 0;
+      setPollError(null);
       setJobId(result.jobId);
       setSelectedIndex(0);
     },
@@ -215,9 +226,14 @@ export function RouteGeneratorMap() {
     queryFn: () => getRouteGenerationStatus(jobId as string),
     enabled: jobId !== null,
     refetchInterval: (query) => {
+      if (pollError) return false;
       const data = query.state.data;
       if (!data) return 1000;
-      if (!data.success) return false;
+      // Keep polling through transient failures until the tolerance
+      // counter (incremented in the effects below) is exhausted.
+      if (!data.success) {
+        return pollFailuresRef.current < MAX_POLL_FAILURES ? 1000 : false;
+      }
       return data.status.state === "PENDING" || data.status.state === "RUNNING"
         ? 1000
         : false;
@@ -226,22 +242,35 @@ export function RouteGeneratorMap() {
 
   const statusData = statusQuery.data;
   useEffect(() => {
-    if (statusData && !statusData.success) {
-      toast.error(statusData.error);
-      setJobId(null);
+    if (!statusData) return;
+
+    // Two different failures hide behind this one poll, and each needs the
+    // other's handling.
+    //
+    // A failed *response* (network blip, a 500) is usually transient, so it
+    // is counted rather than surfaced: only MAX_POLL_FAILURES in a row are
+    // worth interrupting the user for, and then persistently, because a
+    // toast that fades is easy to miss.
+    if (!statusData.success) {
+      pollFailuresRef.current += 1;
+      if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+        setPollError(statusData.error);
+        toast.error(statusData.error, { duration: Number.POSITIVE_INFINITY });
+        setJobId(null);
+      }
       return;
     }
-    // A job can also end in FAILED or CANCELLED with a perfectly successful
-    // *response*. Without this branch the spinner simply stopped and the
-    // panel sat there empty, with no idea why nothing appeared.
-    const state = statusData?.success ? statusData.status.state : null;
+
+    // A successful response can still carry a job that ended in FAILED or
+    // CANCELLED. Treating "success" as "keep waiting" is what left the
+    // spinner running forever over an empty panel with no explanation.
+    pollFailuresRef.current = 0;
+    const state = statusData.status.state;
     if (state === "FAILED") {
       toast.error(
-        statusData?.success
-          ? (statusData.status.errorDetail ??
-              statusData.status.message ??
-              "The route generator could not build a route here.")
-          : "The route generator could not build a route here.",
+        statusData.status.errorDetail ??
+          statusData.status.message ??
+          "The route generator could not build a route here.",
       );
       setJobId(null);
     } else if (state === "CANCELLED") {
@@ -250,12 +279,39 @@ export function RouteGeneratorMap() {
     }
   }, [statusData]);
 
+  // Transport-level failures of the status request itself (the action
+  // threw instead of returning success:false) count against the same
+  // tolerance — errorUpdatedAt ticks once per failed fetch.
+  const transportErrorAt = statusQuery.errorUpdatedAt;
+  useEffect(() => {
+    if (transportErrorAt === 0) return;
+    pollFailuresRef.current += 1;
+    if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+      const message =
+        "Lost connection while checking the route generation. Please try again.";
+      setPollError(message);
+      toast.error(message, { duration: Number.POSITIVE_INFINITY });
+    }
+  }, [transportErrorAt]);
+
   const status = statusData?.success ? statusData.status : null;
   const options: GeneratedRouteOption[] | null =
     status?.state === "SUCCEEDED" ? (status.options ?? null) : null;
+  // Terminal engine states are surfaced explicitly instead of silently
+  // resetting the panel — a job cancelled by `regenerate`/`switchMode`
+  // never shows up here because those already moved `jobId` on.
+  const terminalFailure =
+    status?.state === "FAILED" || status?.state === "CANCELLED"
+      ? (status.errorDetail ??
+        (status.state === "CANCELLED"
+          ? "The route generation was cancelled."
+          : "Route generation failed. Please try again."))
+      : null;
+  const generationError = pollError ?? terminalFailure;
   const generating =
     submitMutation.isPending ||
     (jobId !== null &&
+      generationError === null &&
       (!status || status.state === "PENDING" || status.state === "RUNNING"));
 
   /**
@@ -279,6 +335,8 @@ export function RouteGeneratorMap() {
       void cancelRouteGeneration(activeJobRef.current);
       activeJobRef.current = null;
     }
+    pollFailuresRef.current = 0;
+    setPollError(null);
     requestKeyRef.current = crypto.randomUUID();
     setJobId(null);
     submitMutation.mutate({ from, to: mode === "atob" ? to : null });
@@ -308,6 +366,8 @@ export function RouteGeneratorMap() {
     }
     setMode(next);
     setEnd(null);
+    pollFailuresRef.current = 0;
+    setPollError(null);
     setJobId(null);
     activeJobRef.current = null;
   };
@@ -742,6 +802,23 @@ export function RouteGeneratorMap() {
               <Loader2Icon className="size-3.5 animate-spin" />
               {status?.message ?? "Generating routes…"}
             </p>
+          )}
+          {generationError && (
+            <div className="flex flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+              <p className="text-destructive text-xs font-medium">
+                {generationError}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => regenerate()}
+              >
+                <SparklesIcon className="size-3.5" />
+                Try again
+              </Button>
+            </div>
           )}
         </div>
 

@@ -14,7 +14,7 @@ export function DirectChatHeaderButton() {
         <Button
           variant="ghost"
           size="sm"
-          className="relative gap-2 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+          className="relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-primary/10 hover:text-foreground"
           aria-label={
             unread > 0 ? `Open messages, ${unread} unread` : "Open messages"
           }

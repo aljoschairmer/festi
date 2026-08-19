@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getGroups } from "../actions/getGroups";
 import type { Group } from "../types";
 import { GroupJoinButton } from "./groupJoinButton";
@@ -57,7 +59,13 @@ export function GroupsGrid() {
   };
 
   if (isLoading)
-    return <p className="text-sm text-muted-foreground">Loading groups...</p>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["a", "b", "c"].map((key) => (
+          <Skeleton key={key} className="h-[84px] w-full rounded-xl" />
+        ))}
+      </div>
+    );
   if (isError)
     return <p className="text-sm text-destructive">Failed to load groups.</p>;
 
@@ -65,7 +73,11 @@ export function GroupsGrid() {
     <div className="space-y-6">
       <div className="relative max-w-md">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Label htmlFor="groups-search" className="sr-only">
+          Search groups
+        </Label>
         <Input
+          id="groups-search"
           placeholder="Search groups..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
