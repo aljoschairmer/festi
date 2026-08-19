@@ -341,6 +341,12 @@ Kein `package.json`, kein Lockfile, keine `.gitignore`, keine Tests, keine CI. E
 
   Die drei UI-Bibliotheken `radix-ui`, `@base-ui/react` und `@shadcn/react` parallel zu führen ist zudem strategisch fragwürdig: zwei davon je genau eine Komponente, und beide Komponenten sind tot.
 - **Fix:** `shadcn` nach `devDependencies` verschieben (oder ganz entfernen und per `npx shadcn@latest` aufrufen). Nach Aufräumen von E-15 fallen `@base-ui/react` und `@shadcn/react` ersatzlos weg — dann ist `radix-ui` die einzige Primitive-Bibliothek.
+- **Status:** behoben. `shadcn` liegt jetzt unter `devDependencies`. Mit E-15 fielen **sieben**
+  Laufzeit-Pakete weg, nicht zwei: `@base-ui/react` (combobox), `@shadcn/react` (message-scroller),
+  `embla-carousel-react` (carousel), `input-otp`, `react-day-picker` (calendar),
+  `react-resizable-panels` (resizable) und `vaul` (drawer) — jedes hatte genau eine Import-Stelle,
+  und die war eine tote Komponente. `dependencies` sinkt von 37 auf 30; `radix-ui` ist die einzige
+  verbleibende Primitive-Bibliothek. `cmdk` bleibt: `command.tsx` wird von `bikeCombobox.tsx` genutzt.
 
 ### E-15 — 31 ungenutzte UI-Komponenten (3418 LOC) und 4 komplett tote Module · **P3**
 - **Ort:** Komplett unreferenziert (kein Import irgendwo in `src/`):
@@ -351,6 +357,15 @@ Kein `package.json`, kein Lockfile, keine `.gitignore`, keine Tests, keine CI. E
   - 31 Dateien in `src/components/ui/`: `accordion`, `aspect-ratio`, `attachment`, `breadcrumb`, `bubble`, `button-group`, `calendar`, `carousel`, `collapsible`, `combobox`, `context-menu`, `direction`, `drawer`, `hover-card`, `input-otp`, `item`, `kbd`, `marker`, `menubar`, `message`, `message-scroller`, `native-select`, `navigation-menu`, `pagination`, `progress`, `radio-group`, `resizable`, `scroll-area`, `spinner`, `toggle-group` — zusammen **3418 LOC**. (`toggle.tsx` selbst wird genutzt: `src/features/users/components/riderDetailsEditor.tsx:19`.)
 - **Befund:** Die beiden `utils`-Dateien sind besonders auffällig, weil sie **dieselbe Funktion zweimal** implementieren (relative Datumsformatierung) und beide tot sind — die produktive Variante läuft über `date-fns`. Zusätzlich: 64 exportierte Symbole in nicht-toten Dateien werden nirgends importiert, Schwerpunkte `src/features/rides/schemas/index.ts` (14), `src/features/rides/lib/routeEngine.ts` (11, überwiegend Typ-Bausteine die nur dateiintern kombiniert werden — unkritisch), `src/features/users/schemas/index.ts` (8, u. a. `profileFormSchema`, `ProfileFormValues`, `ALLOWED_ROLES`, `SKILL_LEVEL_VALUES`, `RIDING_STYLE_VALUES`).
 - **Fix:** Die 4 toten Module löschen. Bei `src/components/ui/**` differenzieren: das sind shadcn-Vendor-Dateien, die man bewusst auf Vorrat halten kann — dann aber dokumentieren (Zeile in `AGENTS.md`), damit die nächste Analyse nicht wieder darüber stolpert. `combobox.tsx` und `message-scroller.tsx` sollten in jedem Fall weg, weil sie als einzige zwei ganze npm-Pakete am Leben halten (E-14). Die ungenutzten Schema-Exports mit `knip` oder `ts-prune` in einem Aufwasch prüfen.
+- **Status:** behoben. 34 Dateien, **3507 Zeilen** gelöscht. Vor dem Löschen nachgeprüft, nicht der
+  Liste vertraut: für jede Datei in `src/components/ui/` wurde gegen
+  `from "(@/components/ui/|./|../ui/)<name>"` gesucht. Ergebnis: **30**, nicht 31 — die Überschrift
+  war um eins daneben, die Aufzählung darunter stimmte. `command.tsx` bleibt (`bikeCombobox.tsx`),
+  `toggle.tsx` bleibt (`riderDetailsEditor.tsx`). Danach Lint, Typecheck, 28 Tests und ein voller
+  `next build` grün.
+- **Nachtrag:** Statt „auf Vorrat halten" gelöscht, weil die Dateien nicht nur Zeilen sind: sie hielten
+  sieben npm-Pakete im Produktions-Abhängigkeitsgraphen (siehe E-14). Zurückholen kostet
+  `npx shadcn@latest add <name>`.
 
 ### E-16 — Stale `eslint-disable`-Kommentare in einem Biome-Projekt · **P3**
 - **Ort:** `src/features/community/components/editGroupDialog.tsx:180`, `src/features/community/components/createGroupDialog.tsx:160`.
