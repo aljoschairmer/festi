@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { deleteObject, keyFromPublicUrl } from "@/lib/r2";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -15,7 +16,11 @@ export async function deletePost(postId: string): Promise<Result> {
 
   const post = await prisma.post.findUnique({
     where: { id: postId },
-    select: { id: true, authorId: true },
+    select: {
+      id: true,
+      authorId: true,
+      images: { select: { url: true } },
+    },
   });
 
   if (!post) {
@@ -27,6 +32,13 @@ export async function deletePost(postId: string): Promise<Result> {
   }
 
   await prisma.post.delete({ where: { id: postId } });
+
+  await Promise.allSettled(
+    post.images
+      .map((image) => keyFromPublicUrl(image.url))
+      .filter((key): key is string => key !== null)
+      .map((key) => deleteObject(key)),
+  );
 
   revalidatePath("/dashboard");
 

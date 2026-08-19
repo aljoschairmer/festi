@@ -61,7 +61,6 @@ export async function respondToJoinRequest(
     };
   }
 
-  // Creators can also decline riders who are still on the waitlist.
   if (!approve && participant.status === "APPROVED") {
     return {
       success: false,
@@ -85,11 +84,25 @@ export async function respondToJoinRequest(
   }
 
   const status = approve ? "APPROVED" : "REJECTED";
+  const cap = participant.ride.maxParticipants;
 
-  await prisma.rideParticipant.update({
-    where: { id: participantId },
-    data: { status },
+  const overbooked = await prisma.$transaction(async (tx) => {
+    if (approve && cap !== null) {
+      const approvedCount = await tx.rideParticipant.count({
+        where: { rideId: participant.ride.id, status: "APPROVED" },
+      });
+      if (approvedCount >= cap) return true;
+    }
+    await tx.rideParticipant.update({
+      where: { id: participantId },
+      data: { status },
+    });
+    return false;
   });
+
+  if (overbooked) {
+    return { success: false, error: "This ride is full." };
+  }
 
   revalidatePath(`/dashboard/community-rides/${participant.ride.id}`);
 

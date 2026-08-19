@@ -33,10 +33,9 @@ export function ProfileFollowStats({
   const { data } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
-    refetchInterval: 30_000,
+    enabled: openList !== null,
   });
 
-  // Everyone who follows me / everyone I follow (mutuals belong to both).
   const followers = data ? [...data.mutual, ...data.followers] : [];
   const following = data ? [...data.mutual, ...data.following] : [];
 
@@ -49,7 +48,7 @@ export function ProfileFollowStats({
         <button
           type="button"
           onClick={() => setOpenList("followers")}
-          className="transition-colors hover:text-red-500"
+          className="transition-colors hover:text-primary"
         >
           <span className="font-semibold text-foreground">
             {shownFollowers}
@@ -62,7 +61,7 @@ export function ProfileFollowStats({
         <button
           type="button"
           onClick={() => setOpenList("following")}
-          className="transition-colors hover:text-red-500"
+          className="transition-colors hover:text-primary"
         >
           <span className="font-semibold text-foreground">
             {shownFollowing}
@@ -119,6 +118,7 @@ function FollowUserList({
         <Link
           key={user.id}
           href={`/dashboard/community/u/${user.id}`}
+          prefetch={false}
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-muted/50"
         >

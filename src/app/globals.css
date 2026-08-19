@@ -33,6 +33,7 @@
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
@@ -55,32 +56,62 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.02 15);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.55 0.25 25);
-  --primary-foreground: oklch(0.98 0 0);
+  /*
+   * Brighter red than the original #df000d: 5.79:1 on `--background`, so
+   * links and normal-size text clear WCAG AA on their own.
+   */
+  --primary: oklch(0.65 0.22 25);
+  /*
+   * The brighter red that links move to on hover. Was `red-400` at every
+   * call site; sized here against `--primary` so the hover stays visible —
+   * 1.58:1 against it and 9.14:1 on `--background`, and still inside sRGB
+   * (0.78 and up clip). Re-measured when `--primary` was raised to 0.65:
+   * at the old 0.72 the separation had dropped to 1.35:1.
+   */
+  --primary-hover: oklch(0.76 0.14 25);
+  /* Dark label on the red: 5.79:1, where white would only reach 4.06:1. */
+  --primary-foreground: oklch(0.08 0.01 15);
   --secondary: oklch(0.18 0.04 20);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.02 15);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.55 0.25 25);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.25 25);
-  --border: oklch(0.55 0.25 25 / 20%);
-  --input: oklch(0.55 0.25 25 / 15%);
-  --ring: oklch(0.55 0.25 25);
-  --chart-1: oklch(0.55 0.25 25);
-  --chart-2: oklch(0.45 0.2 25);
-  --chart-3: oklch(0.35 0.15 25);
-  --chart-4: oklch(0.25 0.1 25);
-  --chart-5: oklch(0.15 0.05 25);
+  --accent: oklch(0.65 0.22 25);
+  --accent-foreground: oklch(0.08 0.01 15);
+  /*
+   * Muted amber, not another red. Destructive actions have to read as
+   * different from the brand, and hue is what does that: the old
+   * destructive sat at hue 35, ten degrees from `--primary`, which measured
+   * as "different" (1.40:1) while looking identical.
+   */
+  --destructive: oklch(0.72 0.1 70);
+  /* Neutral, so a border does not tint every card with the brand colour. */
+  --border: oklch(0.85 0 0 / 22%);
+  --input: oklch(0.9 0 0 / 40%);
+  /*
+   * Neutral and bright: 11.13:1 on `--background`. A red ring would reach
+   * 4.10:1 and sit on a UI that is already red — a focus indicator has to
+   * be unmissable, which is a stronger requirement than merely passing 3:1.
+   */
+  --ring: oklch(0.8 0 0);
+  /*
+   * Five distinct hues, all >= 3:1 on the background. A monochrome ramp of
+   * one hue reads as a single series in five shades — and its lower steps
+   * measured 1.75, 1.26 and 1.05:1, i.e. invisible.
+   */
+  --chart-1: oklch(0.65 0.21 25);
+  --chart-2: oklch(0.72 0.16 70);
+  --chart-3: oklch(0.78 0.14 150);
+  --chart-4: oklch(0.7 0.14 240);
+  --chart-5: oklch(0.75 0.15 320);
   --radius: 0.625rem;
   --sidebar: oklch(0.1 0.01 15);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.55 0.25 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.62 0.22 25);
+  --sidebar-primary-foreground: oklch(0.16 0.01 15);
   --sidebar-accent: oklch(0.18 0.04 20);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.55 0.25 25 / 20%);
-  --sidebar-ring: oklch(0.55 0.25 25);
+  --sidebar-border: oklch(0.85 0 0 / 22%);
+  --sidebar-ring: oklch(0.8 0 0);
 }
 
 .dark {
@@ -90,31 +121,61 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.02 15);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.55 0.25 25);
-  --primary-foreground: oklch(0.98 0 0);
+  /*
+   * Brighter red than the original #df000d: 5.79:1 on `--background`, so
+   * links and normal-size text clear WCAG AA on their own.
+   */
+  --primary: oklch(0.65 0.22 25);
+  /*
+   * The brighter red that links move to on hover. Was `red-400` at every
+   * call site; sized here against `--primary` so the hover stays visible —
+   * 1.58:1 against it and 9.14:1 on `--background`, and still inside sRGB
+   * (0.78 and up clip). Re-measured when `--primary` was raised to 0.65:
+   * at the old 0.72 the separation had dropped to 1.35:1.
+   */
+  --primary-hover: oklch(0.76 0.14 25);
+  /* Dark label on the red: 5.79:1, where white would only reach 4.06:1. */
+  --primary-foreground: oklch(0.08 0.01 15);
   --secondary: oklch(0.18 0.04 20);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.02 15);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.55 0.25 25);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.25 25);
-  --border: oklch(0.55 0.25 25 / 20%);
-  --input: oklch(0.55 0.25 25 / 15%);
-  --ring: oklch(0.55 0.25 25);
-  --chart-1: oklch(0.55 0.25 25);
-  --chart-2: oklch(0.45 0.2 25);
-  --chart-3: oklch(0.35 0.15 25);
-  --chart-4: oklch(0.25 0.1 25);
-  --chart-5: oklch(0.15 0.05 25);
+  --accent: oklch(0.65 0.22 25);
+  --accent-foreground: oklch(0.08 0.01 15);
+  /*
+   * Muted amber, not another red. Destructive actions have to read as
+   * different from the brand, and hue is what does that: the old
+   * destructive sat at hue 35, ten degrees from `--primary`, which measured
+   * as "different" (1.40:1) while looking identical.
+   */
+  --destructive: oklch(0.72 0.1 70);
+  /* Neutral, so a border does not tint every card with the brand colour. */
+  --border: oklch(0.85 0 0 / 22%);
+  --input: oklch(0.9 0 0 / 40%);
+  /*
+   * Neutral and bright: 11.13:1 on `--background`. A red ring would reach
+   * 4.10:1 and sit on a UI that is already red — a focus indicator has to
+   * be unmissable, which is a stronger requirement than merely passing 3:1.
+   */
+  --ring: oklch(0.8 0 0);
+  /*
+   * Five distinct hues, all >= 3:1 on the background. A monochrome ramp of
+   * one hue reads as a single series in five shades — and its lower steps
+   * measured 1.75, 1.26 and 1.05:1, i.e. invisible.
+   */
+  --chart-1: oklch(0.65 0.21 25);
+  --chart-2: oklch(0.72 0.16 70);
+  --chart-3: oklch(0.78 0.14 150);
+  --chart-4: oklch(0.7 0.14 240);
+  --chart-5: oklch(0.75 0.15 320);
   --sidebar: oklch(0.1 0.01 15);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.55 0.25 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.62 0.22 25);
+  --sidebar-primary-foreground: oklch(0.16 0.01 15);
   --sidebar-accent: oklch(0.18 0.04 20);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.55 0.25 25 / 20%);
-  --sidebar-ring: oklch(0.55 0.25 25);
+  --sidebar-border: oklch(0.85 0 0 / 22%);
+  --sidebar-ring: oklch(0.8 0 0);
 }
 
 @layer base {
@@ -139,15 +200,22 @@
   background: transparent;
 }
 
+/*
+ * The tokens are OKLCH, so they are used as-is. Wrapping them in `hsl()` —
+ * the shadcn convention back when the tokens were HSL triplets — produces
+ * `hsl(oklch(...))`, which is not a colour: the browser drops the whole
+ * declaration and every `overflow-auto` container falls back to a light
+ * default scrollbar inside a black app.
+ */
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: var(--muted);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: var(--muted-foreground);
   border: 2px solid transparent;
   background-clip: content-box;
 }
@@ -155,7 +223,7 @@
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  scrollbar-color: var(--muted-foreground) transparent;
 }
 
 /* Dark popup for the events map (matches the app-themed MapLibre basemap). */

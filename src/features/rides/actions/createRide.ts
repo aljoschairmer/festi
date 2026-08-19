@@ -49,7 +49,6 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     generation,
   } = parsed.data;
 
-  // Group rides require the creator to be an approved member of the group.
   if (groupId) {
     const membership = await prisma.groupMember.findFirst({
       where: { groupId, userId: session.user.id, status: "APPROVED" },
@@ -63,8 +62,6 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     }
   }
 
-  // Only one ride per creator per calendar day — checked for every weekly
-  // instance up front so a series never half-creates.
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const instanceDates = Array.from(
     { length: repeatWeekly },
@@ -101,18 +98,29 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     }
   }
 
-  // Generated routes are re-fetched from the engine server-side (results
-  // are keyed by job id, so stats cannot be tampered with); manual routes
-  // keep the BRouter recompute path.
   let route: Awaited<ReturnType<typeof fetchRoute>>;
   try {
     if (generation) {
-      const engineRoutes = await getGenerationJobResult(generation.jobId);
-      const engineRoute = engineRoutes?.[generation.routeIndex];
-      if (!engineRoute) {
+      const engineResult = await getGenerationJobResult(generation.jobId);
+      if (engineResult.status === "expired") {
         return {
           success: false,
           error: "The generated route has expired. Please generate it again.",
+        };
+      }
+      if (engineResult.status === "running") {
+        return {
+          success: false,
+          error:
+            "The route generation is still running. Please try again in a moment.",
+        };
+      }
+      const engineRoute = engineResult.routes[generation.routeIndex];
+      if (!engineRoute) {
+        return {
+          success: false,
+          error:
+            "The generated route could not be found. Please generate it again.",
         };
       }
       route = toRouteResult(engineRoute);
@@ -129,9 +137,6 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     };
   }
 
-  // Derive the start name from the final start coordinate so it stays accurate
-  // even if the user moved the start marker after searching. Falls back to the
-  // originally searched name if reverse geocoding is unavailable.
   const start = waypoints[0];
   const resolvedStartLocation =
     (await reverseGeocode(start.lat, start.lng)) ??
@@ -191,8 +196,6 @@ export async function createRide(input: unknown): Promise<CreateRideResult> {
     );
   }
 
-  // Let the other approved group members know a ride was posted to their
-  // group — once per series, pointing at the first instance.
   if (ride.groupId) {
     const members = await prisma.groupMember.findMany({
       where: {

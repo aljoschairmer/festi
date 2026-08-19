@@ -1,6 +1,7 @@
 import "server-only";
 
 import polyline from "@mapbox/polyline";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { ElevationPoint, RouteResult } from "../types";
 
 /**
@@ -235,7 +236,7 @@ export async function submitGenerationJob(
 ): Promise<{ jobId: string }> {
   let response: Response;
   try {
-    response = await fetch(`${getRouteEngineBaseUrl()}/v1/jobs`, {
+    response = await fetchWithTimeout(`${getRouteEngineBaseUrl()}/v1/jobs`, {
       method: "POST",
       headers: engineHeaders(userRef, idempotencyKey),
       body: JSON.stringify(request),
@@ -254,7 +255,7 @@ export async function submitGenerationJob(
 export async function getGenerationJobStatus(
   jobId: string,
 ): Promise<EngineJobStatus | null> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}`,
     { headers: engineHeaders(), cache: "no-store" },
   );
@@ -264,25 +265,34 @@ export async function getGenerationJobStatus(
 }
 
 /**
- * Routes of a SUCCEEDED job, best candidate first. Null when the job or
- * its result is gone (TTL) — callers should ask the user to regenerate.
+ * Outcome of fetching a job's routes. The engine distinguishes a job
+ * whose result is gone (404 — unknown or TTL-expired) from one that is
+ * simply not finished yet (409), and callers should too: "expired" asks
+ * the user to regenerate, "running" asks them to wait.
  */
+export type GenerationJobResult =
+  | { status: "ok"; routes: EngineRoute[] }
+  | { status: "expired" }
+  | { status: "running" };
+
+/** Routes of a SUCCEEDED job, best candidate first. */
 export async function getGenerationJobResult(
   jobId: string,
-): Promise<EngineRoute[] | null> {
-  const response = await fetch(
+): Promise<GenerationJobResult> {
+  const response = await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}/result`,
     { headers: engineHeaders(), cache: "no-store" },
   );
-  if (response.status === 404 || response.status === 409) return null;
+  if (response.status === 404) return { status: "expired" };
+  if (response.status === 409) return { status: "running" };
   if (!response.ok) throw await toUserSafeError(response);
   const payload = (await response.json()) as { routes: EngineRoute[] };
-  return payload.routes;
+  return { status: "ok", routes: payload.routes };
 }
 
 /** Cancels a pending or running job. Best-effort: errors are swallowed. */
 export async function cancelGenerationJob(jobId: string): Promise<void> {
-  await fetch(
+  await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}`,
     {
       method: "DELETE",
@@ -393,8 +403,7 @@ export function buildStreetPoints(
       coordinates.length - 1,
       turns[t + 1]?.pointIndex ?? coordinates.length - 1,
     );
-    // Sample the segment sparsely — enough that any waypoint on it finds
-    // a nearby named point, without ballooning the payload.
+
     const step = Math.max(1, Math.floor((to - from) / 4) || 1);
     for (let i = from; i <= to && points.length < maxPoints; i += step) {
       const c = coordinates[i];

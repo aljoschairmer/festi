@@ -71,7 +71,6 @@ export async function withdrawJoinRequest(
     },
   );
 
-  // Remove the unseen join-request notification to avoid request/withdraw spam.
   await Notifier.remove({
     type: NotificationType.RIDE_JOIN_REQUEST,
     userId: ride.creatorId,

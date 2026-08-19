@@ -32,7 +32,6 @@ export async function deleteRidePhoto(photoId: string): Promise<Result> {
     return { success: false, error: "Only the ride owner can delete photos." };
   }
 
-  // Strip the cache-busting query and the public base to recover the R2 key.
   const base = publicUrl("");
   const key = photo.url.replace(base, "").split("?")[0];
   if (key) {

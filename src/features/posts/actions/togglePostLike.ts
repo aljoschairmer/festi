@@ -5,12 +5,12 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { isUniqueViolation } from "@/lib/prismaErrors";
 
 type Result =
   | { success: true; liked: boolean; likeCount: number }
   | { success: false; error: string };
 
-/** Toggles the current user's like on a post. */
 export async function togglePostLike(postId: string): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) {
@@ -38,7 +38,7 @@ export async function togglePostLike(postId: string): Promise<Result> {
   if (existing) {
     await prisma.postLike.delete({ where: { id: existing.id } });
     liked = false;
-    // Undo the unseen like notification so the author isn't spammed.
+
     await Notifier.remove({
       type: NotificationType.POST_LIKED,
       userId: post.authorId,
@@ -47,9 +47,18 @@ export async function togglePostLike(postId: string): Promise<Result> {
       targetId: post.id,
     });
   } else {
-    await prisma.postLike.create({
-      data: { postId, userId: session.user.id },
-    });
+    try {
+      await prisma.postLike.create({
+        data: { postId, userId: session.user.id },
+      });
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      return {
+        success: true,
+        liked: true,
+        likeCount: await prisma.postLike.count({ where: { postId } }),
+      };
+    }
     liked = true;
 
     await Logger.log(

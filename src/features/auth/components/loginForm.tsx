@@ -30,9 +30,10 @@ import { sessionQueryKey } from "../hooks/use-session";
 import { type LoginFormData, loginSchema } from "../schemas";
 import { formatBanExpiry } from "../utils/formatBanExpiry";
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const destination = returnTo ?? "/dashboard";
 
   const {
     register,
@@ -53,20 +54,29 @@ export function LoginForm() {
         password: data.password,
       });
       if (result.error) {
-        console.log(result.error);
+        if (result.error.code === "BANNED_USER") {
+          const ban = await getBanInfo(data.email, data.password);
+          throw Object.assign(
+            new Error(result.error.message || "Sign in failed"),
+            { code: result.error.code, ban },
+          );
+        }
         throw Object.assign(
           new Error(result.error.message || "Sign in failed"),
-          { code: result.error.code, email: data.email },
+          { code: result.error.code },
         );
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      router.push("/dashboard");
+      router.push(destination);
       router.refresh();
     },
-    onError: async (error) => {
-      const err = error as Error & { code?: string; email?: string };
+    onError: (error) => {
+      const err = error as Error & {
+        code?: string;
+        ban?: { reason: string | null; expires: string | null } | null;
+      };
 
       if (err.code === "EMAIL_NOT_VERIFIED") {
         toast.error("Email not verified", {
@@ -77,16 +87,16 @@ export function LoginForm() {
       }
 
       if (err.code === "BANNED_USER") {
-        const ban = await getBanInfo(err.email ?? "");
         toast.error("Your account has been banned.", {
           description: (
             <div>
               <p>
-                <strong>Reason: </strong> {ban?.reason ?? "No reason provided"}
+                <strong>Reason: </strong>{" "}
+                {err.ban?.reason ?? "No reason provided"}
               </p>
               <p>
                 <strong>Duration: </strong>
-                {formatBanExpiry(ban?.expires ?? null)}
+                {formatBanExpiry(err.ban?.expires ?? null)}
               </p>
             </div>
           ),
@@ -104,7 +114,6 @@ export function LoginForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      {/* Back Arrow */}
       <Link
         href="/"
         className="absolute top-6 left-6 z-10 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -113,19 +122,19 @@ export function LoginForm() {
         Back
       </Link>
 
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 via-background to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-transparent" />
 
-      {/* Interactive Particles */}
       <ParticleBackground />
 
-      <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+      <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Logo size={96} priority className="size-24" />
           </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Welcome back
+          </CardTitle>
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -148,7 +157,7 @@ export function LoginForm() {
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-red-500 hover:text-red-400"
+                    className="text-sm text-primary hover:text-primary-hover"
                   >
                     Forgot password?
                   </Link>
@@ -167,7 +176,7 @@ export function LoginForm() {
             <Button
               type="submit"
               disabled={signInMutation.isPending}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700"
             >
               {signInMutation.isPending && (
                 <Loader2Icon className="mr-2 size-4 animate-spin" />
@@ -179,8 +188,12 @@ export function LoginForm() {
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
-              href="/register"
-              className="font-medium text-red-500 hover:text-red-400"
+              href={
+                returnTo
+                  ? `/register?returnTo=${encodeURIComponent(returnTo)}`
+                  : "/register"
+              }
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Sign up
             </Link>

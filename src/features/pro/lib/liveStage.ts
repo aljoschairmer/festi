@@ -85,9 +85,7 @@ async function fetchLiveRanking(
         const ranking = mapTissotRanking(live);
         if (ranking.length > 0) return { ranking, source: "tissot" };
       }
-    } catch {
-      // Fall through to ASO.
-    }
+    } catch {}
   }
   if (race.asoRace) {
     try {
@@ -100,9 +98,7 @@ async function fetchLiveRanking(
         startlist.index,
       );
       if (ranking.length > 0) return { ranking, source: "aso" };
-    } catch {
-      // No live ranking available.
-    }
+    } catch {}
   }
   return { ranking: [], source: null };
 }
@@ -160,14 +156,11 @@ export async function buildLiveStageData(
 
   let telemetry: AsoTelemetry | null;
   try {
-    // The frame for this stage only — anything else (dead upstream, another
-    // stage live) means not live.
     telemetry = await createLiveAsoClient(
       race.asoRace,
       year,
     ).getTelemetryForStage(stageNumber);
   } catch {
-    // A dead upstream degrades to "no live data" rather than an error.
     return NOT_LIVE;
   }
   if (!telemetry) return NOT_LIVE;
@@ -177,8 +170,7 @@ export async function buildLiveStageData(
     telemetry,
     resolvedStartlist.index,
   );
-  // A matched frame with no GPS-tracked riders isn't meaningfully live: show
-  // the regular route view instead of a "Live" badge with an empty map.
+
   if (riders.length === 0) return NOT_LIVE;
 
   const [{ ranking, source }, weather, news] = await Promise.all([

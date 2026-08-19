@@ -73,7 +73,7 @@ export function TypedHeadline() {
           );
         })}
         <span
-          className={`ml-0.5 inline-block w-[0.06em] -translate-y-[0.05em] self-center bg-red-500 align-middle ${
+          className={`ml-0.5 inline-block w-[0.06em] -translate-y-[0.05em] self-center bg-primary align-middle ${
             done ? "animate-caret-blink" : "opacity-100"
           }`}
           style={{ height: "0.9em" }}

@@ -1,11 +1,20 @@
 "use server";
 
 import dns from "node:dns/promises";
+import { limitByIp } from "@/lib/rateLimit";
 
 export async function validateEmailDomain(email: string): Promise<{
   valid: boolean;
   error?: string;
 }> {
+  const limit = await limitByIp("email-domain-check", {
+    limit: 20,
+    windowSec: 60,
+  });
+  if (!limit.allowed) {
+    return { valid: true };
+  }
+
   try {
     const domain = email.split("@")[1];
 
@@ -13,7 +22,6 @@ export async function validateEmailDomain(email: string): Promise<{
       return { valid: false, error: "Invalid email format" };
     }
 
-    // Check MX records for the domain
     const mxRecords = await dns.resolveMx(domain);
 
     if (!mxRecords || mxRecords.length === 0) {
@@ -25,7 +33,6 @@ export async function validateEmailDomain(email: string): Promise<{
 
     return { valid: true };
   } catch (error) {
-    // DNS errors mean the domain likely doesn't exist or has no MX records
     if (error instanceof Error) {
       if (
         error.message.includes("ENOTFOUND") ||
@@ -38,7 +45,6 @@ export async function validateEmailDomain(email: string): Promise<{
       }
     }
 
-    // For other errors, we'll allow the email (could be network issues)
     console.error("DNS lookup error:", error);
     return { valid: true };
   }

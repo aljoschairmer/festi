@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLinkIcon } from "lucide-react";
+import { CalendarOffIcon, ExternalLinkIcon } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { cn } from "@/lib/utils";
 import { eventColor, eventLocation, formatEventDate } from "../lib/eventTypes";
 import type { CalendarEvent } from "../types";
@@ -19,9 +20,12 @@ type EventsListProps = {
 export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
   if (events.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
-        No events match the current filters
-      </div>
+      <EmptyState
+        icon={CalendarOffIcon}
+        title="No events match the current filters"
+        description="Try a different type, region, or date range."
+        className="flex-1 p-6"
+      />
     );
   }
 
@@ -33,8 +37,8 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
           <li key={event.id}>
             <div
               className={cn(
-                "flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-red-500/5",
-                selectedId === event.id && "bg-red-500/10",
+                "flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-primary/5",
+                selectedId === event.id && "bg-primary/10",
               )}
             >
               <button
@@ -65,7 +69,7 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
                       {location}
                     </span>
                   )}
-                  <span className="block text-xs text-muted-foreground/70">
+                  <span className="block text-xs text-muted-foreground">
                     {[
                       event.type || null,
                       event.distances.length
@@ -83,7 +87,7 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${event.title} on rad-net.de`}
-                className="mt-0.5 shrink-0 text-muted-foreground/50 transition-colors hover:text-red-500"
+                className="mt-0.5 shrink-0 text-muted-foreground/50 transition-colors hover:text-primary"
               >
                 <ExternalLinkIcon className="size-3.5" />
               </a>

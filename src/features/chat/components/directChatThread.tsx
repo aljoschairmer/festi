@@ -15,6 +15,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useChatStream } from "@/hooks/useChatStream";
+import { UNREAD_BADGES_KEY } from "@/hooks/useUnreadBadges";
 import {
   type DirectMessagesResult,
   getDirectMessages,
@@ -37,6 +39,22 @@ const emojis = [
   "😡",
 ];
 
+/** Accessible names for the emoji picker buttons (the glyph alone is not one). */
+const emojiNames: Record<string, string> = {
+  "😀": "grinning face",
+  "😂": "face with tears of joy",
+  "😍": "smiling face with heart-eyes",
+  "🔥": "fire",
+  "🚴": "cyclist",
+  "💪": "flexed biceps",
+  "👍": "thumbs up",
+  "❤️": "red heart",
+  "🎉": "party popper",
+  "😎": "smiling face with sunglasses",
+  "😢": "crying face",
+  "😡": "enraged face",
+};
+
 type FormValues = {
   recipientId: string;
   content: string;
@@ -53,21 +71,24 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<DirectMessagesResult>({
+  const { refetchInterval } = useChatStream<DirectMessagesResult>(
+    `/api/chat/direct/${partnerId}`,
+    ["direct-chat", partnerId],
+  );
+
+  const { data, isLoading, isError, refetch } = useQuery<DirectMessagesResult>({
     queryKey: ["direct-chat", partnerId],
     queryFn: () => getDirectMessages(partnerId),
-    refetchInterval: 2000,
+    refetchInterval,
   });
 
   const messages = data?.messages ?? [];
   const partner = data?.partner;
   const canMessage = data?.canMessage ?? false;
 
-  // Opening/refreshing the thread marks messages read, so keep the unread
-  // badge and conversation previews in sync.
   // biome-ignore lint/correctness/useExhaustiveDependencies: react to new reads
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["direct-unread"] });
+    queryClient.invalidateQueries({ queryKey: UNREAD_BADGES_KEY });
     queryClient.invalidateQueries({ queryKey: ["direct-conversations"] });
   }, [data?.messages.length, queryClient]);
 
@@ -118,6 +139,15 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading messages...</p>
+        ) : isError ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3">
+            <p className="text-sm text-primary">
+              Failed to load the conversation.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
             No messages yet. Say hello.
@@ -132,7 +162,7 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
                 <div
                   className={`break-all rounded-2xl px-4 py-2 text-sm ${
                     message.fromMe
-                      ? "rounded-br-sm bg-red-500 text-white"
+                      ? "rounded-br-sm bg-primary text-white"
                       : "rounded-bl-sm bg-muted text-foreground"
                   }`}
                 >
@@ -173,7 +203,12 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button type="button" variant="outline" size="icon">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Pick emoji"
+              >
                 <SmileIcon className="size-4" />
               </Button>
             </PopoverTrigger>
@@ -185,6 +220,7 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
                     type="button"
                     variant="ghost"
                     size="icon"
+                    aria-label={emojiNames[emoji] ?? emoji}
                     onClick={() => {
                       const currentValue = form.getValues("content");
                       form.setValue("content", currentValue + emoji, {
@@ -203,6 +239,7 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
           <Button
             disabled={mutation.isPending || !form.watch("content").trim()}
             type="submit"
+            aria-label="Send message"
           >
             <SendIcon className="size-4" />
           </Button>

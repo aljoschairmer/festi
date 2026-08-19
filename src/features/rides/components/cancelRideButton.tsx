@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cancelRide } from "../actions/cancelRide";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 
 export function CancelRideButton({
   rideId,
@@ -42,7 +43,7 @@ export function CancelRideButton({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       toast.success(result.message);
       router.refresh();
     },

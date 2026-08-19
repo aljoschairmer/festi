@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
 import { getGroupRole } from "../lib/groupRoles";
+import { groupPath } from "../lib/routes";
 
 export async function kickGroupMember(input: {
   groupId: string;
@@ -27,8 +28,8 @@ export async function kickGroupMember(input: {
     return { success: false as const, error: "Group not found." };
   }
 
-  const member = await prisma.groupMember.findUnique({
-    where: { id: input.memberId },
+  const member = await prisma.groupMember.findFirst({
+    where: { id: input.memberId, groupId: input.groupId },
     select: {
       userId: true,
       role: true,
@@ -44,8 +45,6 @@ export async function kickGroupMember(input: {
     return { success: false as const, error: "Member not found." };
   }
 
-  // The owner can kick anyone (except themselves); moderators can kick
-  // regular members only.
   const isOwner = group.createdById === session.user.id;
   const callerRole = await getGroupRole(input.groupId, session.user.id);
 
@@ -71,13 +70,11 @@ export async function kickGroupMember(input: {
     };
   }
 
-  await prisma.groupMember.delete({
-    where: {
-      id: input.memberId,
-    },
+  await prisma.groupMember.deleteMany({
+    where: { id: input.memberId, groupId: input.groupId },
   });
 
-  revalidatePath(`/groups/${input.groupId}`);
+  revalidatePath(groupPath(input.groupId));
 
   await Logger.log(
     ActivityAction.GROUP_MEMBER_REMOVED,

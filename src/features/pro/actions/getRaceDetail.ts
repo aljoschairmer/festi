@@ -96,9 +96,7 @@ async function fetchWithdrawnBibs(
         }
       }
     }
-  } catch {
-    // A flaky upstream leaves everyone unmarked.
-  }
+  } catch {}
   return withdrawn;
 }
 
@@ -158,9 +156,6 @@ async function fetchStandings(
 ): Promise<ProStandingRow[]> {
   if (!race.tissotCode) return [];
   try {
-    // Team logos and rider photos come from ASO; join them onto the Tissot
-    // standings by team code/name and UCI licence code (name fallback). A
-    // failed ASO fetch just leaves the imagery empty.
     let teamImageIndex: Map<string, ProTeamImages> = new Map();
     let riderPhotoIndex = new Map<string, string>();
     let riderUciIndex = new Map<string, string>();
@@ -174,16 +169,12 @@ async function fetchStandings(
         teamImageIndex = buildTeamImageIndex(teams);
         riderPhotoIndex = buildRiderPhotoIndex(competitors);
         riderUciIndex = buildRiderUciIndex(competitors);
-      } catch {
-        // Standings still render without logos/photos.
-      }
+      } catch {}
     }
 
     const tissot = createTissotClient();
     const competitionId = TissotClient.competitionId(race.tissotCode, year);
-    // The schedule's hasResult flags are unreliable, so the client picks the
-    // latest started stage (via the schedule's utcOffset) and probes backwards
-    // until a ranking is actually served.
+
     const latest = await tissot.getLatestOverallRanking(competitionId);
     const results = latest?.ranking.results ?? [];
 
@@ -229,8 +220,6 @@ export async function getRaceDetail(
   const race = getProRace(raceKey);
   if (!race) return null;
 
-  // The startlist chains on the withdrawals probe, which runs in parallel with
-  // the other sections.
   const withdrawnPromise = fetchWithdrawnBibs(race, year);
   const [stages, startlist, standings] = await Promise.all([
     fetchStages(race, year),

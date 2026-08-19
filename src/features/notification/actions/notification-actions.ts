@@ -50,16 +50,6 @@ export async function getNotifications(): Promise<NotificationItem[]> {
   }));
 }
 
-/** Number of unseen notifications, used for the header badge. */
-export async function getUnreadNotificationCount(): Promise<number> {
-  const session = await getCurrentUser();
-  if (!session) return 0;
-
-  return prisma.notification.count({
-    where: { userId: session.user.id, read: false },
-  });
-}
-
 export type NotificationCursor = { createdAt: string; id: string };
 
 export type NotificationHistoryPage = {
@@ -123,7 +113,6 @@ export async function getNotificationHistory(
   };
 }
 
-/** Marks all of the current user's notifications as seen. */
 export async function markNotificationsSeen(): Promise<void> {
   const session = await getCurrentUser();
   if (!session) return;

@@ -76,7 +76,6 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* Rider details */}
       <div className="rounded-xl border p-4">
         <div className="mb-1">
           <h2 className="font-heading text-lg font-semibold">Rider details</h2>

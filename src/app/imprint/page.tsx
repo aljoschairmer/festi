@@ -3,15 +3,17 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Imprint - Festi",
-  description:
-    "Legal notice (Impressum) for Festi in accordance with § 5 TMG and Art. 10 MDStV.",
+  description: "Legal notice (Impressum) for Festi in accordance with § 5 DDG.",
 };
 
 export default function ImprintPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:py-24">
       <div className="mb-10">
-        <Link href="/" className="text-sm text-red-500 hover:text-red-400">
+        <Link
+          href="/"
+          className="text-sm text-primary hover:text-primary-hover"
+        >
           &larr; Back to home
         </Link>
       </div>
@@ -22,46 +24,49 @@ export default function ImprintPage() {
             Imprint
           </h1>
           <p className="text-sm">
-            Legal notice in accordance with &sect; 5 TMG (German Telemedia Act)
-            and Art. 10 MDStV.
+            Legal notice in accordance with &sect; 5 DDG
+            (Digitale-Dienste-Gesetz).
           </p>
         </header>
 
-        <Section title="Service operator">
+        <section className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
+          This imprint is incomplete. Replace every <Todo>…</Todo> marker with
+          the operator's actual details before operating this service publicly.
+        </section>
+
+        <Section title="Information pursuant to § 5 DDG">
           <p className="font-medium text-foreground">Festi</p>
+
           <p>
-            Postal address: Available on request via{" "}
-            <a
-              href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
-            >
-              info@festicycling.com
-            </a>
+            Operator: <Todo>full name / company name and legal form</Todo>
+          </p>
+
+          <p>
+            Postal address:{" "}
+            <Todo>serviceable address (street, number, postal code, city)</Todo>
+          </p>
+
+          <p>
+            Authorised representative:{" "}
+            <Todo>authorised representative (for legal entities)</Todo>
           </p>
           <p>
             Contact:{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
-            </a>
-          </p>
-          <p>
-            Technical enquiries &amp; support:{" "}
-            <a
-              href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
-            >
-              info@festicycling.com
-            </a>
+            </a>{" "}
+            <Todo>optional: phone number for immediate contact</Todo>
           </p>
         </Section>
 
         <Section title="Responsible for content">
           <p>
-            The person responsible for the content of this service in accordance
-            with &sect; 55 Abs. 2 RStV is the operator listed above.
+            Responsible for the content of this service pursuant to &sect; 18
+            Abs. 2 MStV: <Todo>name and address of the responsible person</Todo>
+            .
           </p>
         </Section>
 
@@ -74,8 +79,8 @@ export default function ImprintPage() {
                 possible care. However, we cannot guarantee the accuracy,
                 completeness, or timeliness of the information provided. As a
                 service provider, we are responsible for our own content on this
-                website under general law (&sect; 7 Abs. 1 TMG). According to
-                &sect;&sect; 8&ndash;10 TMG, however, we are not obligated to
+                website under general law (&sect; 7 Abs. 1 DDG). According to
+                &sect;&sect; 8&ndash;10 DDG, however, we are not obligated to
                 monitor transmitted or stored third-party information or to
                 investigate circumstances indicating illegal activity.
                 Obligations to remove or block the use of information in
@@ -120,13 +125,16 @@ export default function ImprintPage() {
         <Section title="Data protection">
           <p>
             For information on how we handle personal data, please see our{" "}
-            <Link href="/privacy" className="text-red-500 hover:text-red-400">
+            <Link
+              href="/privacy"
+              className="text-primary hover:text-primary-hover"
+            >
               Privacy Policy
             </Link>
             . Questions regarding data protection can be sent to{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -150,5 +158,17 @@ function Section({
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * Visible placeholder for details the operator must fill in before launch.
+ * Renders highlighted so missing entries cannot be overlooked.
+ */
+function Todo({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-600 dark:text-amber-400">
+      [TODO: {children}]
+    </span>
   );
 }

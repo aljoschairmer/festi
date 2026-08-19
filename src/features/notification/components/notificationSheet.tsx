@@ -25,9 +25,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UNREAD_BADGES_KEY, useUnreadBadges } from "@/hooks/useUnreadBadges";
 import {
   getNotifications,
-  getUnreadNotificationCount,
   markNotificationsSeen,
   type NotificationItem,
 } from "../actions/notification-actions";
@@ -118,7 +118,7 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.GROUP_JOINED ||
     type === NotificationType.GROUP_JOIN_REQUESTED
   ) {
-    return <Users className="size-4 text-red-500" />;
+    return <Users className="size-4 text-primary" />;
   }
   if (
     type === NotificationType.GROUP_JOIN_APPROVED ||
@@ -131,7 +131,7 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.RIDE_JOIN_REJECTED ||
     type === NotificationType.RIDE_CANCELLED
   ) {
-    return <X className="size-4 text-red-500" />;
+    return <X className="size-4 text-primary" />;
   }
   if (
     type === NotificationType.RIDE_JOIN_REQUEST ||
@@ -139,18 +139,18 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.RIDE_WAITLIST_PROMOTED ||
     type === NotificationType.GROUP_RIDE_CREATED
   ) {
-    return <Bike className="size-4 text-red-500" />;
+    return <Bike className="size-4 text-primary" />;
   }
   if (type === NotificationType.POST_LIKED) {
-    return <Heart className="size-4 text-red-500" />;
+    return <Heart className="size-4 text-primary" />;
   }
   if (type === NotificationType.POST_COMMENTED) {
-    return <MessageCircle className="size-4 text-red-500" />;
+    return <MessageCircle className="size-4 text-primary" />;
   }
   if (type === NotificationType.GROUP_ANNOUNCEMENT) {
-    return <Megaphone className="size-4 text-red-500" />;
+    return <Megaphone className="size-4 text-primary" />;
   }
-  return <UserPlus className="size-4 text-red-500" />;
+  return <UserPlus className="size-4 text-primary" />;
 }
 
 export function notificationHref(
@@ -163,14 +163,14 @@ export function notificationHref(
   if (targetType === "Group" && targetId) {
     return `/dashboard/community/g/${targetId}`;
   }
-  // Follows carry no target — link to the actor's rider profile instead.
+
   if (
     notification.type === NotificationType.USER_FOLLOWED &&
     notification.actor
   ) {
     return `/dashboard/community/u/${notification.actor.id}`;
   }
-  // Post notifications have no permalink target (posts live in the feed).
+
   return null;
 }
 
@@ -206,13 +206,13 @@ export function NotificationRow({
       </div>
 
       {notification.read ? null : (
-        <span className="mt-1 size-2 shrink-0 rounded-full bg-red-500" />
+        <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
       )}
     </>
   );
 
   const className = `flex items-start gap-3 rounded-lg p-3 transition ${
-    notification.read ? "" : "bg-red-500/5"
+    notification.read ? "" : "bg-primary/5"
   }`;
 
   if (!href) {
@@ -223,7 +223,7 @@ export function NotificationRow({
     <Link
       href={href}
       onClick={onNavigate}
-      className={`${className} hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500`}
+      className={`${className} hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
     >
       {body}
     </Link>
@@ -234,28 +234,29 @@ const NotificationSheet = () => {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: unread = 0 } = useQuery<number>({
-    queryKey: ["notifications-unread"],
-    queryFn: () => getUnreadNotificationCount(),
-    refetchInterval: 10000,
-  });
+  const { notifications: unread } = useUnreadBadges();
 
-  const { data: notifications, isLoading } = useQuery<NotificationItem[]>({
+  const {
+    data: notifications,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<NotificationItem[]>({
     queryKey: ["notifications"],
     queryFn: () => getNotifications(),
     enabled: open,
     refetchInterval: open ? 10000 : false,
+    refetchIntervalInBackground: false,
   });
 
   const markSeen = useMutation({
     mutationFn: () => markNotificationsSeen(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      queryClient.invalidateQueries({ queryKey: UNREAD_BADGES_KEY });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
-  // When the sheet opens, mark everything as seen.
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once per open
   useEffect(() => {
     if (open && unread > 0) {
@@ -271,14 +272,14 @@ const NotificationSheet = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground"
+          className="relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-primary/10 hover:text-foreground"
           aria-label={
             unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
           }
         >
-          <BellDot className="size-4 text-red-500" />
+          <BellDot className="size-4 text-primary" />
           {unread > 0 ? (
-            <span className="absolute -right-1 -top-1 flex size-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white">
+            <span className="absolute -right-1 -top-1 flex size-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium leading-none text-white">
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}
@@ -305,6 +306,15 @@ const NotificationSheet = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                Something went wrong loading your notifications.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { limitByUser } from "@/lib/rateLimit";
 import { type MessageFormData, MessageSchema } from "../schemas";
 
 export async function getGroupMessages(groupId: string) {
@@ -57,8 +58,7 @@ export async function getGroupMessages(groupId: string) {
 
   return {
     currentUserId: session.user.id,
-    // Fetched newest-first to keep the latest 100; reversed back to
-    // ascending order for rendering.
+
     messages: messages.reverse().map((message) => ({
       id: message.id,
       content: message.content,
@@ -73,6 +73,16 @@ export async function sendGroupMessage(values: MessageFormData) {
   const session = await getCurrentUser();
   if (!session) {
     throw new Error("You must be signed in.");
+  }
+
+  const rateLimitResult = await limitByUser("chat", session.user.id, {
+    limit: 30,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    throw new Error(
+      "You're sending messages too quickly. Please wait a moment.",
+    );
   }
 
   const validatedFields = MessageSchema.safeParse(values);

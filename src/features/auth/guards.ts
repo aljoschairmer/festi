@@ -2,17 +2,28 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { auth } from "@/lib/auth";
+
+/**
+ * React `cache` memoizes the session lookup within a single request, so a
+ * layout and its page calling `requireAuth` (or several server actions in one
+ * action call) only hit the auth API / session store once per request instead
+ * of once per call site.
+ */
+const getCachedSession = cache(async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  return session;
+});
 
 /**
  * Reads the current session (or null). Used as the building block for the
  * guards below.
  */
 export async function getSession() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  return session;
+  return getCachedSession();
 }
 
 /**

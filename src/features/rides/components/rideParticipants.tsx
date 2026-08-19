@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { markAttendance } from "../actions/markAttendance";
 import { respondToJoinRequest } from "../actions/respondToJoinRequest";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import type { RideCreator, RideParticipantInfo } from "../types";
 
 type RideParticipantsProps = {
@@ -34,6 +35,7 @@ function RiderChip({ user, host }: { user: RideCreator; host?: boolean }) {
   return (
     <Link
       href={`/dashboard/community/u/${user.id}`}
+      prefetch={false}
       className="flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 transition-colors hover:bg-muted"
     >
       <Avatar className="size-6">
@@ -74,7 +76,7 @@ export function RideParticipants({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       router.refresh();
       toast.success(result.message);
     },
@@ -92,7 +94,7 @@ export function RideParticipants({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       router.refresh();
       toast.success(result.message);
     },

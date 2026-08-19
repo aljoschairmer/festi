@@ -143,6 +143,9 @@ export function RiderDetailsEditor({
           onSelect={(place) =>
             setDraft((d) => ({ ...d, location: place.name }))
           }
+          onQueryChange={(value) =>
+            setDraft((d) => ({ ...d, location: value }))
+          }
         />
       </Row>
 
@@ -323,6 +326,7 @@ function Row({
           size="icon-sm"
           onClick={onEdit}
           aria-label={`Edit ${label}`}
+          className="relative after:absolute after:-inset-2 after:content-['']"
         >
           <PencilIcon className="size-4" />
         </Button>

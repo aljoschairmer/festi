@@ -19,7 +19,7 @@ function sanitizeHref(href: string): string | null {
 /** Renders inline markdown (bold, italic, code, links) within a text string. */
 function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  // Ordered by precedence: code, link, bold, italic.
+
   const pattern =
     /(`[^`]+`)|(\[[^\]]+\]\([^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(_[^_]+_)/g;
 
@@ -56,7 +56,7 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="text-red-500 underline underline-offset-2 hover:text-red-400"
+            className="text-primary underline underline-offset-2 hover:text-primary-hover"
           >
             {label}
           </a>,
@@ -71,7 +71,6 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
         </strong>,
       );
     } else {
-      // *italic* or _italic_
       nodes.push(<em key={key}>{token.slice(1, -1)}</em>);
     }
 
@@ -201,7 +200,7 @@ export function renderMarkdown(source: string): React.ReactNode {
         return (
           <blockquote
             key={key}
-            className="my-2 border-l-2 border-red-500/40 pl-3 text-muted-foreground italic"
+            className="my-2 border-l-2 border-primary/40 pl-3 text-muted-foreground italic"
           >
             {renderInline(block.lines.join(" "), key)}
           </blockquote>

@@ -17,7 +17,12 @@ import { Switch } from "@/components/ui/switch";
 import { searchPlaces } from "../actions/searchPlaces";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
 import type { RideFiltersInput } from "../schemas";
-import type { PlaceResult, RideDifficulty, RidePace } from "../types";
+import type {
+  PlaceResult,
+  RideDifficulty,
+  RideListPage,
+  RidePace,
+} from "../types";
 import { RidesGrid } from "./ridesGrid";
 
 /** Radix Select items can't use an empty string, so "all" means no filter. */
@@ -31,7 +36,7 @@ const RADIUS_OPTIONS = ["10", "25", "50", "100"] as const;
  * filter with radius, and a switch to include past rides.
  * The filters become part of the query key, so changing them refetches.
  */
-export function RideFilters() {
+export function RideFilters({ initialPage }: { initialPage?: RideListPage }) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pace, setPace] = useState<RidePace | null>(null);
@@ -142,7 +147,7 @@ export function RideFilters() {
         </Label>
       </div>
 
-      <RidesGrid filters={filters} />
+      <RidesGrid filters={filters} initialPage={initialPage} />
     </div>
   );
 }
@@ -168,7 +173,6 @@ function NearPlaceSearch({
     enabled: query.trim().length >= 2 && open,
   });
 
-  // Close the dropdown on outside click.
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {

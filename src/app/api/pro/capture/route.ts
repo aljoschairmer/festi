@@ -26,8 +26,6 @@ async function captureRace(
 ): Promise<CaptureResult | null> {
   if (!race.asoRace) return null;
 
-  // Stage program + startlist come from the cached (1h) clients on purpose;
-  // only the telemetry snapshot itself must bypass the fetch cache.
   const aso = createAsoClient(race.asoRace, year);
   const stages = await aso.getStages();
   const todayStage = stages.find((stage) => stage.dateLocal === today);
@@ -49,8 +47,6 @@ async function captureRace(
   const { riders, updatedAt } = mapTelemetry(telemetry, index);
   if (riders.length === 0) return null;
 
-  // Keyed on the upstream's own timestamp so an unchanged frame (cron faster
-  // than ASO's cadence) dedupes against the unique constraint.
   const capturedAt = updatedAt !== null ? new Date(updatedAt) : new Date();
   await prisma.proTelemetryFrame.createMany({
     data: [

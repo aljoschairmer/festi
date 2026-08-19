@@ -32,8 +32,6 @@ export function RouteThumbnail({
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    // Web-Mercator-ish projection is unnecessary at this scale; use raw lng/lat
-    // and correct for latitude so the shape isn't horizontally stretched.
     const latRad = (coords[0][1] * Math.PI) / 180;
     const lngScale = Math.cos(latRad);
 

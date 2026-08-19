@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { groupPath } from "../lib/routes";
 import { type GroupFormData, groupFormSchema } from "../schemas";
 
 export async function updateGroup(input: GroupFormData & { groupId: string }) {
@@ -49,7 +50,7 @@ export async function updateGroup(input: GroupFormData & { groupId: string }) {
     },
   });
 
-  revalidatePath(`/groups/${input.groupId}`);
+  revalidatePath(groupPath(input.groupId));
 
   await Logger.log(
     ActivityAction.GROUP_UPDATED,

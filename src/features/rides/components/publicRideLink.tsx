@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { setRidePublic } from "../actions/setRidePublic";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 
 /**
  * Creator control for the public (logged-out) ride page: a switch to enable
@@ -34,7 +35,7 @@ export function PublicRideLink({
       return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rides"] });
+      invalidateRideQueries(queryClient);
       router.refresh();
       toast.success(result.message);
     },

@@ -49,13 +49,24 @@ export async function getRouteGenerationStatus(
       };
     }
 
-    const routes = await getGenerationJobResult(jobId);
-    if (!routes) {
+    const result = await getGenerationJobResult(jobId);
+    if (result.status === "expired") {
       return {
         success: false,
         error: "The generated routes have expired. Please generate again.",
       };
     }
+    if (result.status === "running") {
+      return {
+        success: true,
+        status: {
+          state: "RUNNING",
+          progressPercent: status.progressPercent,
+          message: status.message,
+        },
+      };
+    }
+    const routes = result.routes;
     return {
       success: true,
       status: {

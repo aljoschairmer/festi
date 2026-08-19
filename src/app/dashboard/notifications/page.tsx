@@ -18,7 +18,7 @@ export default function NotificationsPage() {
         </p>
       </div>
 
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle>History</CardTitle>
           <CardDescription>Newest first</CardDescription>

@@ -13,7 +13,10 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:py-24">
       <div className="mb-10">
-        <Link href="/" className="text-sm text-red-500 hover:text-red-400">
+        <Link
+          href="/"
+          className="text-sm text-primary hover:text-primary-hover"
+        >
           &larr; Back to home
         </Link>
       </div>
@@ -35,7 +38,7 @@ export default function PrivacyPolicyPage() {
             about this policy, contact us at{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -220,7 +223,7 @@ export default function PrivacyPolicyPage() {
             To exercise any of these rights, email{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -274,7 +277,7 @@ export default function PrivacyPolicyPage() {
             Questions or concerns about this policy? Reach us at{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -322,7 +325,7 @@ function Subprocessor({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-red-500 hover:text-red-400"
+          className="text-primary hover:text-primary-hover"
         >
           Privacy policy
         </a>

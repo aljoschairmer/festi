@@ -35,7 +35,7 @@ export function AvatarUploader({ name, image }: AvatarUploaderProps) {
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = ""; // allow re-selecting the same file
+    event.target.value = "";
     if (!file) return;
 
     setUploading(true);
@@ -73,7 +73,7 @@ export function AvatarUploader({ name, image }: AvatarUploaderProps) {
         onClick={openPicker}
         disabled={uploading}
         aria-label="Change profile picture"
-        className="group relative rounded-full outline-none ring-red-500/50 focus-visible:ring-2"
+        className="group relative rounded-full outline-none ring-primary/50 focus-visible:ring-2"
       >
         <Avatar className="size-24">
           {preview ? <AvatarImage src={preview} alt={name} /> : null}
@@ -93,7 +93,7 @@ export function AvatarUploader({ name, image }: AvatarUploaderProps) {
         type="button"
         onClick={openPicker}
         disabled={uploading}
-        className="text-sm text-red-500 hover:text-red-400 disabled:opacity-50"
+        className="text-sm text-primary hover:text-primary-hover disabled:opacity-50"
       >
         {uploading ? "Uploading..." : "Change photo"}
       </button>

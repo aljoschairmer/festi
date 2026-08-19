@@ -22,14 +22,13 @@ export default async function DashboardLayout({
       <PresenceHeartbeat />
       <AppSidebar userRole={session.user.role || "user"} />
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-red-500/20 bg-background px-4">
+        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-background px-4">
           <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 h-4 bg-red-500/20"
-          />
-          <span className="text-sm text-muted-foreground">Dashboard</span>
-          <div className="flex items-center gap-2 ml-auto">
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <span className="truncate text-sm text-muted-foreground">
+            Dashboard
+          </span>
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <HeaderButtonGroup />
             <UserMenu
               userName={session.user.name || "User"}
@@ -39,7 +38,9 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 p-6"> {children}</main>
+        <div id="main-content" tabIndex={-1} className="flex-1 p-6">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

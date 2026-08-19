@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
 import { deleteObject } from "@/lib/r2";
+import { COMMUNITY_PATH } from "../lib/routes";
 
 export async function deleteGroup(groupId: string) {
   const session = await getCurrentUser();
@@ -37,14 +38,13 @@ export async function deleteGroup(groupId: string) {
     where: { id: groupId },
   });
 
-  // Best-effort cleanup of the cover image; never block deletion on storage.
   try {
     await deleteObject(`groups/${groupId}/cover.webp`);
   } catch (error) {
     console.error("[deleteGroup] Failed to delete R2 image:", error);
   }
 
-  revalidatePath("/groups");
+  revalidatePath(COMMUNITY_PATH);
 
   await Logger.log(
     ActivityAction.GROUP_DELETED,

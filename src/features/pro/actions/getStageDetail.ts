@@ -41,9 +41,7 @@ async function fetchStageInfo(
           distanceKm: typeof match.length === "number" ? match.length : null,
         };
       }
-    } catch {
-      // Fall through to the minimal stage info below.
-    }
+    } catch {}
   }
   return {
     number: stageNumber,
@@ -73,8 +71,6 @@ async function fetchTissotStageRoute(
     const detail = await tissot.getStageDetail(competitionId, stageNumber);
     if (!detail?.mapUrl) return null;
 
-    // The KMZ sits on a plain CDN; the 1h fetch cache matches the other
-    // slow-changing race data.
     const [kmzResponse, profile] = await Promise.all([
       fetch(detail.mapUrl, { next: { revalidate: 3600 } }),
       tissot.getStageProfile(competitionId, stageNumber).catch(() => null),
@@ -95,9 +91,6 @@ async function fetchStageRoute(
   year: number,
   stageNumber: number,
 ): Promise<ProStageRoute | null> {
-  // Prefer the cyclingstage GPX — its geometry and elevation are noticeably
-  // more precise than the Tissot KMZ; Tissot is the fallback when no GPX is
-  // published (yet) for the stage.
   if (race.cyclingstageSlug) {
     try {
       const cyclingstage = createCyclingStageClient();
@@ -115,9 +108,7 @@ async function fetchStageRoute(
         );
         if (result) return buildStageRoute(result.route, result.url);
       }
-    } catch {
-      // Fall through to the Tissot route.
-    }
+    } catch {}
   }
   return fetchTissotStageRoute(race, year, stageNumber);
 }

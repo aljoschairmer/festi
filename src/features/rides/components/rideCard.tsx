@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { BikeIcon, ClockIcon, MapPinIcon, MountainIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +9,14 @@ import {
   formatDuration,
   formatElevation,
   formatPace,
+  formatRideDate,
 } from "../lib/format";
-import type { RideSummary } from "../types";
+import type { RideListItem } from "../types";
 import { RideJoinButton } from "./rideJoinButton";
 import { RouteThumbnail } from "./routeThumbnail";
 
 type RideCardProps = {
-  ride: RideSummary;
+  ride: RideListItem;
 };
 
 export function RideCard({ ride }: RideCardProps) {
@@ -33,7 +33,7 @@ export function RideCard({ ride }: RideCardProps) {
 
       <CardContent className="flex flex-col gap-3 py-4">
         <div className="flex items-start gap-2">
-          <BikeIcon className="mt-0.5 size-5 shrink-0 text-red-500" />
+          <BikeIcon className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <Link
               href={href}
@@ -42,7 +42,7 @@ export function RideCard({ ride }: RideCardProps) {
               {ride.title}
             </Link>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(ride.startTime), "EEEE, MMM d 'at' HH:mm")}
+              {formatRideDate(ride.startTime)}
             </p>
             {(ride.pace || ride.difficulty) && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -88,7 +88,7 @@ export function RideCard({ ride }: RideCardProps) {
         </p>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between gap-2 border-t py-3">
+      <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t py-3">
         <Button asChild variant="outline" size="sm">
           <Link href={href}>View Route</Link>
         </Button>

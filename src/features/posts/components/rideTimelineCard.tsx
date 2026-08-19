@@ -36,11 +36,9 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
         "group relative rounded-xl border bg-card p-5 transition-shadow hover:shadow-md",
         isPast
           ? "border-border"
-          : "border-red-500/40 shadow-sm ring-1 ring-red-500/20",
+          : "border-primary/40 shadow-sm ring-1 ring-primary/20",
       )}
     >
-      {/* Full-card click target to the ride page. Interactive elements below
-          sit above it via z-10. */}
       <Link
         href={href}
         aria-label={ride.title}
@@ -48,7 +46,6 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
       />
 
       <div className="pointer-events-none relative z-10 flex flex-col gap-5 lg:flex-row">
-        {/* Left: ride details */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {isPast ? (
@@ -57,13 +54,13 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
                 Past ride
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 font-medium text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 font-medium text-white">
                 <BikeIcon className="size-3.5" />
                 Upcoming ride
               </span>
             )}
             {isPast && ride.photoCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 font-medium text-red-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
                 <ImageIcon className="size-3.5" />
                 {ride.photoCount} {ride.photoCount === 1 ? "photo" : "photos"}
               </span>
@@ -72,6 +69,7 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
               by{" "}
               <Link
                 href={profileHref}
+                prefetch={false}
                 className="pointer-events-auto font-medium text-foreground hover:underline"
               >
                 {creatorLabel}
@@ -135,7 +133,6 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
           </div>
         </div>
 
-        {/* Right: route preview */}
         <div className="h-36 overflow-hidden rounded-lg border lg:h-auto lg:max-h-44 lg:w-56 lg:shrink-0">
           <RouteThumbnail routeGeometry={ride.routeGeometry} />
         </div>

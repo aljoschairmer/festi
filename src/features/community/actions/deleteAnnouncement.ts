@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { canManageGroup } from "../lib/groupRoles";
+import { groupPath } from "../lib/routes";
 
 type Result =
   | { success: true; message: string }
@@ -43,7 +44,7 @@ export async function deleteAnnouncement(
 
   await prisma.groupAnnouncement.delete({ where: { id: announcementId } });
 
-  revalidatePath(`/dashboard/community/g/${announcement.groupId}`);
+  revalidatePath(groupPath(announcement.groupId));
 
   return { success: true, message: "Announcement deleted." };
 }

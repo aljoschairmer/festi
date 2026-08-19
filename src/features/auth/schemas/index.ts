@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const namePattern = /^[\p{L}\p{M}' -]+$/u;
+
 const passwordSchema = z
   .string()
   .min(1, "Password is required")
@@ -15,10 +17,8 @@ export const loginSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(8, "Password must be at least 8 characters"),
+
+  password: z.string().min(1, "Password is required"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -28,11 +28,21 @@ export const registerSchema = z
     firstName: z
       .string()
       .min(1, "First name is required")
-      .min(2, "First name must be at least 2 characters"),
+      .min(2, "First name must be at least 2 characters")
+      .max(50, "First name must be at most 50 characters")
+      .regex(
+        namePattern,
+        "First name can only contain letters, spaces, hyphens, and apostrophes",
+      ),
     lastName: z
       .string()
       .min(1, "Last name is required")
-      .min(2, "Last name must be at least 2 characters"),
+      .min(2, "Last name must be at least 2 characters")
+      .max(50, "Last name must be at most 50 characters")
+      .regex(
+        namePattern,
+        "Last name can only contain letters, spaces, hyphens, and apostrophes",
+      ),
     username: z
       .string()
       .min(1, "Username is required")

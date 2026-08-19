@@ -110,8 +110,6 @@ async function syncList(client: RadNet, now: Date) {
 
   for (const item of items) {
     const listFields = {
-      // A mixed search leaves some rows' type empty (e.g. Gravelride); don't
-      // clobber a type the detail pass already backfilled.
       type: item.type || undefined,
       date: new Date(item.date),
       title: item.title,
@@ -128,9 +126,6 @@ async function syncList(client: RadNet, now: Date) {
     });
   }
 
-  // Drop events that disappeared from the portal — but only inside the range
-  // actually covered by this scrape, so a page-capped result can't wipe rows
-  // beyond the last fetched date. Past events age out here too.
   if (items.length > 0) {
     const lastFetchedDate = items.reduce(
       (max, item) => (item.date > max ? item.date : max),
@@ -176,8 +171,6 @@ async function syncDetailBatch(client: RadNet) {
     try {
       const detail = await client.getEvent(event.detailUrl);
       if (isWaitingRoomPage(detail)) {
-        // Rate-limited: stop the batch, leave the rows unsynced and let a
-        // later sync call retry once the waiting room has cleared.
         return;
       }
       await prisma.radnetEvent.update({
@@ -200,8 +193,7 @@ async function syncDetailBatch(client: RadNet) {
       });
     } catch (error) {
       console.error(`[radnet-sync] detail fetch failed for ${event.id}`, error);
-      // Mark as attempted so one broken detail page can't stall the queue;
-      // the row keeps its list data and simply stays off the map.
+
       await prisma.radnetEvent.update({
         where: { id: event.id },
         data: { detailSyncedAt: new Date() },

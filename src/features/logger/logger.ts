@@ -2,6 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 import type { Prisma } from "@/generated/prisma/client";
+import { getClientIp } from "@/lib/clientIp";
 import { prisma } from "@/lib/prisma";
 
 /** Every activity we can log. Keep in sync with the Prisma `ActivityAction` enum. */
@@ -75,10 +76,8 @@ type LogInput = {
 async function getRequestContext() {
   try {
     const h = await headers();
-    const ipAddress =
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      h.get("x-real-ip") ??
-      null;
+
+    const ipAddress = await getClientIp();
     const userAgent = h.get("user-agent");
     return { ipAddress, userAgent };
   } catch {
@@ -118,7 +117,6 @@ export const Logger = {
         },
       });
     } catch (error) {
-      // Logging must never break the action that triggered it.
       console.error("[Logger] Failed to write activity log:", error);
     }
   },

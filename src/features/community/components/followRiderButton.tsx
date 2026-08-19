@@ -35,6 +35,8 @@ const FollowRiderButton = ({
         queryKey: ["rider-profile", targetId],
       });
 
+      queryClient.invalidateQueries({ queryKey: ["follow-connections"] });
+
       router.refresh();
 
       toast.success(data.message);
@@ -60,6 +62,8 @@ const FollowRiderButton = ({
       queryClient.invalidateQueries({
         queryKey: ["rider-profile", targetId],
       });
+
+      queryClient.invalidateQueries({ queryKey: ["follow-connections"] });
 
       router.refresh();
 

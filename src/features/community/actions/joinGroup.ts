@@ -6,6 +6,8 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { isUniqueViolation } from "@/lib/prismaErrors";
+import { groupPath } from "../lib/routes";
 
 export async function joinGroup(groupId: string) {
   const session = await getCurrentUser();
@@ -60,16 +62,24 @@ export async function joinGroup(groupId: string) {
   }
 
   if (group.needApproval) {
-    await prisma.groupMember.create({
-      data: {
-        groupId,
-        userId: session.user.id,
-        role: "member",
-        status: "PENDING",
-      },
-    });
+    try {
+      await prisma.groupMember.create({
+        data: {
+          groupId,
+          userId: session.user.id,
+          role: "member",
+          status: "PENDING",
+        },
+      });
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      return {
+        success: true,
+        message: "Your join request has been sent to the group owner.",
+      };
+    }
 
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(groupPath(groupId));
 
     await Logger.log(
       ActivityAction.GROUP_JOIN_REQUESTED,
@@ -96,15 +106,20 @@ export async function joinGroup(groupId: string) {
     };
   }
 
-  await prisma.groupMember.create({
-    data: {
-      groupId,
-      userId: session.user.id,
-      role: "member",
-    },
-  });
+  try {
+    await prisma.groupMember.create({
+      data: {
+        groupId,
+        userId: session.user.id,
+        role: "member",
+      },
+    });
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    return { success: true, message: "You have joined the group." };
+  }
 
-  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(groupPath(groupId));
 
   await Logger.log(
     ActivityAction.GROUP_JOINED,

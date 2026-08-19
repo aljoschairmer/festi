@@ -45,7 +45,7 @@ export async function GET(
       headers: {
         "Content-Type": file.contentType,
         "Content-Disposition": `inline; filename="${reportId}.${ext}"`,
-        // The reports are immutable once published; let the browser keep them.
+
         "Cache-Control": "private, max-age=3600",
       },
     });

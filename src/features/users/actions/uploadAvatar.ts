@@ -7,6 +7,7 @@ import { ActivityAction } from "@/features/logger/logger";
 import { validateImageUpload } from "@/lib/image";
 import { prisma } from "@/lib/prisma";
 import { publicUrl, putObject } from "@/lib/r2";
+import { limitByUser } from "@/lib/rateLimit";
 
 type Result =
   | { success: true; message: string; imageUrl: string }
@@ -21,6 +22,17 @@ export async function uploadAvatar(formData: FormData): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) {
     return { success: false, error: "You must be signed in." };
+  }
+
+  const rateLimitResult = await limitByUser("upload", session.user.id, {
+    limit: 20,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    return {
+      success: false,
+      error: "Too many uploads. Please try again in a minute.",
+    };
   }
 
   const validation = await validateImageUpload(formData.get("image"));
@@ -38,7 +50,6 @@ export async function uploadAvatar(formData: FormData): Promise<Result> {
     return { success: false, error: "Failed to upload image. Try again." };
   }
 
-  // Cache-busting version so clients fetch the new image despite the stable key.
   const imageUrl = `${publicUrl(key)}?v=${Date.now()}`;
 
   await prisma.user.update({

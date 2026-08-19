@@ -3,6 +3,7 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { fetchRoute } from "../lib/brouter";
+import { canViewRide } from "../lib/visibility";
 import type { ElevationPoint, RideDetail, Waypoint } from "../types";
 
 /**
@@ -44,7 +45,25 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
     return null;
   }
 
+  if (!(await canViewRide(session.user.id, ride))) {
+    return null;
+  }
+
   const isCreator = ride.creatorId === session.user.id;
+
+  if (ride.groupId && !isCreator) {
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: ride.groupId,
+        userId: session.user.id,
+        status: "APPROVED",
+      },
+      select: { id: true },
+    });
+    if (!membership) {
+      return null;
+    }
+  }
 
   const visibleParticipants = ride.participants.filter(
     (participant) =>
@@ -59,8 +78,6 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
 
   const waypoints = ride.waypoints as unknown as Waypoint[];
 
-  // Prefer the profile stored at creation (positions match the saved route).
-  // Fall back to recomputing from waypoints for older rides that lack it.
   let elevationProfile: ElevationPoint[] = [];
   const stored = ride.elevationProfile as unknown as ElevationPoint[] | null;
   if (Array.isArray(stored) && stored.length >= 2) {

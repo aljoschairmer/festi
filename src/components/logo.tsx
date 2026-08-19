@@ -1,9 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-/**
- * The Festi brand logo, backed by `/public/logo-original.png`.
- */
 export function Logo({
   size = 40,
   className,

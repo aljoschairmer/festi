@@ -3,6 +3,9 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 
+/** Hard cap so one query cannot pull an unbounded table into memory. */
+const DEFAULT_RIDER_LIMIT = 200;
+
 export async function getRiders() {
   const session = await getCurrentUser();
   if (!session) {
@@ -10,6 +13,7 @@ export async function getRiders() {
   }
 
   const users = await prisma.user.findMany({
+    take: DEFAULT_RIDER_LIMIT,
     where: {
       banned: false,
       NOT: { id: session.user.id },

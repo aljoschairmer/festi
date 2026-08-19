@@ -40,8 +40,6 @@ export function WaypointList({
   highlights,
   streetPoints,
 }: WaypointListProps) {
-  // Where each point sits along the route — friendlier than raw
-  // coordinates ("km 12.4" instead of "52.37001, 9.73200").
   const kmPositions = useMemo(
     () =>
       routeCoordinates && routeCoordinates.length >= 2
@@ -50,9 +48,6 @@ export function WaypointList({
     [waypoints, routeCoordinates],
   );
 
-  // Real names beat any numbering. Priority per point: the street it
-  // sits on ("Hildesheimer Straße"), else a landmark nearby
-  // ("Lindener Berg"), else its km position.
   const streetNames = useMemo(
     () =>
       streetPoints && streetPoints.length > 0
@@ -109,7 +104,7 @@ export function WaypointList({
           ? "bg-green-500"
           : isEnd
             ? "bg-blue-500"
-            : "bg-red-500";
+            : "bg-primary";
         return (
           <li
             // biome-ignore lint/suspicious/noArrayIndexKey: waypoints have no stable id

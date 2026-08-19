@@ -9,6 +9,7 @@ import type { PlaceResult } from "../types";
 
 type LocationSearchProps = {
   onSelect: (place: PlaceResult) => void;
+  onQueryChange?: (value: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
   initialQuery?: string;
@@ -16,6 +17,7 @@ type LocationSearchProps = {
 
 export function LocationSearch({
   onSelect,
+  onQueryChange,
   placeholder,
   autoFocus,
   initialQuery,
@@ -68,6 +70,7 @@ export function LocationSearch({
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
+            onQueryChange?.(event.target.value);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
@@ -98,7 +101,7 @@ export function LocationSearch({
                     }}
                     className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
                   >
-                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-red-500" />
+                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span className="line-clamp-2">{place.name}</span>
                   </button>
                 </li>

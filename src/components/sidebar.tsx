@@ -86,8 +86,8 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
               isActive={isActive}
               className={
                 isActive
-                  ? "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500"
-                  : "hover:bg-red-500/10"
+                  ? "bg-primary/20 text-primary hover:bg-primary/30 hover:text-primary"
+                  : "hover:bg-primary/10"
               }
             >
               <Link href={item.href}>
@@ -102,24 +102,21 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
   );
 
   return (
-    <Sidebar className="border-r border-red-500/20">
-      {/* Header */}
-      <SidebarHeader className="h-14 justify-center border-b border-red-500/20 px-4">
+    <Sidebar className="border-r border-primary/20">
+      <SidebarHeader className="h-14 justify-center border-b border-primary/20 px-4">
         <div className="flex items-center gap-3">
           <span className="text-xl font-bold tracking-tight">FESTI</span>
           {isAdmin && (
-            <span className="ml-auto rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-500">
+            <span className="ml-auto rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
               Admin
             </span>
           )}
         </div>
       </SidebarHeader>
 
-      {/* Main Content */}
       <SidebarContent>
-        {/* Content Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">
+          <SidebarGroupLabel className="text-muted-foreground">
             Content
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -127,9 +124,8 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">
+          <SidebarGroupLabel className="text-muted-foreground">
             Account
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -138,11 +134,10 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer - Admin section at bottom */}
       {isAdmin && (
         <SidebarFooter className="mt-auto">
-          <SidebarGroup className="border-t border-red-500/20 pt-2">
-            <SidebarGroupLabel className="text-red-500/70">
+          <SidebarGroup className="border-t border-primary/20 pt-2">
+            <SidebarGroupLabel className="text-primary/70">
               Administration
             </SidebarGroupLabel>
             <SidebarGroupContent>

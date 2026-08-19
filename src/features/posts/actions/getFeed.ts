@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/features/auth/guards";
+import { rideVisibilityFilter } from "@/features/rides/lib/visibility";
 import type { RideSummary, Waypoint } from "@/features/rides/types";
 import { prisma } from "@/lib/prisma";
 import type { FeedItem, PostSummary } from "../types";
@@ -41,7 +42,6 @@ export async function getFeed(
   });
   const followingIds = following.map((f) => f.followingId);
 
-  // "following" includes your own content; "discover" excludes both.
   const authorFilter =
     scope === "following"
       ? { in: [...followingIds, userId] }
@@ -56,7 +56,8 @@ export async function getFeed(
       }
     : {};
 
-  // One extra row per source tells us whether older items remain.
+  const rideVisibility = rideVisibilityFilter(userId);
+
   const [posts, rides] = await Promise.all([
     prisma.post.findMany({
       where: { authorId: authorFilter, ...cursorFilter },
@@ -80,7 +81,11 @@ export async function getFeed(
       },
     }),
     prisma.ride.findMany({
-      where: { creatorId: authorFilter, ...cursorFilter },
+      where: {
+        creatorId: authorFilter,
+
+        AND: [cursorFilter, rideVisibility],
+      },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       include: {

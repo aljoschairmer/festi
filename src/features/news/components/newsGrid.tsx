@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRightIcon, NewspaperIcon } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getNews } from "../actions/getNews";
@@ -45,10 +46,12 @@ export function NewsGrid() {
 
   if (articles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <NewspaperIcon className="mb-4 size-12 text-muted-foreground/50" />
-        <p className="text-muted-foreground">No articles available.</p>
-      </div>
+      <EmptyState
+        icon={NewspaperIcon}
+        title="No articles available."
+        description="New stories from the cycling world will show up here."
+        className="py-16"
+      />
     );
   }
 
@@ -100,7 +103,7 @@ function FeaturedCard({ article }: { article: NewsArticle }) {
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative block overflow-hidden rounded-2xl border border-red-500/20"
+      className="group relative block overflow-hidden rounded-2xl border border-primary/20"
     >
       <div className="relative aspect-[21/9] w-full bg-muted">
         {article.image ? (
@@ -120,7 +123,7 @@ function FeaturedCard({ article }: { article: NewsArticle }) {
 
       <div className="absolute right-0 bottom-0 left-0 p-5 text-white sm:p-6">
         <div className="mb-2 flex items-center gap-2 text-xs">
-          <span className="rounded-full bg-red-500 px-2 py-0.5 font-medium">
+          <span className="rounded-full bg-primary px-2 py-0.5 font-medium text-primary-foreground">
             {article.source}
           </span>
           {ago && <span className="text-white/70">{ago}</span>}
@@ -145,7 +148,7 @@ function NewsCard({ article }: { article: NewsArticle }) {
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-red-500/40 hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
         {article.image ? (
@@ -167,7 +170,7 @@ function NewsCard({ article }: { article: NewsArticle }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="font-heading font-semibold leading-snug group-hover:text-red-500">
+        <h3 className="font-heading font-semibold leading-snug group-hover:text-primary">
           {article.title}
         </h3>
         {article.excerpt && (
@@ -177,7 +180,7 @@ function NewsCard({ article }: { article: NewsArticle }) {
         )}
         <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
           <span>{ago ?? ""}</span>
-          <span className="flex items-center gap-1 font-medium text-red-500">
+          <span className="flex items-center gap-1 font-medium text-primary">
             Read
             <ArrowUpRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </span>

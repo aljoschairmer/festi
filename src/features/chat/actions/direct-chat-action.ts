@@ -5,6 +5,7 @@ import { isOnline } from "@/features/followers/lib/presence";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { limitByUser } from "@/lib/rateLimit";
 import { type DirectMessageFormData, DirectMessageSchema } from "../schemas";
 
 const partnerSelect = {
@@ -37,16 +38,6 @@ async function areMutualFollowers(me: string, other: string) {
   );
 
   return iFollow && followsMe;
-}
-
-/** Total number of unread direct messages addressed to the current user. */
-export async function getUnreadDirectCount(): Promise<number> {
-  const session = await getCurrentUser();
-  if (!session) return 0;
-
-  return prisma.directMessage.count({
-    where: { recipientId: session.user.id, readAt: null },
-  });
 }
 
 export type DirectConversation = {
@@ -209,7 +200,6 @@ export async function getDirectMessages(
     areMutualFollowers(myId, partnerId),
   ]);
 
-  // Mark partner's messages to me as read.
   await prisma.directMessage.updateMany({
     where: { senderId: partnerId, recipientId: myId, readAt: null },
     data: { readAt: new Date() },
@@ -225,8 +215,7 @@ export async function getDirectMessages(
       isOnline: isOnline(partner.lastSeenAt),
     },
     canMessage,
-    // Fetched newest-first to keep the latest 100; reversed back to
-    // ascending order for rendering.
+
     messages: messages.reverse().map((message) => ({
       id: message.id,
       content: message.content,
@@ -240,6 +229,16 @@ export async function sendDirectMessage(values: DirectMessageFormData) {
   const session = await getCurrentUser();
   if (!session) {
     throw new Error("You must be signed in.");
+  }
+
+  const rateLimitResult = await limitByUser("chat", session.user.id, {
+    limit: 30,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    throw new Error(
+      "You're sending messages too quickly. Please wait a moment.",
+    );
   }
 
   const validatedFields = DirectMessageSchema.safeParse(values);

@@ -20,23 +20,17 @@ export default async function NewRidePage({
 }) {
   await requireAuth();
 
-  // "Plan ride" from a library route lands here with ?routeId=… and skips
-  // straight to the route-building step with the saved waypoints.
   const { routeId, genJob, genIndex, genName } = await searchParams;
   const libraryRoute = routeId ? await getRoute(routeId) : null;
 
-  // "Use this route" from the map generator lands here with the job
-  // reference; the route is fetched server-side so the planner starts on
-  // the build step with the generated tour already in place. Waypoints
-  // sampled along the geometry keep the tour editable like a manually
-  // planned route.
   let generated = null;
   if (genJob && genIndex !== undefined) {
     const index = Number(genIndex);
-    const engineRoutes = Number.isInteger(index)
+    const engineResult = Number.isInteger(index)
       ? await getGenerationJobResult(genJob).catch(() => null)
       : null;
-    const engineRoute = engineRoutes?.[index];
+    const engineRoute =
+      engineResult?.status === "ok" ? engineResult.routes[index] : undefined;
     if (engineRoute) {
       const route = toRouteResult(engineRoute);
       const waypoints = sampleRouteWaypoints(

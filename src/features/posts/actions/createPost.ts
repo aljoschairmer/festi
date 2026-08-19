@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { limitByUser } from "@/lib/rateLimit";
 import { createPostSchema } from "../schemas";
 
 type CreatePostResult =
@@ -19,6 +20,17 @@ export async function createPost(input: unknown): Promise<CreatePostResult> {
   const session = await getCurrentUser();
   if (!session) {
     return { success: false, error: "You must be signed in." };
+  }
+
+  const rateLimitResult = await limitByUser("post", session.user.id, {
+    limit: 30,
+    windowSec: 60,
+  });
+  if (!rateLimitResult.allowed) {
+    return {
+      success: false,
+      error: "You're posting too quickly. Please try again in a minute.",
+    };
   }
 
   const parsed = createPostSchema.safeParse(input);

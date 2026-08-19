@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -14,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublicRide } from "@/features/rides/actions/getPublicRide";
+import { RideDate } from "@/features/rides/components/rideDate";
 import { RouteThumbnail } from "@/features/rides/components/routeThumbnail";
 import {
   formatDifficulty,
@@ -90,7 +90,7 @@ export default async function PublicRidePage({
               <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                   <CalendarIcon className="size-4" />
-                  {format(new Date(ride.startTime), "EEEE, d MMMM yyyy, HH:mm")}
+                  <RideDate startTime={ride.startTime} style="long" />
                 </span>
                 {ride.startLocation && (
                   <span className="inline-flex items-center gap-1.5">
@@ -152,7 +152,7 @@ export default async function PublicRidePage({
               </CardContent>
             </Card>
 
-            <Card className="border-red-500/30">
+            <Card className="border-primary/30">
               <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
                 <p className="font-heading text-lg font-semibold">
                   Want to ride along?

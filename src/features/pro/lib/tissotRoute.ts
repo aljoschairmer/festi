@@ -83,7 +83,7 @@ export function buildTissotRoute(
 ): ProStageRoute | null {
   const kml = extractKml(kmz);
   if (!kml) return null;
-  // The longest placemark line is the stage route (pins/short segments lose).
+
   const line = parseKmlLines(kml)
     .map((entry) => entry.points)
     .sort((a, b) => b.length - a.length)[0];

@@ -41,7 +41,6 @@ export function PostCard({ post }: PostCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  // Optimistic like state, re-synced when the feed refetches.
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   useEffect(() => {
@@ -64,7 +63,6 @@ export function PostCard({ post }: PostCardProps) {
       setLikeCount(result.likeCount);
     },
     onError: (error) => {
-      // Revert optimistic change.
       setLiked(post.likedByMe);
       setLikeCount(post.likeCount);
       toast.error(error.message);
@@ -94,12 +92,11 @@ export function PostCard({ post }: PostCardProps) {
     .toUpperCase();
 
   return (
-    <article className="rounded-xl border border-red-500/20 bg-card p-5 transition-shadow hover:shadow-md">
+    <article className="rounded-xl border border-primary/20 bg-card p-5 transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-5 lg:flex-row">
-        {/* Left: author, title, content */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex items-start gap-3">
-            <Link href={profileHref} aria-label={authorLabel}>
+            <Link href={profileHref} prefetch={false} aria-label={authorLabel}>
               <Avatar>
                 {post.author.image && (
                   <AvatarImage src={post.author.image} alt={authorLabel} />
@@ -110,6 +107,7 @@ export function PostCard({ post }: PostCardProps) {
             <div className="min-w-0 flex-1">
               <Link
                 href={profileHref}
+                prefetch={false}
                 className="block truncate font-medium leading-tight hover:underline"
               >
                 {authorLabel}
@@ -167,7 +165,6 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </div>
 
-        {/* Right: images */}
         {post.images.length > 0 && (
           <div className="lg:w-56 lg:shrink-0">
             <PostGallery post={post} />
@@ -175,18 +172,18 @@ export function PostCard({ post }: PostCardProps) {
         )}
       </div>
 
-      {/* Footer: likes & comments */}
       <div className="mt-4 flex items-center gap-1 border-t pt-3">
         <Button
           variant="ghost"
           size="sm"
           className={cn(
             "gap-1.5 text-muted-foreground",
-            liked && "text-red-500 hover:text-red-500",
+            liked && "text-primary hover:text-primary",
           )}
           disabled={likeMutation.isPending}
           onClick={() => likeMutation.mutate()}
           aria-pressed={liked}
+          aria-label={liked ? "Unlike post" : "Like post"}
         >
           <HeartIcon
             className={cn(
@@ -204,6 +201,8 @@ export function PostCard({ post }: PostCardProps) {
             showComments && "text-foreground",
           )}
           onClick={() => setShowComments((v) => !v)}
+          aria-label={showComments ? "Hide comments" : "Show comments"}
+          aria-expanded={showComments}
         >
           <MessageCircleIcon className="size-4" />
           {post.commentCount > 0 ? post.commentCount : "Comment"}

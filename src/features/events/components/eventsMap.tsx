@@ -9,6 +9,7 @@ import type {
 } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import { getMapStyle } from "@/features/rides/lib/mapStyle";
+import { guardTerrainSource } from "@/features/rides/lib/terrain";
 import { eventColor, eventLocation, formatEventDate } from "../lib/eventTypes";
 import type { CalendarEvent } from "../types";
 
@@ -89,7 +90,7 @@ function buildPopupContent(event: CalendarEvent): HTMLElement {
 
   if (event.cancelled) {
     const cancelled = document.createElement("div");
-    cancelled.className = "text-xs font-medium text-red-500";
+    cancelled.className = "text-xs font-medium text-primary";
     cancelled.textContent = event.cancelReason || "Cancelled";
     root.appendChild(cancelled);
   }
@@ -99,7 +100,7 @@ function buildPopupContent(event: CalendarEvent): HTMLElement {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   link.className =
-    "mt-1.5 inline-block w-fit rounded-md bg-red-500 px-2.5 py-1 text-xs font-medium text-white no-underline hover:bg-red-600";
+    "mt-1.5 inline-block w-fit rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white no-underline hover:bg-primary/80";
   link.textContent = "Details on rad-net ↗";
   root.appendChild(link);
 
@@ -122,7 +123,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     eventsRef.current = events;
   }, [events]);
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -146,6 +146,7 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
         attributionControl: { compact: true },
       });
       mapRef.current = map;
+      guardTerrainSource(map);
 
       map.addControl(new maplibregl.NavigationControl(), "top-right");
       map.addControl(
@@ -237,7 +238,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     };
   }, []);
 
-  // Push filtered events into the source whenever they change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
@@ -249,7 +249,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
     }
   }, [events, ready]);
 
-  // Fly to the event selected in the list and open its popup.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !selectedId) {
@@ -277,7 +276,6 @@ export function EventsMap({ events, selectedId }: EventsMapProps) {
         .setDOMContent(buildPopupContent(event))
         .addTo(activeMap);
     })();
-    // Reads events via eventsRef so list refetches don't re-fly the map.
   }, [selectedId, ready]);
 
   return <div ref={containerRef} className="h-full w-full" />;

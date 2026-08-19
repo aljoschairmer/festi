@@ -1,6 +1,6 @@
 const NotFoundComponent = () => {
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <div className="max-w-md">
         <h1 className="text-6xl font-semibold tracking-tight text-foreground">
           404
@@ -14,7 +14,7 @@ const NotFoundComponent = () => {
           The page you are looking for doesn’t exist or may have been removed.
         </p>
       </div>
-    </main>
+    </div>
   );
 };
 

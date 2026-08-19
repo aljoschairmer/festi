@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   type FollowConnections,
@@ -101,7 +102,7 @@ function ConversationList({
             </p>
           </div>
           {unreadCount > 0 ? (
-            <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+            <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-white">
               {unreadCount}
             </span>
           ) : null}
@@ -139,7 +140,11 @@ function NewChatPicker({
       <div className="border-b p-2">
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Label htmlFor="mutual-followers-search" className="sr-only">
+            Search mutual followers
+          </Label>
           <Input
+            id="mutual-followers-search"
             placeholder="Search mutual followers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

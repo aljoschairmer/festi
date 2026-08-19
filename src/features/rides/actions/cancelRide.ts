@@ -60,8 +60,6 @@ export async function cancelRide(
     return { success: false, error: "This ride is already cancelled." };
   }
 
-  // Resolve which rides to cancel: just this one, or also all future
-  // scheduled instances of its weekly series.
   let rideIds = [ride.id];
   if (cancelFutureSeries && ride.recurrenceId) {
     const futureInstances = await prisma.ride.findMany({

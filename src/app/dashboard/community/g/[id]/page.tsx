@@ -53,8 +53,6 @@ export default async function GroupPage({
         },
       },
       members: {
-        // Only approved members count as members; pending join requests are
-        // fetched separately and never leave the server for non-owners.
         where: { status: "APPROVED" },
         include: {
           user: {
@@ -92,8 +90,6 @@ export default async function GroupPage({
       })
     : null;
 
-  // Join requests are visible to the owner and moderators — never to anyone
-  // else (they never leave the server otherwise).
   const canManage =
     isOwner ||
     (ownMembership?.status === "APPROVED" &&
@@ -180,7 +176,7 @@ export default async function GroupPage({
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-6">
             {canManage && (
-              <Card className="border-red-500/20">
+              <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ClockIcon className="size-5" />
@@ -204,7 +200,7 @@ export default async function GroupPage({
               </Card>
             )}
 
-            <Card className="border-red-500/20">
+            <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MegaphoneIcon className="size-5" />
@@ -219,7 +215,7 @@ export default async function GroupPage({
               </CardContent>
             </Card>
 
-            <Card className="border-red-500/20">
+            <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UsersIcon className="size-5" />
@@ -278,7 +274,7 @@ export default async function GroupPage({
           </div>
 
           <div className="space-y-6">
-            <Card className="border-red-500/20">
+            <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BikeIcon className="size-5" />
@@ -293,7 +289,7 @@ export default async function GroupPage({
               </CardContent>
             </Card>
 
-            <Card className="border-red-500/20">
+            <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <RouteIcon className="size-5" />
@@ -308,7 +304,7 @@ export default async function GroupPage({
               </CardContent>
             </Card>
 
-            <Card className="border-red-500/20">
+            <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircleIcon className="size-5" />
@@ -323,7 +319,7 @@ export default async function GroupPage({
           </div>
         </div>
       ) : (
-        <Card className="border-red-500/20">
+        <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UsersIcon className="size-5" />

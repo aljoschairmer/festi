@@ -58,7 +58,6 @@ export async function unfollowRider(values: FollowUserFormData) {
     },
   );
 
-  // Remove the unseen "followed you" notification to avoid follow/unfollow spam.
   await Notifier.remove({
     type: NotificationType.USER_FOLLOWED,
     userId: targetId,

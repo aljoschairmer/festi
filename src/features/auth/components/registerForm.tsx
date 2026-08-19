@@ -28,9 +28,12 @@ import { Input } from "@/components/ui/input";
 import { registerUser } from "../actions/registerUser";
 import { type RegisterFormData, registerSchema } from "../schemas";
 
-export function RegisterForm() {
+export function RegisterForm({ returnTo }: { returnTo?: string | null }) {
   const [verificationSent, setVerificationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>("");
+  const loginHref = returnTo
+    ? `/login?returnTo=${encodeURIComponent(returnTo)}`
+    : "/login";
 
   const {
     register,
@@ -74,11 +77,9 @@ export function RegisterForm() {
     registerMutation.mutate(data);
   };
 
-  // Show verification sent state
   if (verificationSent) {
     return (
       <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-        {/* Back Arrow */}
         <Link
           href="/"
           className="absolute top-6 left-6 z-10 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -87,19 +88,19 @@ export function RegisterForm() {
           Back
         </Link>
 
-        {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 via-background to-black" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-transparent" />
 
-        {/* Interactive Particles */}
         <ParticleBackground />
 
-        <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+        <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <MailCheckIcon className="size-7 text-white" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
+            <CardTitle as="h1" className="text-2xl">
+              Check your email
+            </CardTitle>
             <CardDescription className="pt-2">
               If that email isn't already registered, we've sent a verification
               link to
@@ -114,8 +115,8 @@ export function RegisterForm() {
             <p className="text-sm text-muted-foreground">
               Already verified?{" "}
               <Link
-                href="/login"
-                className="font-medium text-red-500 hover:text-red-400"
+                href={loginHref}
+                className="font-medium text-primary hover:text-primary-hover"
               >
                 Sign in
               </Link>
@@ -128,7 +129,6 @@ export function RegisterForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      {/* Back Arrow */}
       <Link
         href="/"
         className="absolute top-6 left-6 z-10 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -137,19 +137,19 @@ export function RegisterForm() {
         Back
       </Link>
 
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 via-background to-black" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-transparent" />
 
-      {/* Interactive Particles */}
       <ParticleBackground />
 
-      <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+      <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Logo size={96} priority className="size-24" />
           </div>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Create your account
+          </CardTitle>
           <CardDescription>Join the cycling community today</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -257,14 +257,14 @@ export function RegisterForm() {
                     I agree to the{" "}
                     <Link
                       href="/terms"
-                      className="text-red-500 hover:text-red-400"
+                      className="text-primary hover:text-primary-hover"
                     >
                       Terms of Service
                     </Link>{" "}
                     and{" "}
                     <Link
                       href="/privacy"
-                      className="text-red-500 hover:text-red-400"
+                      className="text-primary hover:text-primary-hover"
                     >
                       Privacy Policy
                     </Link>
@@ -277,7 +277,7 @@ export function RegisterForm() {
             <Button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700"
             >
               {registerMutation.isPending && (
                 <Loader2Icon className="mr-2 size-4 animate-spin" />
@@ -289,8 +289,8 @@ export function RegisterForm() {
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              href="/login"
-              className="font-medium text-red-500 hover:text-red-400"
+              href={loginHref}
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Sign in
             </Link>

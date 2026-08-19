@@ -60,8 +60,7 @@ export function ridersToDots(riders: ProLiveRider[]): MapDot[] {
     ]
       .filter(Boolean)
       .join(" · ");
-    // Jersey wearers keep their signature color; everyone else is tinted by
-    // their team color when ASO provides one, falling back to plain blue.
+
     const color = rider.jersey
       ? JERSEY_COLORS[rider.jersey]
       : (rider.teamColor ?? DEFAULT_RIDER_COLOR);
@@ -70,10 +69,9 @@ export function ridersToDots(riders: ProLiveRider[]): MapDot[] {
       lat: rider.lat,
       lng: rider.lng,
       color,
-      // The white jersey needs a dark outline to stay visible on the map.
+
       stroke: rider.jersey === "white" ? "#525252" : undefined,
-      // Enlarge jersey wearers so they stand out from (and draw on top of) the
-      // tightly-packed peloton instead of disappearing under the blue dots.
+
       radius: rider.jersey ? 10 : 6,
       title: rider.name ?? `Bib ${rider.bib}`,
       subtitle: details || undefined,

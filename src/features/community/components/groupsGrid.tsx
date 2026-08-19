@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getGroups } from "../actions/getGroups";
 import type { Group } from "../types";
 import { GroupJoinButton } from "./groupJoinButton";
@@ -57,15 +59,25 @@ export function GroupsGrid() {
   };
 
   if (isLoading)
-    return <p className="text-sm text-muted-foreground">Loading groups...</p>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["a", "b", "c"].map((key) => (
+          <Skeleton key={key} className="h-[84px] w-full rounded-xl" />
+        ))}
+      </div>
+    );
   if (isError)
-    return <p className="text-sm text-red-500">Failed to load groups.</p>;
+    return <p className="text-sm text-destructive">Failed to load groups.</p>;
 
   return (
     <div className="space-y-6">
       <div className="relative max-w-md">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Label htmlFor="groups-search" className="sr-only">
+          Search groups
+        </Label>
         <Input
+          id="groups-search"
           placeholder="Search groups..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -90,7 +102,7 @@ export function GroupsGrid() {
               style={{ animationDelay: `${(index % PAGE_SIZE) * 60}ms` }}
             >
               <Link href={`/dashboard/community/g/${group.id}`}>
-                <Card className="h-full transition hover:border-red-500/40 hover:bg-muted/40">
+                <Card className="h-full transition hover:border-primary/40 hover:bg-muted/40">
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="size-12">
                       <AvatarImage src={group.image ?? undefined} sizes="" />
@@ -122,7 +134,7 @@ export function GroupsGrid() {
               type="button"
               onClick={loadMore}
               disabled={loadingMore}
-              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-red-500/30 text-sm font-medium text-muted-foreground transition hover:border-red-500/50 hover:bg-muted/40 hover:text-foreground"
+              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-primary/30 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-muted/40 hover:text-foreground"
             >
               <span className="flex items-center gap-2">
                 {loadingMore ? (

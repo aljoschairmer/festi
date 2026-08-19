@@ -30,27 +30,12 @@ type RemoveInput = {
 };
 
 /**
- * Simple notification service for server actions. Works like the Logger:
- * push a notification to the DB from anywhere, and it never throws.
- *
- * @example
- * await Notifier.push({
- *   type: NotificationType.USER_FOLLOWED,
- *   userId: targetId,
- *   actorId: me.id,
- * });
- *
- * // Undo an unseen notification (e.g. on unfollow):
- * await Notifier.remove({
- *   type: NotificationType.USER_FOLLOWED,
- *   userId: targetId,
- *   actorId: me.id,
- * });
+ * Notifications for server actions. Every method is best-effort: a failure
+ * is logged and swallowed, never propagated to the action that triggered it.
  */
 export const Notifier = {
   async push(input: PushInput) {
     try {
-      // Never notify yourself.
       if (input.actorId && input.actorId === input.userId) return;
 
       await prisma.notification.create({
@@ -64,7 +49,6 @@ export const Notifier = {
         },
       });
     } catch (error) {
-      // Notifications must never break the action that triggered them.
       console.error("[Notifier] Failed to push notification:", error);
     }
   },

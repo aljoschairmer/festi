@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -34,6 +34,7 @@ import { calculateRoute } from "../actions/calculateRoute";
 import { createRide } from "../actions/createRide";
 import { getMyRideGroups } from "../actions/getMyRideGroups";
 import { RIDE_DIFFICULTY_OPTIONS, RIDE_PACE_OPTIONS } from "../lib/format";
+import { invalidateRideQueries } from "../lib/rideQueryKeys";
 import { type RideFormValues, rideFormSchema } from "../schemas";
 import type {
   PlaceResult,
@@ -126,11 +127,10 @@ export function RidePlanner({
     streetPoints: RoutePlaceName[];
   } | null;
 }) {
-  // Street names and landmarks survive edits: even after the tour
-  // switches to manual planning, nearby points keep their names.
   const highlights = initialGenerated?.highlights ?? [];
   const streetPoints = initialGenerated?.streetPoints ?? [];
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(
     initialRoute || initialGenerated ? "build" : "start",
   );
@@ -197,7 +197,6 @@ export function RidePlanner({
     },
   });
 
-  // Groups the rider can post to — loaded once the details step is reached.
   const { data: rideGroups = [] } = useQuery({
     queryKey: ["my-ride-groups"],
     queryFn: () => getMyRideGroups(),
@@ -225,6 +224,8 @@ export function RidePlanner({
     mutationFn: async (values: RideFormValues) => {
       const result = await createRide({
         ...values,
+
+        startTime: new Date(values.startTime).toISOString(),
         startLocation: startPlace?.name ?? "",
         waypoints,
         profile,
@@ -241,6 +242,7 @@ export function RidePlanner({
       return result;
     },
     onSuccess: (result) => {
+      invalidateRideQueries(queryClient);
       toast.success(result.message);
       router.push(`/dashboard/community-rides/${result.rideId}`);
     },
@@ -251,9 +253,6 @@ export function RidePlanner({
 
   const calcMutate = calcMutation.mutate;
 
-  // Recalculate the route (debounced) whenever the points or profile
-  // change. Generated routes are engine-owned — no BRouter recalculation
-  // until a manual edit clears the generation reference.
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -287,7 +286,6 @@ export function RidePlanner({
   const addWaypoint = (waypoint: Waypoint) => {
     dropGeneration();
     setWaypoints((current) => {
-      // In round-trip mode, insert before the returning end point.
       if (roundTrip && current.length >= 2) {
         const next = [...current];
         next.splice(next.length - 1, 0, waypoint);
@@ -298,11 +296,10 @@ export function RidePlanner({
   };
 
   const removeWaypoint = (index: number) => {
-    // The start point (index 0) is locked once chosen.
     if (index === 0 && startPlace) {
       return;
     }
-    // The returning end point is locked in round-trip mode.
+
     if (roundTrip && index === waypoints.length - 1) {
       return;
     }
@@ -337,7 +334,7 @@ export function RidePlanner({
     setWaypoints((current) => {
       const next = [...current];
       next[index] = waypoint;
-      // In a round trip, keep start and end in sync (same location).
+
       if (roundTrip && next.length > 1) {
         const lastIndex = next.length - 1;
         if (index === 0) {
@@ -388,7 +385,6 @@ export function RidePlanner({
     setWaypoints(roundTrip ? [start, start] : [start]);
   };
 
-  // Going back to step 1 resets the built route to a clean slate.
   const backToStart = () => {
     setGeneration(null);
     setRoute(null);
@@ -433,7 +429,7 @@ export function RidePlanner({
 
                 {startPlace && (
                   <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm animate-in fade-in-0 zoom-in-95">
-                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-red-500" />
+                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span className="line-clamp-2">{startPlace.name}</span>
                   </div>
                 )}
@@ -458,12 +454,12 @@ export function RidePlanner({
 
                 <Button
                   variant="outline"
-                  className="justify-start"
+                  className="h-auto flex-wrap justify-start py-2 text-left whitespace-normal"
                   onClick={() =>
                     router.push("/dashboard/community-rides/generate")
                   }
                 >
-                  <SparklesIcon className="size-4 text-primary" />
+                  <SparklesIcon className="size-4 shrink-0 text-primary" />
                   Generate a route for me
                   <span className="text-muted-foreground">
                     — pick a start on the map
@@ -490,7 +486,6 @@ export function RidePlanner({
           >
             <Card className="overflow-hidden lg:flex lg:h-[calc(100dvh-9rem)] lg:flex-col">
               <CardContent className="flex min-h-0 flex-1 flex-col p-0">
-                {/* Toolbar above the map: profile selector + live stats */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
                   <Select
                     value={profile}

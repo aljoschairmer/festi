@@ -94,7 +94,7 @@ export function nearestCheckpointWeather(
       typeof meteo.temperature === "number"
         ? Math.round(meteo.temperature)
         : null,
-    // ASO reports the wind force in km/h.
+
     windKph:
       typeof meteo.windForce === "number" ? Math.round(meteo.windForce) : null,
     windDirection: asString(meteo.windDirection),

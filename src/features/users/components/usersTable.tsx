@@ -53,7 +53,7 @@ export function UsersTable() {
   });
 
   if (isLoading) return <p>Loading users...</p>;
-  if (isError) return <p className="text-red-500">Failed to load users.</p>;
+  if (isError) return <p className="text-destructive">Failed to load users.</p>;
 
   return (
     <div className="space-y-4">

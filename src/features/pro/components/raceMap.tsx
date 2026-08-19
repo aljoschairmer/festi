@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { decodeRouteGeometry } from "@/features/rides/lib/geometry";
 import { getMapStyle } from "@/features/rides/lib/mapStyle";
+import { guardTerrainSource } from "@/features/rides/lib/terrain";
 import { cn } from "@/lib/utils";
 import type { ProRaceMapStage } from "../types";
 
@@ -77,7 +78,6 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
     stageHrefRef.current = stageHref;
   });
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -95,6 +95,7 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
         attributionControl: { compact: true },
       });
       mapRef.current = map;
+      guardTerrainSource(map);
       map.addControl(new maplibregl.NavigationControl(), "top-right");
 
       const observedMap = map;
@@ -118,7 +119,7 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
             "line-opacity": 0.85,
           },
         });
-        // Wide invisible twin so the thin lines are easy to hover/tap.
+
         map.addLayer({
           id: STAGES_HIT_LAYER_ID,
           type: "line",
@@ -191,7 +192,6 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
     };
   }, [router]);
 
-  // Render the stage lines, numbered start markers, and fit the view.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;

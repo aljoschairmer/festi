@@ -93,13 +93,11 @@ export function CreateGroupDialog() {
         throw new Error(result.error);
       }
 
-      // Upload the (optional) group image once we have the new group id.
       if (imageBlob) {
         const formData = new FormData();
         formData.append("image", imageBlob, "cover.webp");
         const imageResult = await uploadGroupImage(result.groupId, formData);
         if (!imageResult.success) {
-          // Group was created; surface the image problem without failing.
           toast.warning(
             `Group created, but image failed: ${imageResult.error}`,
           );
@@ -154,10 +152,9 @@ export function CreateGroupDialog() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={processing || mutation.isPending}
-                className="group relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/30 outline-none ring-red-500/50 transition-colors hover:border-red-500/50 focus-visible:ring-2"
+                className="group relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/30 outline-none ring-primary/50 transition-colors hover:border-primary/50 focus-visible:ring-2"
               >
                 {imagePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   // biome-ignore lint/performance/noImgElement: local blob-URL preview via URL.createObjectURL — next/image cannot optimize object URLs
                   <img
                     src={imagePreview}

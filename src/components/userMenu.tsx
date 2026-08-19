@@ -51,42 +51,44 @@ export function UserMenu({ userName, userEmail, userRole }: UserMenuProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground"
+          className="gap-2 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
         >
           {isAdmin ? (
-            <ShieldCheckIcon className="size-4 text-red-500" />
+            <ShieldCheckIcon className="size-4 text-primary" />
           ) : (
             <UserIcon className="size-4" />
           )}
-          <span className="hidden sm:inline">{userName}</span>
+          <span className="hidden max-w-32 truncate sm:inline">{userName}</span>
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 border-red-500/20">
+      <DropdownMenuContent align="end" className="w-56 border-primary/20">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{userName}</p>
             <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-red-500/20" />
+        <DropdownMenuSeparator className="bg-primary/20" />
         <DropdownMenuItem
           asChild
-          className="cursor-pointer hover:bg-red-500/10"
+          className="cursor-pointer hover:bg-primary/10"
         >
           <Link href="/dashboard/profile">
             <UserIcon className="mr-2 size-4" />
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-red-500/20" />
+        <DropdownMenuSeparator className="bg-primary/20" />
         <DropdownMenuItem
-          onClick={handleSignOut}
+          asChild
           disabled={signOutMutation.isPending}
-          className="cursor-pointer text-red-500 hover:bg-red-500/10 hover:text-red-500 focus:text-red-500"
+          className="w-full cursor-pointer text-primary hover:bg-primary/10 hover:text-primary focus:text-primary"
         >
-          <LogOutIcon className="mr-2 size-4" />
-          Sign out
+          <button type="button" onClick={handleSignOut}>
+            <LogOutIcon className="mr-2 size-4" />
+            Sign out
+          </button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

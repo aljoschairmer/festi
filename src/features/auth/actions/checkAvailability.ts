@@ -1,11 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { limitByIp } from "@/lib/rateLimit";
 
 export async function checkUsernameAvailable(username: string): Promise<{
   available: boolean;
   error?: string;
 }> {
+  const limit = await limitByIp("username-check", { limit: 30, windowSec: 60 });
+  if (!limit.allowed) {
+    return {
+      available: false,
+      error: "Too many attempts. Please try again in a minute.",
+    };
+  }
+
   try {
     const existingUser = await prisma.user.findFirst({
       where: { username },
@@ -22,7 +31,7 @@ export async function checkUsernameAvailable(username: string): Promise<{
     return { available: true };
   } catch (error) {
     console.error("Username check error:", error);
-    // Allow signup to continue, the database constraint will catch duplicates
+
     return { available: true };
   }
 }

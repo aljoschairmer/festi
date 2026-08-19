@@ -57,6 +57,12 @@ const AVOID_OPTIONS = [
 
 const ROUTE_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
 
+/**
+ * Consecutive poll failures tolerated before the generation is surfaced
+ * as failed — a single dropped status request must not kill a running job.
+ */
+const MAX_POLL_FAILURES = 3;
+
 /** Display names for the engine's semantic route labels. */
 const LABEL_TEXT: Record<string, string> = {
   FASTEST: "Fastest",
@@ -167,6 +173,9 @@ export function RouteGeneratorMap() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [locating, setLocating] = useState(false);
+  /** Set only after MAX_POLL_FAILURES consecutive poll failures. */
+  const [pollError, setPollError] = useState<string | null>(null);
+  const pollFailuresRef = useRef(0);
   const requestKeyRef = useRef<string>(crypto.randomUUID());
   const activeJobRef = useRef<string | null>(null);
 
@@ -204,6 +213,8 @@ export function RouteGeneratorMap() {
     },
     onSuccess: (result) => {
       activeJobRef.current = result.jobId;
+      pollFailuresRef.current = 0;
+      setPollError(null);
       setJobId(result.jobId);
       setSelectedIndex(0);
     },
@@ -215,9 +226,13 @@ export function RouteGeneratorMap() {
     queryFn: () => getRouteGenerationStatus(jobId as string),
     enabled: jobId !== null,
     refetchInterval: (query) => {
+      if (pollError) return false;
       const data = query.state.data;
       if (!data) return 1000;
-      if (!data.success) return false;
+
+      if (!data.success) {
+        return pollFailuresRef.current < MAX_POLL_FAILURES ? 1000 : false;
+      }
       return data.status.state === "PENDING" || data.status.state === "RUNNING"
         ? 1000
         : false;
@@ -226,18 +241,61 @@ export function RouteGeneratorMap() {
 
   const statusData = statusQuery.data;
   useEffect(() => {
-    if (statusData && !statusData.success) {
-      toast.error(statusData.error);
+    if (!statusData) return;
+
+    if (!statusData.success) {
+      pollFailuresRef.current += 1;
+      if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+        setPollError(statusData.error);
+        toast.error(statusData.error, { duration: Number.POSITIVE_INFINITY });
+        setJobId(null);
+      }
+      return;
+    }
+
+    pollFailuresRef.current = 0;
+    const state = statusData.status.state;
+    if (state === "FAILED") {
+      toast.error(
+        statusData.status.errorDetail ??
+          statusData.status.message ??
+          "The route generator could not build a route here.",
+      );
+      setJobId(null);
+    } else if (state === "CANCELLED") {
+      toast.info("Route generation was cancelled.");
       setJobId(null);
     }
   }, [statusData]);
 
+  const transportErrorAt = statusQuery.errorUpdatedAt;
+  useEffect(() => {
+    if (transportErrorAt === 0) return;
+    pollFailuresRef.current += 1;
+    if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+      const message =
+        "Lost connection while checking the route generation. Please try again.";
+      setPollError(message);
+      toast.error(message, { duration: Number.POSITIVE_INFINITY });
+    }
+  }, [transportErrorAt]);
+
   const status = statusData?.success ? statusData.status : null;
   const options: GeneratedRouteOption[] | null =
     status?.state === "SUCCEEDED" ? (status.options ?? null) : null;
+
+  const terminalFailure =
+    status?.state === "FAILED" || status?.state === "CANCELLED"
+      ? (status.errorDetail ??
+        (status.state === "CANCELLED"
+          ? "The route generation was cancelled."
+          : "Route generation failed. Please try again."))
+      : null;
+  const generationError = pollError ?? terminalFailure;
   const generating =
     submitMutation.isPending ||
     (jobId !== null &&
+      generationError === null &&
       (!status || status.state === "PENDING" || status.state === "RUNNING"));
 
   /**
@@ -261,6 +319,8 @@ export function RouteGeneratorMap() {
       void cancelRouteGeneration(activeJobRef.current);
       activeJobRef.current = null;
     }
+    pollFailuresRef.current = 0;
+    setPollError(null);
     requestKeyRef.current = crypto.randomUUID();
     setJobId(null);
     submitMutation.mutate({ from, to: mode === "atob" ? to : null });
@@ -290,6 +350,8 @@ export function RouteGeneratorMap() {
     }
     setMode(next);
     setEnd(null);
+    pollFailuresRef.current = 0;
+    setPollError(null);
     setJobId(null);
     activeJobRef.current = null;
   };
@@ -348,8 +410,6 @@ export function RouteGeneratorMap() {
 
   const weather = selected?.weather ?? null;
 
-  // One badge per forecast sample, skipping the start (it sits under the
-  // start marker) — its values are in the summary panel anyway.
   const weatherMarkers: WeatherMarkerData[] = useMemo(
     () =>
       (selected?.weather?.points ?? []).slice(1).map((point, index) => ({
@@ -402,7 +462,6 @@ export function RouteGeneratorMap() {
         onAddWaypoint={handleMapTap}
       />
 
-      {/* Ride-time weather for the selected route. */}
       {weather && selected && (
         <div className="absolute top-4 right-14 z-10 flex flex-col gap-1 rounded-xl border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
           <span className="flex items-center gap-2 font-medium text-sm">
@@ -446,7 +505,6 @@ export function RouteGeneratorMap() {
         </div>
       )}
 
-      {/* Floating control panel, Komoot-style on the left. */}
       <div className="absolute top-4 left-4 z-10 flex max-h-[calc(100%-2rem)] w-[min(22rem,calc(100%-2rem))] flex-col gap-3 overflow-y-auto">
         <div className="flex flex-col gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -499,14 +557,14 @@ export function RouteGeneratorMap() {
             Use my location
           </Button>
 
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 rounded-lg border p-0.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 basis-full rounded-lg border p-0.5 sm:basis-auto">
               {CATEGORIES.map((item) => (
                 <button
                   key={item.value}
                   type="button"
                   className={cn(
-                    "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    "min-w-0 flex-1 truncate rounded-md px-2 py-1 text-xs font-medium transition-colors",
                     category === item.value
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground",
@@ -720,6 +778,23 @@ export function RouteGeneratorMap() {
               <Loader2Icon className="size-3.5 animate-spin" />
               {status?.message ?? "Generating routes…"}
             </p>
+          )}
+          {generationError && (
+            <div className="flex flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+              <p className="text-destructive text-xs font-medium">
+                {generationError}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => regenerate()}
+              >
+                <SparklesIcon className="size-3.5" />
+                Try again
+              </Button>
+            </div>
           )}
         </div>
 

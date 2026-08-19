@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { canViewRide } from "../lib/visibility";
 
 type RequestJoinResult =
   | { success: true; message: string }
@@ -31,10 +32,15 @@ export async function requestJoinRide(
       startTime: true,
       status: true,
       maxParticipants: true,
+      groupId: true,
     },
   });
 
   if (!ride) {
+    return { success: false, error: "Ride not found." };
+  }
+
+  if (!(await canViewRide(session.user.id, ride))) {
     return { success: false, error: "Ride not found." };
   }
 
@@ -69,7 +75,6 @@ export async function requestJoinRide(
     };
   }
 
-  // A full ride queues new requests on the waitlist instead of rejecting them.
   let isFull = false;
   if (ride.maxParticipants !== null) {
     const approvedCount = await prisma.rideParticipant.count({
@@ -80,7 +85,6 @@ export async function requestJoinRide(
   const status = isFull ? "WAITLISTED" : "PENDING";
 
   if (existing) {
-    // A previously declined request can be asked again.
     await prisma.rideParticipant.update({
       where: { rideId_userId: { rideId, userId: session.user.id } },
       data: { status },

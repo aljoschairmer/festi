@@ -19,7 +19,7 @@ export default async function CommunityPage() {
         </p>
       </div>
 
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle>Rider Network</CardTitle>
           <CardDescription>
@@ -30,7 +30,7 @@ export default async function CommunityPage() {
           <RidersGrid />
         </CardContent>
       </Card>
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-4">
             Rider Groups <CreateGroupDialog />

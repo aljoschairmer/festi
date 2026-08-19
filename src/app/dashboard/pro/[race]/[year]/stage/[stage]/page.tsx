@@ -48,8 +48,6 @@ export default async function ProStagePage({
 
   const { stage, route } = detail;
 
-  // Live coverage only makes sense on the stage's race day; past stages get a
-  // replay instead when telemetry frames were captured during the stage.
   const today = new Date().toISOString().slice(0, 10);
   const isRaceDay = stage.date !== null && stage.date === today;
   const isPast = stage.date !== null && stage.date < today;
@@ -165,7 +163,7 @@ export default async function ProStagePage({
                 />
               </CardContent>
             </Card>
-            {/* Height-capped to the map column on large screens. */}
+
             <div className="relative">
               <StageNewsFeed
                 articles={detail.news}
@@ -190,8 +188,6 @@ export default async function ProStagePage({
               : "cyclingstage.com"}
           </a>
         ) : (
-          // One-day races come from cyclingstage without a source URL; the
-          // Tissot path always carries its KMZ URL.
           "cyclingstage.com"
         )}
         {" · "}Race data: ASO / Tissot

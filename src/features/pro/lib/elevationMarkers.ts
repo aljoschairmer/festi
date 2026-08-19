@@ -116,9 +116,6 @@ export function buildElevationMarkers(
     });
   }
 
-  // Stagger: walk the flags left to right and drop each onto the first row
-  // with enough horizontal room for the previous label; when both rows are
-  // crowded, take the one whose last flag is farthest away.
   markers.sort((a, b) => a.km - b.km);
   const minGapKm = (last.distance - first.distance) * 0.18;
   const lastKmPerRow = [-Infinity, -Infinity];

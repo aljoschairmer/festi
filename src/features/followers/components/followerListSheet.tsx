@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, SearchIcon, UserCheck, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +84,7 @@ function FollowerRow({
           aria-label={`Go to ${user.name}'s profile`}
         >
           <SheetClose asChild>
-            <Link href={`/dashboard/community/u/${user.id}`}>
+            <Link href={`/dashboard/community/u/${user.id}`} prefetch={false}>
               <UserIcon className="size-4" />
             </Link>
           </SheetClose>
@@ -129,10 +130,13 @@ function matchesSearch(user: FollowUser, query: string) {
 
 const FollowerListSheet = () => {
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
+    enabled: open,
+
     refetchInterval: 30_000,
   });
 
@@ -160,16 +164,17 @@ const FollowerListSheet = () => {
     filtered.followers.length > 0;
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
+        aria-label="Your network"
         className={buttonVariants({
           variant: "ghost",
           size: "sm",
           className:
-            "gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground",
+            "relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-primary/10 hover:text-foreground",
         })}
       >
-        <UserCheck className="size-4 text-red-500" />
+        <UserCheck className="size-4 text-primary" />
       </SheetTrigger>
       <SheetContent className="flex flex-col gap-0 p-0">
         <SheetHeader className="border-b">
@@ -206,21 +211,28 @@ const FollowerListSheet = () => {
               ))}
             </div>
           ) : isError ? (
-            <p className="p-4 text-center text-sm text-red-500">
+            <p className="p-4 text-center text-sm text-destructive">
               Failed to load your network.
             </p>
           ) : !hasResults ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <UserIcon className="mb-4 size-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground">
-                {search ? "No matches found" : "No connections yet"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {search
+            <EmptyState
+              icon={UserIcon}
+              title={search ? "No matches found" : "No connections yet"}
+              description={
+                search
                   ? "Try a different name or username."
-                  : "Follow some riders to see them here."}
-              </p>
-            </div>
+                  : "Follow some riders to see them here."
+              }
+              action={
+                search ? null : (
+                  <Button asChild variant="outline" size="sm">
+                    <SheetClose asChild>
+                      <Link href="/dashboard/community">Find riders</Link>
+                    </SheetClose>
+                  </Button>
+                )
+              }
+            />
           ) : (
             <>
               <FollowerSection

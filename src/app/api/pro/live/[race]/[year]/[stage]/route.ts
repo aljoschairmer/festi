@@ -36,18 +36,9 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 /**
- * SSE stream of live stage snapshots, replacing the panel's former 8s
- * server-action polling. Two lanes feed the same `snapshot` event:
- *
- * - Fast lane: ASO's own `/live-stream` SSE. Telemetry frames for this stage
- *   are mapped and pushed as they arrive (~5s cadence during racing), so the
- *   browser gets positions at upstream latency with no extra fetches.
- * - Slow lane: every {@link REFRESH_MS} the full snapshot is rebuilt to
- *   refresh rankings/weather and to detect live-status transitions.
- *
- * Every event carries a complete {@link ProLiveStageData}, so a dropped
- * connection needs no patch replay — EventSource reconnects (browser default,
- * plus the `retry` hint) and the first snapshot re-syncs the client.
+ * SSE stream of live stage snapshots from two lanes: ASO's own telemetry
+ * push, and a full rebuild every {@link REFRESH_MS} for rankings, weather
+ * and live-status changes. Every event carries a complete snapshot.
  */
 export async function GET(
   request: Request,
@@ -78,9 +69,6 @@ export async function GET(
   }
   const asoRace = race.asoRace;
 
-  // One controller tied to everything long-lived in this handler: client
-  // disconnect (request.signal / cancel), a dead enqueue, or the run loop
-  // finishing all funnel through it so nothing leaks.
   const abort = new AbortController();
   request.signal.addEventListener("abort", () => abort.abort());
   const encoder = new TextEncoder();
@@ -92,7 +80,6 @@ export async function GET(
         try {
           controller.enqueue(encoder.encode(frame));
         } catch {
-          // Enqueue on a closed stream — the client is gone.
           abort.abort();
         }
       };
@@ -107,16 +94,12 @@ export async function GET(
         clearInterval(heartbeat);
         try {
           controller.close();
-        } catch {
-          // Already closed or errored.
-        }
+        } catch {}
       });
 
       const run = async () => {
         write(`retry: ${RECONNECT_DELAY_MS}\n\n`);
 
-        // The startlist index lives as long as the connection — names and
-        // teams don't change mid-stage.
         const startlist = await fetchStartlist(race, year);
         let latest = await buildLiveStageData(
           race,
@@ -127,7 +110,6 @@ export async function GET(
         if (abort.signal.aborted) return;
         send(latest);
 
-        // Slow lane. Sequential await keeps rebuilds from overlapping.
         const slowLane = (async () => {
           while (!abort.signal.aborted) {
             await sleep(REFRESH_MS, abort.signal);
@@ -139,8 +121,7 @@ export async function GET(
                 stageNumber,
                 startlist,
               );
-              // The fast lane may hold a fresher telemetry frame than the
-              // rebuild's fetch; keep whichever positions are newest.
+
               latest =
                 next.live &&
                 latest.live &&
@@ -154,15 +135,10 @@ export async function GET(
                     }
                   : next;
               send(latest);
-            } catch {
-              // A failed rebuild keeps the previous snapshot on screen.
-            }
+            } catch {}
           }
         })();
 
-        // Fast lane: forward ASO telemetry pushes for this stage. The package
-        // leaves reconnection to the caller, so wrap in a retry loop; the
-        // slow lane covers any gap with fresh snapshots.
         const aso = createLiveAsoClient(asoRace, year);
         const telemetryBind = `telemetryCompetitor-${year}`;
         const newsBind = `publication_en-${year}-${stageNumber}`;
@@ -170,10 +146,6 @@ export async function GET(
         while (!abort.signal.aborted) {
           try {
             for await (const update of aso.streamLive(abort.signal)) {
-              // A new/edited commentary entry: re-fetch the stage feed (the
-              // event only carries one record) and push it with the current
-              // snapshot. One refresh at a time; a burst of edits collapses
-              // into the next one.
               if (update?.bind === newsBind) {
                 if (!newsRefreshing) {
                   newsRefreshing = true;
@@ -183,25 +155,20 @@ export async function GET(
                       latest = { ...latest, news };
                       send(latest);
                     })
-                    .catch(() => {
-                      // Keep the previous feed on a flaky upstream.
-                    })
+                    .catch(() => {})
                     .finally(() => {
                       newsRefreshing = false;
                     });
                 }
                 continue;
               }
-              // The stream multiplexes every bind (videos, publications,
-              // rankings...); only whole telemetry frames for this stage are
-              // usable here. Guard `bind` too — keepalive events carry none.
+
               if (update?.bind !== telemetryBind) continue;
               const frame = update.data as AsoTelemetry | undefined;
               if (!frame || frame.StageIndex !== stageNumber) continue;
               const mapped = mapTelemetry(frame, startlist.index);
               if (mapped.riders.length === 0) continue;
-              // ASO emits the same frame more than once and replays the last
-              // one on connect; only strictly newer frames are worth pushing.
+
               if (
                 latest.live &&
                 mapped.updatedAt !== null &&
@@ -213,9 +180,7 @@ export async function GET(
               latest = { ...latest, live: true, ...mapped };
               send(latest);
             }
-          } catch {
-            // Upstream dropped; back off and reconnect below.
-          }
+          } catch {}
           if (!abort.signal.aborted) {
             await sleep(RECONNECT_DELAY_MS, abort.signal);
           }
@@ -224,10 +189,7 @@ export async function GET(
       };
 
       void run()
-        .catch(() => {
-          // Setup failed (e.g. upstream down before the first snapshot);
-          // closing makes EventSource retry with a fresh handler.
-        })
+        .catch(() => {})
         .finally(() => abort.abort());
     },
     cancel() {
@@ -238,8 +200,7 @@ export async function GET(
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      // `no-transform` keeps proxies from buffering or compressing the
-      // stream, which would hold events back from the client.
+
       "Cache-Control": "no-cache, no-transform",
       "X-Accel-Buffering": "no",
     },
