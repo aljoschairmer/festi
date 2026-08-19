@@ -65,7 +65,7 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
                       {location}
                     </span>
                   )}
-                  <span className="block text-xs text-muted-foreground/70">
+                  <span className="block text-xs text-muted-foreground">
                     {[
                       event.type || null,
                       event.distances.length

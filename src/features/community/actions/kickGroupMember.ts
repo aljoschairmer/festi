@@ -77,7 +77,7 @@ export async function kickGroupMember(input: {
     },
   });
 
-  revalidatePath(`/groups/${input.groupId}`);
+  revalidatePath(`/dashboard/community/g/${input.groupId}`);
 
   await Logger.log(
     ActivityAction.GROUP_MEMBER_REMOVED,

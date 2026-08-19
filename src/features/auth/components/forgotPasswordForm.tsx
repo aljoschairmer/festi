@@ -91,7 +91,9 @@ export function ForgotPasswordForm() {
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <MailCheckIcon className="size-7 text-white" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
+            <CardTitle as="h1" className="text-2xl">
+              Check your email
+            </CardTitle>
             <CardDescription className="pt-2">
               We sent a password reset link to
             </CardDescription>
@@ -137,7 +139,9 @@ export function ForgotPasswordForm() {
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700">
             <ZapIcon className="size-6 text-white" />
           </div>
-          <CardTitle className="text-2xl">Forgot your password?</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Forgot your password?
+          </CardTitle>
           <CardDescription>
             Enter your email and we'll send you a reset link
           </CardDescription>

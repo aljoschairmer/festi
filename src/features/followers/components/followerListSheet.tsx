@@ -162,6 +162,7 @@ const FollowerListSheet = () => {
   return (
     <Sheet>
       <SheetTrigger
+        aria-label="Your network"
         className={buttonVariants({
           variant: "ghost",
           size: "sm",

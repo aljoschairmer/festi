@@ -44,7 +44,7 @@ export async function deleteGroup(groupId: string) {
     console.error("[deleteGroup] Failed to delete R2 image:", error);
   }
 
-  revalidatePath("/groups");
+  revalidatePath("/dashboard/community");
 
   await Logger.log(
     ActivityAction.GROUP_DELETED,

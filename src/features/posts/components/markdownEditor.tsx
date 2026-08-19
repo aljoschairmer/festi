@@ -69,7 +69,9 @@ export function MarkdownEditor({
   };
 
   return (
-    <div className="rounded-md border border-input">
+    // `min-w-0` stops an unbroken word or a pasted route URL from widening
+    // the editor (and with it the surrounding dialog).
+    <div className="min-w-0 rounded-md border border-input">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-input p-1.5">
         <div className="flex items-center gap-0.5">
           <ToolbarButton
@@ -137,7 +139,7 @@ export function MarkdownEditor({
       ) : (
         <div
           className={cn(
-            "min-h-40 px-3 py-2 text-sm",
+            "min-h-40 overflow-x-auto px-3 py-2 text-sm break-words",
             value.trim() === "" && "text-muted-foreground",
           )}
         >

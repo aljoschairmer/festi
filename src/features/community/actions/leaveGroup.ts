@@ -59,7 +59,7 @@ export async function leaveGroup(groupId: string) {
     },
   });
 
-  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/dashboard/community/g/${groupId}`);
 
   // A pending member leaving is really a cancelled join request: remove the
   // unseen request notification instead of logging a "left the group" event.

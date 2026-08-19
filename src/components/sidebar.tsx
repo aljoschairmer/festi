@@ -119,7 +119,7 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
       <SidebarContent>
         {/* Content Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">
+          <SidebarGroupLabel className="text-muted-foreground">
             Content
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -129,7 +129,7 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
 
         {/* Settings Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">
+          <SidebarGroupLabel className="text-muted-foreground">
             Account
           </SidebarGroupLabel>
           <SidebarGroupContent>

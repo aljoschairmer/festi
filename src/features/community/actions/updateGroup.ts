@@ -49,7 +49,7 @@ export async function updateGroup(input: GroupFormData & { groupId: string }) {
     },
   });
 
-  revalidatePath(`/groups/${input.groupId}`);
+  revalidatePath(`/dashboard/community/g/${input.groupId}`);
 
   await Logger.log(
     ActivityAction.GROUP_UPDATED,

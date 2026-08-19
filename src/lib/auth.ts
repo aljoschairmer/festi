@@ -113,7 +113,7 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day
     cookieCache: {
       enabled: true,
-      maxAge: 30, // 5 minutes
+      maxAge: 60 * 5, // 5 minutes
     },
   },
   // Logs a successful login whenever a new session is created.

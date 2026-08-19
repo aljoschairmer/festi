@@ -78,7 +78,7 @@ export async function respondToGroupJoinRequest(
     };
   }
 
-  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/dashboard/community/g/${groupId}`);
 
   if (approve) {
     await prisma.groupMember.update({

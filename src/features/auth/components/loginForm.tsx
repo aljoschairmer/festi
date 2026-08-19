@@ -125,7 +125,9 @@ export function LoginForm() {
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Logo size={96} priority className="size-24" />
           </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Welcome back
+          </CardTitle>
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

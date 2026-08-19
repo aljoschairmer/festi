@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden"
+    >
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-900/70 via-background to-red-950/50" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-red-600/40 via-transparent to-transparent" />
@@ -44,6 +48,6 @@ export default function HomePage() {
       <SiteFooter className="absolute inset-x-0 bottom-0 z-10 mx-auto max-w-4xl px-4 pb-6" />
 
       <CookieConsent />
-    </section>
+    </main>
   );
 }

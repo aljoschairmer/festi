@@ -90,7 +90,9 @@ export function ResetPasswordForm() {
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700">
               <ZapIcon className="size-6 text-white" />
             </div>
-            <CardTitle className="text-2xl">Invalid link</CardTitle>
+            <CardTitle as="h1" className="text-2xl">
+              Invalid link
+            </CardTitle>
             <CardDescription>
               This password reset link is invalid or has expired
             </CardDescription>
@@ -121,7 +123,9 @@ export function ResetPasswordForm() {
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <CheckCircleIcon className="size-7 text-white" />
             </div>
-            <CardTitle className="text-2xl">Password reset!</CardTitle>
+            <CardTitle as="h1" className="text-2xl">
+              Password reset!
+            </CardTitle>
             <CardDescription className="pt-2">
               Your password has been successfully reset
             </CardDescription>
@@ -159,7 +163,9 @@ export function ResetPasswordForm() {
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700">
             <ZapIcon className="size-6 text-white" />
           </div>
-          <CardTitle className="text-2xl">Reset your password</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Reset your password
+          </CardTitle>
           <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

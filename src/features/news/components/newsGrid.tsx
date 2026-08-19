@@ -120,7 +120,7 @@ function FeaturedCard({ article }: { article: NewsArticle }) {
 
       <div className="absolute right-0 bottom-0 left-0 p-5 text-white sm:p-6">
         <div className="mb-2 flex items-center gap-2 text-xs">
-          <span className="rounded-full bg-red-500 px-2 py-0.5 font-medium">
+          <span className="rounded-full bg-primary px-2 py-0.5 font-medium text-primary-foreground">
             {article.source}
           </span>
           {ago && <span className="text-white/70">{ago}</span>}

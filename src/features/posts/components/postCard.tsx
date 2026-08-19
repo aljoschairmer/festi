@@ -187,6 +187,7 @@ export function PostCard({ post }: PostCardProps) {
           disabled={likeMutation.isPending}
           onClick={() => likeMutation.mutate()}
           aria-pressed={liked}
+          aria-label={liked ? "Unlike post" : "Like post"}
         >
           <HeartIcon
             className={cn(
@@ -204,6 +205,8 @@ export function PostCard({ post }: PostCardProps) {
             showComments && "text-foreground",
           )}
           onClick={() => setShowComments((v) => !v)}
+          aria-label={showComments ? "Hide comments" : "Show comments"}
+          aria-expanded={showComments}
         >
           <MessageCircleIcon className="size-4" />
           {post.commentCount > 0 ? post.commentCount : "Comment"}

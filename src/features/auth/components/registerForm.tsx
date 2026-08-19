@@ -99,7 +99,9 @@ export function RegisterForm() {
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <MailCheckIcon className="size-7 text-white" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
+            <CardTitle as="h1" className="text-2xl">
+              Check your email
+            </CardTitle>
             <CardDescription className="pt-2">
               If that email isn't already registered, we've sent a verification
               link to
@@ -149,7 +151,9 @@ export function RegisterForm() {
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Logo size={96} priority className="size-24" />
           </div>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardTitle as="h1" className="text-2xl">
+            Create your account
+          </CardTitle>
           <CardDescription>Join the cycling community today</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

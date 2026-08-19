@@ -234,7 +234,7 @@ export function EventsExplorer() {
             ))}
           </div>
 
-          <div className="border-t px-3 py-1.5 text-center text-[11px] text-muted-foreground/70">
+          <div className="border-t px-3 py-1.5 text-center text-[11px] text-muted-foreground">
             Data:{" "}
             <a
               href="https://breitensport.rad-net.de/breitensportkalender/"

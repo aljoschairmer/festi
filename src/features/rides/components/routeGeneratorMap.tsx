@@ -499,14 +499,18 @@ export function RouteGeneratorMap() {
             Use my location
           </Button>
 
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 rounded-lg border p-0.5">
+          {/* `flex-wrap` + `min-w-0`: the six category chips are wider than a
+              phone-sized panel. Without these the strip refused to shrink and
+              shoved the distance field roughly 80px off screen — where it was
+              unreachable, because the panel clips instead of scrolling. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 basis-full rounded-lg border p-0.5 sm:basis-auto">
               {CATEGORIES.map((item) => (
                 <button
                   key={item.value}
                   type="button"
                   className={cn(
-                    "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    "min-w-0 flex-1 truncate rounded-md px-2 py-1 text-xs font-medium transition-colors",
                     category === item.value
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground",

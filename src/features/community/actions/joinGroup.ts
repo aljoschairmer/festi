@@ -69,7 +69,7 @@ export async function joinGroup(groupId: string) {
       },
     });
 
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(`/dashboard/community/g/${groupId}`);
 
     await Logger.log(
       ActivityAction.GROUP_JOIN_REQUESTED,
@@ -104,7 +104,7 @@ export async function joinGroup(groupId: string) {
     },
   });
 
-  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/dashboard/community/g/${groupId}`);
 
   await Logger.log(
     ActivityAction.GROUP_JOINED,

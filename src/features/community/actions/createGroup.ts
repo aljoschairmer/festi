@@ -40,7 +40,7 @@ export async function createGroup(input: GroupFormData) {
     },
   });
 
-  revalidatePath("/groups");
+  revalidatePath("/dashboard/community");
 
   await Logger.log(
     ActivityAction.GROUP_CREATED,

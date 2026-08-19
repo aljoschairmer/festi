@@ -88,7 +88,11 @@ export function RideCard({ ride }: RideCardProps) {
         </p>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between gap-2 border-t py-3">
+      {/* `flex-wrap`: the card clips its overflow (for the rounded
+          thumbnail), so a footer that cannot wrap silently swallows the join
+          button once the buttons stop fitting side by side — which is what
+          happens at 200% text zoom. */}
+      <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t py-3">
         <Button asChild variant="outline" size="sm">
           <Link href={href}>View Route</Link>
         </Button>

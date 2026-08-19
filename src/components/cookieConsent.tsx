@@ -1,15 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "festi-cookie-consent";
+/**
+ * Published on the root element while the banner is on screen so page
+ * furniture pinned to the bottom (the site footer) can move out of its way.
+ * Without it the banner sits exactly on top of the Imprint/Privacy/Terms
+ * links — both are anchored to `bottom-0`.
+ */
+const HEIGHT_VAR = "--cookie-banner-height";
 
 export function CookieConsent() {
   // `null` = not yet determined (avoids a flash before we read storage).
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -23,6 +31,28 @@ export function CookieConsent() {
       setVisible(true);
     }
   }, []);
+
+  // Keep the published height in sync with the rendered banner (its height
+  // depends on the viewport: one row on desktop, stacked on a phone).
+  useEffect(() => {
+    const root = document.documentElement;
+    const clear = () => root.style.removeProperty(HEIGHT_VAR);
+    if (!visible) {
+      clear();
+      return clear;
+    }
+    const el = bannerRef.current;
+    if (!el) return clear;
+    const publish = () =>
+      root.style.setProperty(HEIGHT_VAR, `${el.offsetHeight}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      clear();
+    };
+  }, [visible]);
 
   const accept = () => {
     try {
@@ -49,11 +79,17 @@ export function CookieConsent() {
           : "pointer-events-none translate-y-full opacity-0"
       }`}
     >
-      <div className="flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-border bg-card/95 p-5 shadow-2xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div
+        ref={bannerRef}
+        className="flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-border bg-card/95 p-5 shadow-2xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+      >
         <p className="text-sm text-muted-foreground">
           We use only essential cookies needed to keep you signed in and to keep
           Festi secure. See our{" "}
-          <Link href="/privacy" className="text-red-500 hover:text-red-400">
+          <Link
+            href="/privacy"
+            className="text-primary underline underline-offset-2 hover:text-primary/80"
+          >
             Privacy Policy
           </Link>
           .

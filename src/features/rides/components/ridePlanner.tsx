@@ -456,14 +456,17 @@ export function RidePlanner({
                   </span>
                 </label>
 
+                {/* `flex-wrap` + `whitespace-normal`: on a narrow phone the
+                    trailing hint used to push the button past the viewport
+                    edge instead of moving to its own line. */}
                 <Button
                   variant="outline"
-                  className="justify-start"
+                  className="h-auto flex-wrap justify-start py-2 text-left whitespace-normal"
                   onClick={() =>
                     router.push("/dashboard/community-rides/generate")
                   }
                 >
-                  <SparklesIcon className="size-4 text-primary" />
+                  <SparklesIcon className="size-4 shrink-0 text-primary" />
                   Generate a route for me
                   <span className="text-muted-foreground">
                     — pick a start on the map

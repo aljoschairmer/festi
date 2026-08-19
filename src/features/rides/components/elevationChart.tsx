@@ -188,7 +188,15 @@ export function ElevationChart({
         </span>
       </div>
       <div className={hasMarkers ? "h-44 w-full" : "h-32 w-full"}>
-        <ResponsiveContainer width="100%" height="100%">
+        {/* `minWidth`/`minHeight`: the container is measured before the
+            surrounding panel has laid out, which made Recharts warn about a
+            -1 × -1 chart and flash an empty box on first paint. */}
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={0}
+          minHeight={0}
+        >
           <AreaChart
             data={data}
             margin={{

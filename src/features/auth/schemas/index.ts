@@ -15,10 +15,10 @@ export const loginSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(8, "Password must be at least 8 characters"),
+  // Sign-in deliberately does not enforce the password policy: it would
+  // leak the policy to anyone and lock out accounts whose password predates
+  // the current rule. The server decides whether the password is right.
+  password: z.string().min(1, "Password is required"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

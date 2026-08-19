@@ -39,7 +39,10 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 p-6"> {children}</main>
+        {/* SidebarInset already renders the <main> landmark. */}
+        <div id="main-content" tabIndex={-1} className="flex-1 p-6">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
