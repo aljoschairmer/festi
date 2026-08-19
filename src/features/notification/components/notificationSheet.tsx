@@ -25,9 +25,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UNREAD_BADGES_KEY, useUnreadBadges } from "@/hooks/useUnreadBadges";
 import {
   getNotifications,
-  getUnreadNotificationCount,
   markNotificationsSeen,
   type NotificationItem,
 } from "../actions/notification-actions";
@@ -234,11 +234,7 @@ const NotificationSheet = () => {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: unread = 0 } = useQuery<number>({
-    queryKey: ["notifications-unread"],
-    queryFn: () => getUnreadNotificationCount(),
-    refetchInterval: 10000,
-  });
+  const { notifications: unread } = useUnreadBadges();
 
   const { data: notifications, isLoading } = useQuery<NotificationItem[]>({
     queryKey: ["notifications"],
@@ -250,7 +246,7 @@ const NotificationSheet = () => {
   const markSeen = useMutation({
     mutationFn: () => markNotificationsSeen(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      queryClient.invalidateQueries({ queryKey: UNREAD_BADGES_KEY });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });

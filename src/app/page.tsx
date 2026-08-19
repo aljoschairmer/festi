@@ -20,6 +20,19 @@ export default function HomePage() {
       {/* Interactive Particles */}
       <ParticleBackground />
 
+      {/*
+        The particle graph draws city labels across the whole canvas, so at
+        375px names like "Basel" and "Marseille" run straight through the
+        paragraph below. This gives the copy its own ground. A radial fade
+        rather than a solid panel: a panel would show a hard edge over the
+        gradients, and the labels outside the text block are the point of
+        the animation.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_45%,color-mix(in_oklch,var(--background)_85%,transparent)_25%,transparent_70%)]"
+      />
+
       <div className="relative mx-auto max-w-4xl px-4 text-center">
         <TypedHeadline />
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">

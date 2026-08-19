@@ -139,15 +139,22 @@
   background: transparent;
 }
 
+/*
+ * The tokens are OKLCH, so they are used as-is. Wrapping them in `hsl()` —
+ * the shadcn convention back when the tokens were HSL triplets — produces
+ * `hsl(oklch(...))`, which is not a colour: the browser drops the whole
+ * declaration and every `overflow-auto` container falls back to a light
+ * default scrollbar inside a black app.
+ */
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: var(--muted);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: var(--muted-foreground);
   border: 2px solid transparent;
   background-clip: content-box;
 }
@@ -155,7 +162,7 @@
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  scrollbar-color: var(--muted-foreground) transparent;
 }
 
 /* Dark popup for the events map (matches the app-themed MapLibre basemap). */

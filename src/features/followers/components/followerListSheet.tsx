@@ -129,11 +129,17 @@ function matchesSearch(user: FollowUser, query: string) {
 
 const FollowerListSheet = () => {
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
 
+  // `getFollowConnections` returns the *complete* follower, following and
+  // mutual lists with no `take`. Polling that every 30 seconds from a sheet
+  // nobody opened was the single most expensive idle request in the app, so
+  // it now runs only while the sheet is on screen. Follow and unfollow
+  // invalidate the key, so what is on screen still stays current.
   const { data, isLoading, isError } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
-    refetchInterval: 30_000,
+    enabled: open,
   });
 
   const filtered = useMemo<FollowConnections>(() => {
@@ -160,7 +166,7 @@ const FollowerListSheet = () => {
     filtered.followers.length > 0;
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Your network"
         className={buttonVariants({

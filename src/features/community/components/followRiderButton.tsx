@@ -34,6 +34,8 @@ const FollowRiderButton = ({
       queryClient.invalidateQueries({
         queryKey: ["rider-profile", targetId],
       });
+      // The network sheet no longer polls, so it has to be told.
+      queryClient.invalidateQueries({ queryKey: ["follow-connections"] });
 
       router.refresh();
 
@@ -60,6 +62,8 @@ const FollowRiderButton = ({
       queryClient.invalidateQueries({
         queryKey: ["rider-profile", targetId],
       });
+      // The network sheet no longer polls, so it has to be told.
+      queryClient.invalidateQueries({ queryKey: ["follow-connections"] });
 
       router.refresh();
 

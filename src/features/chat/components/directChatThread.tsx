@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { UNREAD_BADGES_KEY } from "@/hooks/useUnreadBadges";
 import {
   type DirectMessagesResult,
   getDirectMessages,
@@ -67,7 +68,7 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
   // badge and conversation previews in sync.
   // biome-ignore lint/correctness/useExhaustiveDependencies: react to new reads
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["direct-unread"] });
+    queryClient.invalidateQueries({ queryKey: UNREAD_BADGES_KEY });
     queryClient.invalidateQueries({ queryKey: ["direct-conversations"] });
   }, [data?.messages.length, queryClient]);
 

@@ -338,6 +338,13 @@ Zusätzlich schwankt dadurch der Kontrast des ohnehin grauen
 `bg-background/70 backdrop-blur-sm` auf dem Container), oder die Partikel im
 mittleren Bereich ausdünnen.
 
+**Status:** behoben (`src/app/page.tsx`). Zwischen Partikeln und Textblock liegt
+jetzt ein radialer Scrim (`color-mix(in oklch, var(--background) 85%, transparent)`,
+Stopps bei 25 % / 70 %). Ein Verlauf statt einer Fläche, damit über den drei
+Hintergrund-Gradienten keine sichtbare Kante entsteht und die Labels außerhalb
+des Textblocks — der eigentliche Effekt — erhalten bleiben. Tailwind erzeugt
+zusätzlich einen `@supports`-freien Fallback mit deckendem `var(--background)`.
+
 📸 `screenshots/375-root.jpg`
 
 ---

@@ -131,9 +131,15 @@ Insgesamt: **26 Findings** (2 × P0, 8 × P1, 11 × P2, 5 × P3).
   Fach-Query. Bei 100 gleichzeitigen Nutzern ≈ 96 000 Invocations/h **ohne jede Interaktion**. Auf
   Cloudflare Workers + Postgres ist das die dominierende Kostenposition, und es ist Last, die
   vollständig verschwindet, sobald man sie ereignisgesteuert macht.
+- **Korrektur (nachträglich geprüft):** Der ursprüngliche Punkt 1 des Fixes war falsch. React Query
+  pausiert Intervall-Refetches im Hintergrund-Tab **von sich aus**: `queryObserver.js:215` feuert nur
+  bei `this.options.refetchIntervalInBackground || focusManager.isFocused()`, und `focusManager`
+  (`focusManager.js:59`) liest `document.visibilityState !== "hidden"`. `refetchIntervalInBackground`
+  ist nirgends im Repo gesetzt und hat den Default `false`. Die Zahlen oben gelten also für den
+  **sichtbaren** Tab; ein Hintergrund-Tab pollte nie. Geprüft gegen `@tanstack/react-query@5.101.2`
+  im `node_modules` dieses Repos.
 - **Fix:**
-  1. `PresenceHeartbeat` pausiert bereits bei `visibilitychange` — dieses Muster auf die drei
-     Query-Polls übertragen (`refetchInterval` nur wenn `document.visibilityState === "visible"`).
+  1. ~~`refetchInterval` an `visibilitychange` koppeln~~ — entfällt, siehe Korrektur.
   2. Die beiden Unread-Zähler zu **einem** Badge-Endpunkt zusammenlegen (`{ notifications, messages }`)
      → halbiert 12 auf 6 Req/min.
   3. `follow-connections` nicht pollen: `enabled: open` im Sheet, plus Invalidierung nach
@@ -142,6 +148,13 @@ Insgesamt: **26 Findings** (2 × P0, 8 × P1, 11 × P2, 5 × P3).
      `src/app/api/pro/live/[race]/[year]/[stage]/route.ts` bereits sauber implementiert ist (Kommentar
      dort: *„replacing the panel's former 8s server-action polling"*). Die Lösung existiert im Repo —
      sie ist nur nicht auf den Chat angewandt.
+- **Status:** Punkte 2 und 3 umgesetzt. Die beiden Unread-Zähler laufen jetzt über eine gemeinsame
+  Server-Action (`src/lib/unreadBadges.ts`) und einen gemeinsamen Hook
+  (`src/hooks/useUnreadBadges.ts`), Intervall 15 s statt 2 × 10 s; die alten Einzel-Actions sind
+  gelöscht (jede exportierte Server-Action ist ein öffentlicher Endpunkt). `follow-connections` läuft
+  nur noch mit `enabled: open` — im Sheet und in `ProfileFollowStats` — und wird nach Follow/Unfollow
+  invalidiert. Damit sinkt die Grundlast eines idle Tabs von **16 auf 6 Req/min**
+  (Badges 4 + Presence 2). Punkt 4 (Chat auf SSE) ist offen.
 
 ---
 

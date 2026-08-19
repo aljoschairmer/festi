@@ -1,17 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getUnreadDirectCount } from "../actions/direct-chat-action";
+import { useUnreadBadges } from "@/hooks/useUnreadBadges";
 import { DirectChatDialog } from "./directChatDialog";
 
 export function DirectChatHeaderButton() {
-  const { data: unread = 0 } = useQuery<number>({
-    queryKey: ["direct-unread"],
-    queryFn: () => getUnreadDirectCount(),
-    refetchInterval: 10000,
-  });
+  const { messages: unread } = useUnreadBadges();
 
   return (
     <DirectChatDialog

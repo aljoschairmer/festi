@@ -7,9 +7,9 @@
 
 | | Anzahl |
 | --- | ---: |
-| **Behoben** | ~62 |
+| **Behoben** | ~68 |
 | **Zurückgezogen** (Fehlmessung / Fehlalarm) | 5 |
-| **Offen** | ~89 |
+| **Offen** | ~83 |
 
 Die Fix-Runde hat sich auf **Sicherheit, Datenkonsistenz und die konkreten
 UI-Defekte** konzentriert. Drei ganze Review-Bereiche sind weitgehend
@@ -47,6 +47,38 @@ U-01 bis U-08 · U-13 Kontraste · U-16 Rottöne teilweise.
 
 **Engine (5 von 12)** — R-01 Höhenmeter-Artefakte · R-02 Distanz-Scoring ·
 R-03 Lokalisierung · R-04 Coverage · R-11 Port-Binding. Tests 241 → 250.
+
+### Zweite Runde: CI, Tests, Grundlast
+
+**CI (E-02, E-03)** — GitHub-Actions-Workflow in allen drei Repos.
+`festi`: Biome, `typecheck` (neues Script, `next typegen` vorgeschaltet), Tests,
+Build; dazu ein zweiter Job, der die Migrationen gegen ein echtes Postgres 16
+anwendet und mit `prisma migrate diff --exit-code` gegen `schema.prisma` prüft,
+damit eine handgeschriebene Migration nicht vom Schema wegdriften kann.
+`festi-backend`: Typecheck, 250 Tests, `docker compose config`.
+`festi-routes`: `node --check` plus ein Dry-Run des Generators, der bei
+`invalid:` fehlschlägt. Der Migrations-Job wurde lokal gegen ein echtes
+Postgres verifiziert, inklusive Negativtest (absichtliche Drift → Exit 2);
+der Routes-Guard, indem eine Idee absichtlich kaputtgemacht wurde.
+
+**Tests (E-01, teilweise)** — Vitest im Frontend, 28 Tests auf genau der Logik,
+die diese Runde angefasst hat: `visibility.test.ts` (10) — Gruppen-Rides bleiben
+in der Gruppe, eine leere Mitgliedsliste weitet sich nie auf „irgendeine Gruppe",
+offene Beitrittsanfragen zählen nicht als Mitgliedschaft; `image.test.ts` (9) —
+`MAX_IMAGE_DIMENSION` greift wirklich, inklusive einer 30000 × 30000-Zip-Bombe
+in 33 Byte; `rateLimit.test.ts` (9) — die Grenze zwischen letztem erlaubtem und
+erstem blockiertem Aufruf, ehrliches `retryAfterSec`, und Fail-Open, wenn der
+Limiter selbst ausfällt.
+
+**Grundlast (C-02, teilweise)** — Zwei Unread-Zähler zu einer Server-Action
+zusammengelegt, `follow-connections` nur noch bei geöffnetem Sheet. Idle-Tab:
+**16 → 6 Requests/Minute**. Dabei stellte sich Punkt 1 des ursprünglichen Fixes
+als falsch heraus — React Query pausiert Intervall-Refetches im Hintergrund-Tab
+bereits selbst; korrigiert in `review/C-frontend-architektur.md`.
+
+**Sichtbares (D-10, U-07)** — Scrollbars sind wieder dunkel (`hsl()` um
+OKLCH-Variablen entfernt), und hinter dem Landing-Page-Text liegt ein Scrim,
+sodass keine Städtenamen mehr durch den Fließtext laufen.
 
 **Routen-Repo (3 von 8 + Datenfehler)** — L-04 Schema-Validierung ·
 L-05 Quota-Header · L-06 `.gitignore`. Dabei aufgedeckt: 14 Constraint-Werte
@@ -144,8 +176,13 @@ E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
 
 ## Vorschlag für die Reihenfolge
 
-1. **CI aufsetzen** (E-02, E-03) — `tsc`, Biome, die 250 Engine-Tests. Ein Nachmittag, und danach ist alles Weitere abgesichert.
-2. **Tests für die gerade geänderte Sicherheitslogik** (E-01) — Gruppen-Sichtbarkeit, Kapazität, Rate-Limits. Das sind die Stellen, an denen ein Fehler wieder Daten preisgibt.
-3. **C-02 Polling-Grundlast** — 16 Requests/Minute pro Tab kosten unabhängig vom Standort.
-4. **D-10 Scrollbar** (drei Zeilen) und **U-07 Partikel-Lesbarkeit** — billig, sichtbar.
-5. Danach die großen mechanischen Blöcke (D-08, E-15) als eigene PRs.
+1. ~~**CI aufsetzen** (E-02, E-03)~~ — erledigt, in allen drei Repos.
+2. ~~**Tests für die gerade geänderte Sicherheitslogik** (E-01)~~ — erledigt, 28 Tests.
+   Die restlichen 82 Server Actions bleiben ungetestet.
+3. ~~**C-02 Polling-Grundlast**~~ — 16 → 6 Req/min. Offen bleibt der Chat: 2-s-Polling
+   in `groupChat` und `directChatThread` (+30/min je offenem Thread). Das SSE-Muster
+   dafür liegt fertig in `src/app/api/pro/live/[race]/[year]/[stage]/route.ts`.
+4. ~~**D-10 Scrollbar** und **U-07 Partikel-Lesbarkeit**~~ — erledigt.
+5. **Als Nächstes:** die großen mechanischen Blöcke (D-08 291 Farb-Call-Sites,
+   E-15 31 tote Komponenten) als je eigener PR, und C-03 — sieben `revalidatePath()`
+   auf `/groups/…`, ein Segment, das es nicht gibt.

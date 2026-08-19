@@ -39,16 +39,6 @@ async function areMutualFollowers(me: string, other: string) {
   return iFollow && followsMe;
 }
 
-/** Total number of unread direct messages addressed to the current user. */
-export async function getUnreadDirectCount(): Promise<number> {
-  const session = await getCurrentUser();
-  if (!session) return 0;
-
-  return prisma.directMessage.count({
-    where: { recipientId: session.user.id, readAt: null },
-  });
-}
-
 export type DirectConversation = {
   partner: {
     id: string;

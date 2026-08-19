@@ -139,6 +139,10 @@ Auffällig:
 - **Befund:** `--muted` ist `oklch(0.18 0.02 15)` (Z. 62). `hsl(oklch(0.18 0.02 15))` ist keine gültige Farbe → die Deklaration wird vom Parser verworfen. Das Muster stammt aus shadcn-Setups mit HSL-Tokens; hier wurde auf OKLCH migriert, ohne die Scrollbar-Regeln nachzuziehen.
 - **Auswirkung:** Scrollbars fallen auf den Browser-Default zurück — helle Leisten in einer schwarzen App, in jedem `overflow-auto`-Container (Chat-Threads, Event-Liste, Notification-Sheet, Kommentare).
 - **Fix:** `hsl(...)` entfernen: `background: var(--muted);` / `scrollbar-color: var(--muted-foreground) transparent;`.
+- **Status:** behoben. Im gebauten CSS steht jetzt
+  `::-webkit-scrollbar-thumb{background:var(--muted)…}` und
+  `*{scrollbar-width:thin;scrollbar-color:var(--muted-foreground) transparent}`; kein `hsl(var(--…))`
+  mehr im gesamten `src/`.
 
 ### D-11 — Sonner ruft `useTheme()` ohne Provider → Toasts folgen dem OS statt der App · **P2**
 - **Ort:** `src/components/ui/sonner.tsx:10-15`
