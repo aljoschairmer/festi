@@ -55,8 +55,10 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.02 15);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.55 0.25 25);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Brighter red so links/normal text reach >= 4.5:1 on the dark background (WCAG AA). */
+  --primary: oklch(0.65 0.22 25);
+  /* Dark foreground keeps primary buttons >= 4.5:1 with the brighter red. */
+  --primary-foreground: oklch(0.08 0.01 15);
   --secondary: oklch(0.18 0.04 20);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.02 15);
@@ -90,8 +92,10 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.02 15);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.55 0.25 25);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Brighter red so links/normal text reach >= 4.5:1 on the dark background (WCAG AA). */
+  --primary: oklch(0.65 0.22 25);
+  /* Dark foreground keeps primary buttons >= 4.5:1 with the brighter red. */
+  --primary-foreground: oklch(0.08 0.01 15);
   --secondary: oklch(0.18 0.04 20);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.02 15);
