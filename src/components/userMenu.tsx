@@ -81,12 +81,14 @@ export function UserMenu({ userName, userEmail, userRole }: UserMenuProps) {
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-red-500/20" />
         <DropdownMenuItem
-          onClick={handleSignOut}
+          asChild
           disabled={signOutMutation.isPending}
-          className="cursor-pointer text-red-500 hover:bg-red-500/10 hover:text-red-500 focus:text-red-500"
+          className="w-full cursor-pointer text-red-500 hover:bg-red-500/10 hover:text-red-500 focus:text-red-500"
         >
-          <LogOutIcon className="mr-2 size-4" />
-          Sign out
+          <button type="button" onClick={handleSignOut}>
+            <LogOutIcon className="mr-2 size-4" />
+            Sign out
+          </button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
