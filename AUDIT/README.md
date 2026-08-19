@@ -10,6 +10,7 @@ am **2026-08-19** gegen die Produktion und die Live-Route-Engine.
 | [`00-overview.md`](./00-overview.md) | Architektur, Datenfluss, vollständige Routen-/Seiten-Liste, UI-Flows, lokaler Start, Basis-Performance |
 | [`00-routes-diff.md`](./00-routes-diff.md) | `festi-routes` ↔ Route Engine ↔ App: Bestand, Feature-Lücken, Integrationsstand, vier datenbelegte Engine-Defekte |
 | [`01-findings.md`](./01-findings.md) | Phase 1 + 2: 29 Funde aus Browser-Funktionstest, Responsive-, Design- und A11y-Prüfung — mit Repro, Messwerten und Screenshots |
+| [`02-ui-bugs.md`](./02-ui-bugs.md) | Gezielte UI-Fehlersuche: 16 weitere Defekte aus DOM-Scan, Interaktions-Durchlauf und Stresstests (200 % Zoom, überlanger Inhalt) |
 | [`review/A-auth-security.md`](./review/A-auth-security.md) | Auth, Session, Authorization/IDOR, Uploads, XSS, Rate-Limiting, Secrets |
 | [`review/B-backend-daten.md`](./review/B-backend-daten.md) | Fehlerbehandlung, Statuscodes, N+1, Indizes, Transaktionen, API-Vertrag |
 | [`review/C-frontend-architektur.md`](./review/C-frontend-architektur.md) | Server/Client-Grenzen, Caching, Revalidation, Bundles, State, Routing |
@@ -45,9 +46,10 @@ Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
 | | |
 | --- | --- |
 | Funde Phase 1 + 2 | 29 (2 × P0, 15 × P1, 9 × P2, 4 × P3) |
+| Funde gezielte UI-Suche | 16 (5 × P1, 9 × P2, 2 × P3) |
 | Funde Phase 3 (Code-Review) | 121 über fünf Reports |
 | Geprüfte Seiten | 22 Routen × bis zu 3 Viewports |
-| Screenshots | 106 |
+| Screenshots | 129 |
 | Ausgewertete generierte Routen | 569 aus `festi-routes` |
 
 ## Die fünf wichtigsten Punkte
@@ -63,7 +65,11 @@ Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
 4. **Die Datenschicht ist ungeschützt gegen Nebenläufigkeit**: ein einziges
    `$transaction` im gesamten Projekt, Wartelisten-Beförderung und
    Kapazitätsprüfung sind Races (Review `B`).
-5. **Die Route Engine kann deutlich mehr, als die App anbietet** — acht
+5. **Dialoge haben keine Höhenbegrenzung** — ein 60-zeiliger Beitrag schiebt
+   „Post", „Preview" *und* das Schließen-Kreuz aus dem Bild; die Seite scrollt
+   nicht, der Dialog auch nicht. Einziger Ausweg: Escape, Beitrag verloren
+   (`02-ui-bugs.md`, U-01/U-02).
+6. **Die Route Engine kann deutlich mehr, als die App anbietet** — acht
    Parameter und neun Ergebnisfelder ungenutzt, und 569 fertig berechnete
    Routen über 70 Regionen liegen brach (`00-routes-diff.md`).
 
