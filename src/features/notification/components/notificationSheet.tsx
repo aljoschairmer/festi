@@ -280,7 +280,7 @@ const NotificationSheet = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground"
+          className="relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-red-500/10 hover:text-foreground"
           aria-label={
             unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
           }

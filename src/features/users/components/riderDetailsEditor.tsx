@@ -323,6 +323,7 @@ function Row({
           size="icon-sm"
           onClick={onEdit}
           aria-label={`Edit ${label}`}
+          className="relative after:absolute after:-inset-2 after:content-['']"
         >
           <PencilIcon className="size-4" />
         </Button>

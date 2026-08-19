@@ -172,7 +172,7 @@ const FollowerListSheet = () => {
           variant: "ghost",
           size: "sm",
           className:
-            "gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground",
+            "relative gap-2 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:bg-red-500/10 hover:text-foreground",
         })}
       >
         <UserCheck className="size-4 text-red-500" />
