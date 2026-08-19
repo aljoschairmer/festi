@@ -109,7 +109,7 @@ export function WaypointList({
           ? "bg-green-500"
           : isEnd
             ? "bg-blue-500"
-            : "bg-red-500";
+            : "bg-primary";
         return (
           <li
             // biome-ignore lint/suspicious/noArrayIndexKey: waypoints have no stable id

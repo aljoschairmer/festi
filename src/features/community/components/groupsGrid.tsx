@@ -59,7 +59,7 @@ export function GroupsGrid() {
   if (isLoading)
     return <p className="text-sm text-muted-foreground">Loading groups...</p>;
   if (isError)
-    return <p className="text-sm text-red-500">Failed to load groups.</p>;
+    return <p className="text-sm text-destructive">Failed to load groups.</p>;
 
   return (
     <div className="space-y-6">
@@ -90,7 +90,7 @@ export function GroupsGrid() {
               style={{ animationDelay: `${(index % PAGE_SIZE) * 60}ms` }}
             >
               <Link href={`/dashboard/community/g/${group.id}`}>
-                <Card className="h-full transition hover:border-red-500/40 hover:bg-muted/40">
+                <Card className="h-full transition hover:border-primary/40 hover:bg-muted/40">
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="size-12">
                       <AvatarImage src={group.image ?? undefined} sizes="" />
@@ -122,7 +122,7 @@ export function GroupsGrid() {
               type="button"
               onClick={loadMore}
               disabled={loadingMore}
-              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-red-500/30 text-sm font-medium text-muted-foreground transition hover:border-red-500/50 hover:bg-muted/40 hover:text-foreground"
+              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-primary/30 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-muted/40 hover:text-foreground"
             >
               <span className="flex items-center gap-2">
                 {loadingMore ? (

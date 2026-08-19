@@ -126,7 +126,7 @@ export function PostFeed() {
         <div className="space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-center gap-3 pt-2">
             <div className="h-px flex-1 bg-border" />
-            <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-500">
+            <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <CompassIcon className="size-3.5" />
               Discover
             </span>
@@ -236,9 +236,9 @@ function EmptyFollowing({
   onDiscover: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-red-500/30 py-16 text-center duration-500 animate-in fade-in zoom-in-95">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-red-500/10">
-        <SparklesIcon className="size-7 text-red-500" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-primary/30 py-16 text-center duration-500 animate-in fade-in zoom-in-95">
+      <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
+        <SparklesIcon className="size-7 text-primary" />
       </div>
       <p className="font-heading text-lg font-semibold">
         No {label} from people you follow

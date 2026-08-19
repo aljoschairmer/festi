@@ -117,6 +117,45 @@ Auffällig:
 - **Auswirkung:** (a) Ein Theme-Wechsel oder ein Rebranding ist nicht möglich, ohne 61 Dateien anzufassen. (b) Es entstehen zwei parallele Rot-Töne: `--primary` = `#df000d` (4.10:1) und `red-500` = `#ef4444` (5.53:1) — nebeneinander sichtbar unterschiedlich, mit unterschiedlichem Kontrastverhalten. (c) `border-red-500/20` (1.20:1) und `--border` (1.12:1) sehen fast gleich aus, sind aber verschiedene Farben.
 - **Fix:** Mechanische Ersetzung, dann Lint-Regel. Mapping: `text-red-500`→`text-primary`, `text-red-400`→`text-primary` (hover), `border-red-500/20`→`border-border`, `bg-red-500/10`→`bg-primary/10`, `bg-red-500/20 text-red-500`→`bg-primary/15 text-primary`, `text-white` auf farbigem Grund→`text-primary-foreground`. Die 9 Gradient-CTAs (D-03) als `variant: { cta: … }` in `buttonVariants` aufnehmen. Danach in `biome.json` eine `nursery/noRestrictedClasses`-artige Regel oder ein `grep`-Gate in CI.
 
+- **Status: die Rot-Palette ist umgestellt** — 175 Ersetzungen in 46 Dateien; danach keine
+  `(text|bg|border|ring|shadow)-red-*` mehr in `src/`.
+
+  **Die Prämisse hatte sich verschoben.** Der Fund rechnete mit `--primary` = `#df000d`, also einem
+  sichtbar anderen Rot als `red-500`. `--primary` ist inzwischen `oklch(0.62 0.22 25)` = **`#ee343b`**,
+  und der Kontrast zwischen `#ee343b` und `#ef4444` beträgt **1,08:1** — die beiden sind
+  nicht unterscheidbar. Genau das macht die Ersetzung risikoarm: sie ändert die Struktur, nicht das Bild.
+
+  **Zwei Abweichungen vom vorgeschlagenen Mapping:**
+
+  1. `text-red-400` → **nicht** `text-primary`. Alle 24 Vorkommen sind `hover:text-red-400` als
+     Hover-Partner von `text-red-500` — beide auf denselben Token zu legen hätte das Hover-Feedback
+     ersatzlos gelöscht. Stattdessen ein neuer Token `--primary-hover: oklch(0.72 0.16 25)` =
+     `#f97770`, ausgemessen statt geraten: **7,82:1** auf `--background` (`red-400` hatte 7,52:1) und
+     **1,53:1** gegen `--primary`, also wahrnehmbar und nicht bloß messbar.
+  2. `border-red-500/20` → `border-primary/20`, **nicht** `border-border`. Der Fund selbst schreibt,
+     dass die beiden fast gleich aussehen aber verschiedene Farben sind — die roten Ränder sind
+     erkennbar Akzent, kein neutraler Rahmen.
+
+  **Dabei aufgefallen:** fünf der ersetzten Stellen waren gar keine Markenfarbe, sondern
+  Fehlermeldungen („Failed to load riders/groups/users/your network", der Status `Banned`). Eine reine
+  Suchen-und-Ersetzen-Runde hätte sie zu Markenrot gemacht; sie liegen jetzt auf `--destructive`.
+
+  **Wiederholungsschutz:** `scripts/check-colors.mjs`, verdrahtet als `npm run lint:colors` und als
+  eigener CI-Schritt. Negativ getestet: ein absichtlich eingefügtes `text-red-500` bricht mit Exit 1,
+  `// check-colors: allow` auf derselben Zeile lässt es durch.
+
+- **Bewusst offen gelassen — braucht eine Designentscheidung, keine Ersetzung:**
+  - **56 Gradient-Klassen** (`from-red-500 to-red-600` usw.). Ein Gradient lässt sich nicht 1:1 auf
+    einen Token abbilden; das gehört an die `cta`-Variante aus D-03.
+  - **`text-white` auf rotem Grund.** Das ist kein reiner Stilpunkt: Weiß auf `--primary` misst
+    **4,06:1** und verfehlt AA für normalen Text, `--primary-foreground` misst **4,79:1** und besteht.
+    Die `Button`-Default-Variante macht es bereits richtig (`text-primary-foreground`). Die Umstellung
+    dreht allerdings jeden roten CTA von weißer auf fast schwarze Schrift — sichtbar genug, dass ich
+    das nicht nebenbei entscheide. Die übrigen `text-white`/`bg-black`-Stellen liegen auf Fotos und
+    Kartenkacheln, wo es keinen Token gibt und Weiß richtig ist.
+  - **40+ Hex-Literale in JS** (`particleBackground.tsx`, `elevationChart.tsx`, `eventTypes.ts`,
+    `riderDots.ts`). Die brauchen einen Weg, Tokens zur Laufzeit zu lesen, keine Klassenersetzung.
+
 ### D-09 — Chart-Palette: 4 von 5 Serienfarben unter 3:1 · **P1**
 - **Ort:** `src/app/globals.css:70-74`
   ```

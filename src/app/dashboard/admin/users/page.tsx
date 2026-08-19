@@ -20,7 +20,7 @@ export default async function UsersPage() {
         </p>
       </div>
 
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle>All Users</CardTitle>
           <CardDescription>View and manage user accounts</CardDescription>

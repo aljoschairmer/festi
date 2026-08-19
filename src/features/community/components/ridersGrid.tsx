@@ -66,7 +66,7 @@ export function RidersGrid() {
   if (isLoading)
     return <p className="text-sm text-muted-foreground">Loading riders...</p>;
   if (isError)
-    return <p className="text-sm text-red-500">Failed to load riders.</p>;
+    return <p className="text-sm text-destructive">Failed to load riders.</p>;
 
   return (
     <div className="space-y-6">
@@ -97,7 +97,7 @@ export function RidersGrid() {
               style={{ animationDelay: `${(index % PAGE_SIZE) * 60}ms` }}
             >
               <Link href={`/dashboard/community/u/${rider.id}`}>
-                <Card className="h-full transition hover:border-red-500/40 hover:bg-muted/40">
+                <Card className="h-full transition hover:border-primary/40 hover:bg-muted/40">
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="size-12">
                       <AvatarImage src={rider.image ?? undefined} />
@@ -142,7 +142,7 @@ export function RidersGrid() {
               type="button"
               onClick={loadMore}
               disabled={loadingMore}
-              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-red-500/30 text-sm font-medium text-muted-foreground transition hover:border-red-500/50 hover:bg-muted/40 hover:text-foreground"
+              className="group flex min-h-[84px] items-center justify-center rounded-xl border border-dashed border-primary/30 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-muted/40 hover:text-foreground"
             >
               <span className="flex items-center gap-2">
                 {loadingMore ? (

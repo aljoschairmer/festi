@@ -85,7 +85,7 @@ export function ResetPasswordForm() {
 
         <ParticleBackground />
 
-        <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+        <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700">
               <ZapIcon className="size-6 text-white" />
@@ -100,7 +100,7 @@ export function ResetPasswordForm() {
           <CardContent className="text-center">
             <Link
               href="/forgot-password"
-              className="font-medium text-red-500 hover:text-red-400"
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Request a new reset link
             </Link>
@@ -118,7 +118,7 @@ export function ResetPasswordForm() {
 
         <ParticleBackground />
 
-        <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+        <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <CheckCircleIcon className="size-7 text-white" />
@@ -133,7 +133,7 @@ export function ResetPasswordForm() {
           <CardContent className="space-y-6 text-center">
             <Button
               onClick={() => router.push("/login")}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700"
             >
               Sign in with new password
             </Button>
@@ -158,7 +158,7 @@ export function ResetPasswordForm() {
 
       <ParticleBackground />
 
-      <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+      <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700">
             <ZapIcon className="size-6 text-white" />
@@ -208,7 +208,7 @@ export function ResetPasswordForm() {
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700"
             >
               {mutation.isPending && (
                 <Loader2Icon className="mr-2 size-4 animate-spin" />

@@ -170,7 +170,7 @@ export const columns: ColumnDef<AdminUser>[] = [
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="cursor-help text-red-500">Banned</span>
+                <span className="cursor-help text-destructive">Banned</span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{user.banReason || "No reason provided"}</p>

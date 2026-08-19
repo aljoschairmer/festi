@@ -53,7 +53,7 @@ export function ProfileFollowStats({
         <button
           type="button"
           onClick={() => setOpenList("followers")}
-          className="transition-colors hover:text-red-500"
+          className="transition-colors hover:text-primary"
         >
           <span className="font-semibold text-foreground">
             {shownFollowers}
@@ -66,7 +66,7 @@ export function ProfileFollowStats({
         <button
           type="button"
           onClick={() => setOpenList("following")}
-          className="transition-colors hover:text-red-500"
+          className="transition-colors hover:text-primary"
         >
           <span className="font-semibold text-foreground">
             {shownFollowing}

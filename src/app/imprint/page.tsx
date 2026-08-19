@@ -11,7 +11,10 @@ export default function ImprintPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:py-24">
       <div className="mb-10">
-        <Link href="/" className="text-sm text-red-500 hover:text-red-400">
+        <Link
+          href="/"
+          className="text-sm text-primary hover:text-primary-hover"
+        >
           &larr; Back to home
         </Link>
       </div>
@@ -33,7 +36,7 @@ export default function ImprintPage() {
             Postal address: Available on request via{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -42,7 +45,7 @@ export default function ImprintPage() {
             Contact:{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -51,7 +54,7 @@ export default function ImprintPage() {
             Technical enquiries &amp; support:{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>
@@ -120,13 +123,16 @@ export default function ImprintPage() {
         <Section title="Data protection">
           <p>
             For information on how we handle personal data, please see our{" "}
-            <Link href="/privacy" className="text-red-500 hover:text-red-400">
+            <Link
+              href="/privacy"
+              className="text-primary hover:text-primary-hover"
+            >
               Privacy Policy
             </Link>
             . Questions regarding data protection can be sent to{" "}
             <a
               href="mailto:info@festicycling.com"
-              className="text-red-500 hover:text-red-400"
+              className="text-primary hover:text-primary-hover"
             >
               info@festicycling.com
             </a>

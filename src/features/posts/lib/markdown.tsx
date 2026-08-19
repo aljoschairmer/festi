@@ -56,7 +56,7 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="text-red-500 underline underline-offset-2 hover:text-red-400"
+            className="text-primary underline underline-offset-2 hover:text-primary-hover"
           >
             {label}
           </a>,
@@ -201,7 +201,7 @@ export function renderMarkdown(source: string): React.ReactNode {
         return (
           <blockquote
             key={key}
-            className="my-2 border-l-2 border-red-500/40 pl-3 text-muted-foreground italic"
+            className="my-2 border-l-2 border-primary/40 pl-3 text-muted-foreground italic"
           >
             {renderInline(block.lines.join(" "), key)}
           </blockquote>

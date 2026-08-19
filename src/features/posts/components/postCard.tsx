@@ -94,7 +94,7 @@ export function PostCard({ post }: PostCardProps) {
     .toUpperCase();
 
   return (
-    <article className="rounded-xl border border-red-500/20 bg-card p-5 transition-shadow hover:shadow-md">
+    <article className="rounded-xl border border-primary/20 bg-card p-5 transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-5 lg:flex-row">
         {/* Left: author, title, content */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -182,7 +182,7 @@ export function PostCard({ post }: PostCardProps) {
           size="sm"
           className={cn(
             "gap-1.5 text-muted-foreground",
-            liked && "text-red-500 hover:text-red-500",
+            liked && "text-primary hover:text-primary",
           )}
           disabled={likeMutation.isPending}
           onClick={() => likeMutation.mutate()}

@@ -89,7 +89,7 @@ function buildPopupContent(event: CalendarEvent): HTMLElement {
 
   if (event.cancelled) {
     const cancelled = document.createElement("div");
-    cancelled.className = "text-xs font-medium text-red-500";
+    cancelled.className = "text-xs font-medium text-primary";
     cancelled.textContent = event.cancelReason || "Cancelled";
     root.appendChild(cancelled);
   }
@@ -99,7 +99,7 @@ function buildPopupContent(event: CalendarEvent): HTMLElement {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   link.className =
-    "mt-1.5 inline-block w-fit rounded-md bg-red-500 px-2.5 py-1 text-xs font-medium text-white no-underline hover:bg-red-600";
+    "mt-1.5 inline-block w-fit rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white no-underline hover:bg-primary/80";
   link.textContent = "Details on rad-net ↗";
   root.appendChild(link);
 

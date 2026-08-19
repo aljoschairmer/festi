@@ -43,7 +43,7 @@ export default function HomePage() {
           <Button
             size="lg"
             asChild
-            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700 sm:w-auto"
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700 sm:w-auto"
           >
             <Link href="/register">Get started free</Link>
           </Button>

@@ -94,7 +94,7 @@ export function RegisterForm() {
         {/* Interactive Particles */}
         <ParticleBackground />
 
-        <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+        <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
               <MailCheckIcon className="size-7 text-white" />
@@ -117,7 +117,7 @@ export function RegisterForm() {
               Already verified?{" "}
               <Link
                 href="/login"
-                className="font-medium text-red-500 hover:text-red-400"
+                className="font-medium text-primary hover:text-primary-hover"
               >
                 Sign in
               </Link>
@@ -146,7 +146,7 @@ export function RegisterForm() {
       {/* Interactive Particles */}
       <ParticleBackground />
 
-      <Card className="relative w-full max-w-md border-red-500/20 backdrop-blur-sm">
+      <Card className="relative w-full max-w-md border-primary/20 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Logo size={96} priority className="size-24" />
@@ -261,14 +261,14 @@ export function RegisterForm() {
                     I agree to the{" "}
                     <Link
                       href="/terms"
-                      className="text-red-500 hover:text-red-400"
+                      className="text-primary hover:text-primary-hover"
                     >
                       Terms of Service
                     </Link>{" "}
                     and{" "}
                     <Link
                       href="/privacy"
-                      className="text-red-500 hover:text-red-400"
+                      className="text-primary hover:text-primary-hover"
                     >
                       Privacy Policy
                     </Link>
@@ -281,7 +281,7 @@ export function RegisterForm() {
             <Button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-red-700"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-primary/25 hover:from-red-600 hover:to-red-700"
             >
               {registerMutation.isPending && (
                 <Loader2Icon className="mr-2 size-4 animate-spin" />
@@ -294,7 +294,7 @@ export function RegisterForm() {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-red-500 hover:text-red-400"
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Sign in
             </Link>

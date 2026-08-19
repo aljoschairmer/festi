@@ -53,7 +53,7 @@ type LiveStagePanelProps = {
 
 function LiveBadge() {
   return (
-    <Badge className="gap-1.5 bg-red-600 text-white hover:bg-red-600">
+    <Badge className="gap-1.5 bg-primary text-white hover:bg-primary/80">
       <span className="relative flex size-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
         <span className="relative inline-flex size-2 rounded-full bg-white" />

@@ -19,7 +19,7 @@ export default async function SettingsPage() {
         <p className="text-muted-foreground">Manage your account</p>
       </div>
 
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle>Account</CardTitle>
           <CardDescription>Your sign-in details</CardDescription>
@@ -37,7 +37,7 @@ export default async function SettingsPage() {
             Rider details (bio, bike, styles) live on your{" "}
             <Link
               href="/dashboard/profile"
-              className="text-red-500 underline-offset-4 hover:underline"
+              className="text-primary underline-offset-4 hover:underline"
             >
               profile page
             </Link>
@@ -46,7 +46,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-red-500/20">
+      <Card className="border-primary/20">
         <CardHeader>
           <CardTitle>Change password</CardTitle>
           <CardDescription>

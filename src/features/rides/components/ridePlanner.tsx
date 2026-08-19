@@ -433,7 +433,7 @@ export function RidePlanner({
 
                 {startPlace && (
                   <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm animate-in fade-in-0 zoom-in-95">
-                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-red-500" />
+                    <MapPinIcon className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span className="line-clamp-2">{startPlace.name}</span>
                   </div>
                 )}

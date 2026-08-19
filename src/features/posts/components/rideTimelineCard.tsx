@@ -36,7 +36,7 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
         "group relative rounded-xl border bg-card p-5 transition-shadow hover:shadow-md",
         isPast
           ? "border-border"
-          : "border-red-500/40 shadow-sm ring-1 ring-red-500/20",
+          : "border-primary/40 shadow-sm ring-1 ring-primary/20",
       )}
     >
       {/* Full-card click target to the ride page. Interactive elements below
@@ -57,13 +57,13 @@ export function RideTimelineCard({ ride }: RideTimelineCardProps) {
                 Past ride
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 font-medium text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 font-medium text-white">
                 <BikeIcon className="size-3.5" />
                 Upcoming ride
               </span>
             )}
             {isPast && ride.photoCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 font-medium text-red-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
                 <ImageIcon className="size-3.5" />
                 {ride.photoCount} {ride.photoCount === 1 ? "photo" : "photos"}
               </span>

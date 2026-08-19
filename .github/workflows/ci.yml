@@ -36,6 +36,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Guards D-08: hardcoded palette reds instead of theme tokens.
+      - name: Colour tokens
+        run: npm run lint:colors
+
       - name: Tests
         run: npm test
 

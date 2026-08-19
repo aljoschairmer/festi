@@ -161,7 +161,7 @@ export default async function PublicRidePage({
           </CardContent>
         </Card>
 
-        <Card className="border-red-500/30">
+        <Card className="border-primary/30">
           <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
             <p className="font-heading text-lg font-semibold">
               Want to ride along?

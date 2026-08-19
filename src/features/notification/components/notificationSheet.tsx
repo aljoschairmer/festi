@@ -118,7 +118,7 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.GROUP_JOINED ||
     type === NotificationType.GROUP_JOIN_REQUESTED
   ) {
-    return <Users className="size-4 text-red-500" />;
+    return <Users className="size-4 text-primary" />;
   }
   if (
     type === NotificationType.GROUP_JOIN_APPROVED ||
@@ -131,7 +131,7 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.RIDE_JOIN_REJECTED ||
     type === NotificationType.RIDE_CANCELLED
   ) {
-    return <X className="size-4 text-red-500" />;
+    return <X className="size-4 text-primary" />;
   }
   if (
     type === NotificationType.RIDE_JOIN_REQUEST ||
@@ -139,18 +139,18 @@ export function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
     type === NotificationType.RIDE_WAITLIST_PROMOTED ||
     type === NotificationType.GROUP_RIDE_CREATED
   ) {
-    return <Bike className="size-4 text-red-500" />;
+    return <Bike className="size-4 text-primary" />;
   }
   if (type === NotificationType.POST_LIKED) {
-    return <Heart className="size-4 text-red-500" />;
+    return <Heart className="size-4 text-primary" />;
   }
   if (type === NotificationType.POST_COMMENTED) {
-    return <MessageCircle className="size-4 text-red-500" />;
+    return <MessageCircle className="size-4 text-primary" />;
   }
   if (type === NotificationType.GROUP_ANNOUNCEMENT) {
-    return <Megaphone className="size-4 text-red-500" />;
+    return <Megaphone className="size-4 text-primary" />;
   }
-  return <UserPlus className="size-4 text-red-500" />;
+  return <UserPlus className="size-4 text-primary" />;
 }
 
 export function notificationHref(
@@ -206,13 +206,13 @@ export function NotificationRow({
       </div>
 
       {notification.read ? null : (
-        <span className="mt-1 size-2 shrink-0 rounded-full bg-red-500" />
+        <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
       )}
     </>
   );
 
   const className = `flex items-start gap-3 rounded-lg p-3 transition ${
-    notification.read ? "" : "bg-red-500/5"
+    notification.read ? "" : "bg-primary/5"
   }`;
 
   if (!href) {
@@ -223,7 +223,7 @@ export function NotificationRow({
     <Link
       href={href}
       onClick={onNavigate}
-      className={`${className} hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500`}
+      className={`${className} hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
     >
       {body}
     </Link>
@@ -267,14 +267,14 @@ const NotificationSheet = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground"
+          className="relative gap-2 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
           aria-label={
             unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
           }
         >
-          <BellDot className="size-4 text-red-500" />
+          <BellDot className="size-4 text-primary" />
           {unread > 0 ? (
-            <span className="absolute -right-1 -top-1 flex size-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white">
+            <span className="absolute -right-1 -top-1 flex size-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium leading-none text-white">
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}

@@ -12,7 +12,10 @@ export default function TermsOfServicePage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:py-24">
       <div className="mb-10">
-        <Link href="/" className="text-sm text-red-500 hover:text-red-400">
+        <Link
+          href="/"
+          className="text-sm text-primary hover:text-primary-hover"
+        >
           &larr; Back to home
         </Link>
       </div>
@@ -132,7 +135,10 @@ export default function TermsOfServicePage() {
           <p>
             Information about how we process your personal data is set out in
             our{" "}
-            <Link href="/privacy" className="text-red-500 hover:text-red-400">
+            <Link
+              href="/privacy"
+              className="text-primary hover:text-primary-hover"
+            >
               Privacy Policy
             </Link>
             .

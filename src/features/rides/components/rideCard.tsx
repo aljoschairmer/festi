@@ -33,7 +33,7 @@ export function RideCard({ ride }: RideCardProps) {
 
       <CardContent className="flex flex-col gap-3 py-4">
         <div className="flex items-start gap-2">
-          <BikeIcon className="mt-0.5 size-5 shrink-0 text-red-500" />
+          <BikeIcon className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <Link
               href={href}

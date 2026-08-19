@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "ci": "npm run lint && npm run typecheck && npm test && npm run build",
+    "ci": "npm run lint && npm run lint:colors && npm run typecheck && npm test && npm run build",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:setup": "prisma migrate deploy && prisma db seed",
@@ -13,6 +13,7 @@
     "dev": "next dev",
     "format": "biome format --write",
     "lint": "biome check",
+    "lint:colors": "node scripts/check-colors.mjs",
     "postinstall": "prisma generate",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",

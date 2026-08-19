@@ -101,7 +101,7 @@ function ConversationList({
             </p>
           </div>
           {unreadCount > 0 ? (
-            <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+            <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-white">
               {unreadCount}
             </span>
           ) : null}

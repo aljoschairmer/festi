@@ -526,7 +526,7 @@ export function RideMap({
 
           const el = document.createElement("div");
           el.className =
-            "size-4 rounded-full border-2 border-red-500 bg-white shadow";
+            "size-4 rounded-full border-2 border-primary bg-white shadow";
           dragTempMarker = new maplibregl.Marker({ element: el })
             .setLngLat([downEvent.lngLat.lng, downEvent.lngLat.lat])
             .addTo(map);
@@ -607,7 +607,7 @@ export function RideMap({
           ? "bg-green-500"
           : isEnd
             ? "bg-blue-500"
-            : "bg-red-500";
+            : "bg-primary";
         const label =
           isRoundTrip && isStart
             ? "S/E"

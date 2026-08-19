@@ -240,7 +240,7 @@ export function EventsExplorer() {
               href="https://breitensport.rad-net.de/breitensportkalender/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-2 hover:text-red-500 hover:underline"
+              className="underline-offset-2 hover:text-primary hover:underline"
             >
               rad-net.de Breitensportkalender
             </a>{" "}

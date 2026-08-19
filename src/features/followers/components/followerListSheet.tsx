@@ -173,10 +173,10 @@ const FollowerListSheet = () => {
           variant: "ghost",
           size: "sm",
           className:
-            "gap-2 text-muted-foreground hover:bg-red-500/10 hover:text-foreground",
+            "gap-2 text-muted-foreground hover:bg-primary/10 hover:text-foreground",
         })}
       >
-        <UserCheck className="size-4 text-red-500" />
+        <UserCheck className="size-4 text-primary" />
       </SheetTrigger>
       <SheetContent className="flex flex-col gap-0 p-0">
         <SheetHeader className="border-b">
@@ -213,7 +213,7 @@ const FollowerListSheet = () => {
               ))}
             </div>
           ) : isError ? (
-            <p className="p-4 text-center text-sm text-red-500">
+            <p className="p-4 text-center text-sm text-destructive">
               Failed to load your network.
             </p>
           ) : !hasResults ? (

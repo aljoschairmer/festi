@@ -33,8 +33,8 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
           <li key={event.id}>
             <div
               className={cn(
-                "flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-red-500/5",
-                selectedId === event.id && "bg-red-500/10",
+                "flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-primary/5",
+                selectedId === event.id && "bg-primary/10",
               )}
             >
               <button
@@ -83,7 +83,7 @@ export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${event.title} on rad-net.de`}
-                className="mt-0.5 shrink-0 text-muted-foreground/50 transition-colors hover:text-red-500"
+                className="mt-0.5 shrink-0 text-muted-foreground/50 transition-colors hover:text-primary"
               >
                 <ExternalLinkIcon className="size-3.5" />
               </a>
