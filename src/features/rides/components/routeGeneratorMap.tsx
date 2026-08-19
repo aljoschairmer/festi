@@ -235,6 +235,16 @@ export function RouteGeneratorMap() {
   const status = statusData?.success ? statusData.status : null;
   const options: GeneratedRouteOption[] | null =
     status?.state === "SUCCEEDED" ? (status.options ?? null) : null;
+  // Terminal engine states are surfaced explicitly instead of silently
+  // resetting the panel — a job cancelled by `regenerate`/`switchMode`
+  // never shows up here because those already moved `jobId` on.
+  const terminalFailure =
+    status?.state === "FAILED" || status?.state === "CANCELLED"
+      ? (status.errorDetail ??
+        (status.state === "CANCELLED"
+          ? "The route generation was cancelled."
+          : "Route generation failed. Please try again."))
+      : null;
   const generating =
     submitMutation.isPending ||
     (jobId !== null &&
@@ -720,6 +730,23 @@ export function RouteGeneratorMap() {
               <Loader2Icon className="size-3.5 animate-spin" />
               {status?.message ?? "Generating routes…"}
             </p>
+          )}
+          {terminalFailure && (
+            <div className="flex flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+              <p className="text-destructive text-xs font-medium">
+                {terminalFailure}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => regenerate()}
+              >
+                <SparklesIcon className="size-3.5" />
+                Try again
+              </Button>
+            </div>
           )}
         </div>
 
