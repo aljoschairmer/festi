@@ -58,7 +58,7 @@ export function UserMenu({ userName, userEmail, userRole }: UserMenuProps) {
           ) : (
             <UserIcon className="size-4" />
           )}
-          <span className="hidden sm:inline">{userName}</span>
+          <span className="hidden max-w-32 truncate sm:inline">{userName}</span>
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>

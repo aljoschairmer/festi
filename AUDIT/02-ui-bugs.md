@@ -48,6 +48,20 @@ gemessen worden:
 Fehlermeldungen nicht mehr aussehen wie Primäraktionen, und `--ring` auf ein
 neutrales Hell, damit der Fokus auf jeder Fläche liest.
 
+Die Layout-Fixes sind gegen die ursprünglichen Repros nachgemessen, indem
+die geänderten Klassen in die Live-Seite injiziert und der Test wiederholt
+wurde:
+
+| Repro | vorher | nachher |
+| --- | --- | --- |
+| U-01: 60 Zeilen im Create-Post-Dialog | Box 576 × **1439** @ y = −269, „Post" und „Close" außerhalb, Klick lief in den Timeout | Box 576 × **868** @ y = 16, Dialog scrollt (1439 in 868), **Klick auf „Post" geht durch** |
+| U-03: 1280 px, 200 % Textzoom | **1335 / 1280** — 55 px Überlauf, „Request Join" von `overflow:hidden` weggeschnitten | **1280 / 1280** — kein Überlauf, Button sichtbar |
+
+Der zweite Durchlauf zeigte, dass nach dem `min-w-0` an `SidebarInset` noch
+23 px Überlauf blieben — verursacht vom Nutzermenü in der Kopfzeile. Das ist
+mit `overflow-hidden` an der Kopfzeile und einem `truncate` am Namen
+nachgezogen.
+
 
 ## Übersicht
 

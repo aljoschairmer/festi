@@ -8,6 +8,22 @@
 > Code-Funde aus den parallelen Reviews stehen in [`review/`](./review/) und
 > werden hier nur referenziert, nicht wiederholt.
 
+## Status der Behebung
+
+Alle Funde sind auf `claude/festi-e2e-audit-n10238` behoben, mit diesen
+Ausnahmen und Einschränkungen:
+
+| Fund | Status |
+| --- | --- |
+| F-01 (Feed 21,5 s) | **teilweise** — die Ursachen sind angegangen (20 Composite-Indizes, `take`-Limits, Timeouts), aber der Kern ist die Serialisierung der Server Actions plus ein frischer Postgres-Connect pro Query (`maxUses: 1`, Review B-01). Das ist ein Architektur-Umbau, kein Patch: die Header-Zähler gehören aus dem Layout in einen gemeinsamen Endpunkt oder in RSC, und vor Postgres gehört ein Pooler (Hyperdrive/PgBouncer). Bewusst nicht im Rahmen dieser Runde. |
+| F-02 (öffentliche Fahrten) | behoben — `isPublic` ist opt-in. **Die Migration setzt auch Bestandsdaten auf privat**, weil niemand zugestimmt hatte; bestehende geteilte Links brechen dadurch und müssen vom Creator neu aktiviert werden. |
+| F-05 (Profil lädt langsam) | teilweise — Indizes und `take` helfen, das clientseitige Laden bleibt (Review C-06). |
+| F-14 (kein Dark/Light-Umschalter) | **nicht behoben** — die App ist bewusst dunkel; ein zweites Theme ist eine Designentscheidung, keine Fehlerbehebung. Die Kontraste im vorhandenen Theme sind gefixt. |
+| F-16 (Logout-Fehlermeldung) | **nicht behoben** — die Meldung entsteht durch eine Server Action, die nach dem Invalidieren der Session zurückkommt. Der Presence-Heartbeat müsste beim Abmelden gestoppt werden; das hängt an derselben Layout-Umbaufrage wie F-01. |
+| F-24 (Font-Preload-Warnung) | **nicht behoben** — die Warnung kommt aus Next' eigenem Font-Handling, nicht aus Anwendungscode. |
+| F-28 (`.env.example`) | **nicht behoben** — die Liste steht in der README; eine `.env.example` anzulegen ist sinnvoll, aber ich wollte keine Datei mit Platzhaltern anlegen, die wie echte Konfiguration aussieht, ohne das mit dir abzustimmen. |
+
+
 ## Schweregrade
 
 | | Bedeutung |
