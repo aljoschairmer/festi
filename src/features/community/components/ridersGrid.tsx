@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getRiders } from "../actions/getRiders";
 import type { Rider } from "../types";
 
@@ -81,7 +82,11 @@ export function RidersGrid() {
     <div className="space-y-6">
       <div className="relative max-w-md">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Label htmlFor="riders-search" className="sr-only">
+          Search riders
+        </Label>
         <Input
+          id="riders-search"
           placeholder="Search riders..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}

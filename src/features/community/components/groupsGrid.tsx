@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getGroups } from "../actions/getGroups";
 import type { Group } from "../types";
 import { GroupJoinButton } from "./groupJoinButton";
@@ -65,7 +66,11 @@ export function GroupsGrid() {
     <div className="space-y-6">
       <div className="relative max-w-md">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Label htmlFor="groups-search" className="sr-only">
+          Search groups
+        </Label>
         <Input
+          id="groups-search"
           placeholder="Search groups..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
