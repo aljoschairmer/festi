@@ -210,6 +210,47 @@ E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
    auf diesem Branch statt als eigener PR, damit alles an einer Stelle reviewbar bleibt.
    C-03 war bereits in `9b32f02` behoben; nachgezogen ist der Wiederholungsschutz.
 
+## Zusammenführung mit `audit/fixes-2026-08`
+
+Parallel lief ein zweiter Audit-Branch (39 Commits, 83 Dateien) vom selben
+`main`. Beide sind jetzt zusammengeführt: 334 Dateien mergten automatisch,
+**27 Konflikte** habe ich einzeln nach Sachlage entschieden, die Farbkonflikte
+nach Messung.
+
+**Von dort übernommen, weil besser:** `getBanInfo` verlangt jetzt das Passwort
+und prüft es (mein Rate-Limit war nur eine Bremse gegen Enumeration; es bleibt
+zusätzlich, weil ein Passwort-Hash ohne Limit ein Rate-Oracle wäre) ·
+Rate-Limits auch auf Chat, Posts und allen vier Upload-Pfaden ·
+**Pruning der Rate-Limit-Tabelle** — ich hatte `expiresAt` indiziert und dann nie
+gelöscht · Session-Dedup per React `cache` · QueryClient-Defaults ·
+Cursor-Pagination für `getRides` · `returnTo` nach Login · Zeitzonen-korrekte
+Ride-Daten · FAILED/CANCELLED-Zustände · `metadataBase` · DEM-Fallback ·
+Upload-Fortschritt · Retry-Buttons · DDG-§5-Impressum · gleichwertiges
+Cookie-Ablehnen.
+
+**Von hier behalten, weil besser:** der Sichtbarkeitsfilter in `getFeed` (dort
+war das Leck offen geblieben) · `isPublic` als Opt-in · Chat-SSE, gemeinsamer
+Badge-Endpunkt, `enabled: open` in `profileFollowStats` · Tests, CI, tote
+Dateien, Farb-Guard.
+
+**Zusammengeführt, weil jede Seite eine Hälfte hatte:** beide
+Registrierungs-Limits (gegen die Datenbank nachgewiesen: nach sieben Versuchen
+stand der IP-Eimer auf 7, jeder Adress-Eimer auf 1 — das Adress-Limit allein
+ist durch Variieren der Adresse umgangen) · `routeGeneratorMap` (ihre Toleranz
+für Poll-Aussetzer plus meine Behandlung eines FAILED-Jobs in einer
+erfolgreichen Antwort) · `routeEngine` (ihr Ergebnistyp, mein Timeout) · ein
+Sichtbarkeits-Helper mit ihrer Relation-Query hinter meiner getesteten API.
+
+**Drei Dinge hatte der Auto-Merge still zerstört**, gefunden von Typecheck und
+Tests: zwei `AND`-Keys im selben Objekt in `getRides` (der zweite hätte den
+Sichtbarkeitsfilter verworfen), `escapeHtml` doppelt definiert, und
+`ui/progress`, das ich als ungenutzt gelöscht hatte und ihre
+Fortschrittsanzeige braucht.
+
+Geprüft: Lint, Farb-Guard, Typecheck, 29 Tests, Build, `prisma migrate diff`
+ohne Drift gegen echtes Postgres 16 — und danach end-to-end auf dieser
+Datenbank.
+
 ## Was jetzt eine Entscheidung von dir braucht
 
 | Thema | Frage |
