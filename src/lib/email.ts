@@ -31,6 +31,21 @@ interface SendEmailOptions {
   html: string;
 }
 
+/**
+ * Escapes user-controlled text before it is interpolated into an HTML email.
+ * Without this, a registration name like `<a href="https://phish.example">…`
+ * would be sent as raw HTML in a legitimately signed Festi email (phishing
+ * relay via our own domain).
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   const client = getResendClient();
 
@@ -71,7 +86,7 @@ export function getVerificationEmailHtml(url: string, userName: string) {
           <h2 style="margin: 0 0 16px; font-size: 20px; text-align: center;">Verify your email address</h2>
           
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
-            Hey ${userName}, welcome to the cycling community! Click the button below to verify your email and start planning your next ride.
+            Hey ${escapeHtml(userName)}, welcome to the cycling community! Click the button below to verify your email and start planning your next ride.
           </p>
           
           <div style="text-align: center; margin: 32px 0;">
@@ -113,7 +128,7 @@ export function getPasswordResetEmailHtml(url: string, userName: string) {
           <h2 style="margin: 0 0 16px; font-size: 20px; text-align: center;">Reset your password</h2>
           
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
-            Hey ${userName}, we received a request to reset your password. Click the button below to choose a new password.
+            Hey ${escapeHtml(userName)}, we received a request to reset your password. Click the button below to choose a new password.
           </p>
           
           <div style="text-align: center; margin: 32px 0;">
@@ -157,7 +172,7 @@ export function getExistingAccountEmailHtml(userName: string) {
           <h2 style="margin: 0 0 16px; font-size: 20px; text-align: center;">Someone tried to sign up with your email</h2>
 
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
-            Hey ${userName}, we received a sign-up attempt using this email address, but you already have a Festi account. No new account was created and nothing has changed.
+            Hey ${escapeHtml(userName)}, we received a sign-up attempt using this email address, but you already have a Festi account. No new account was created and nothing has changed.
           </p>
 
           <p style="color: #a1a1aa; margin: 0 0 24px; text-align: center;">
