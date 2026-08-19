@@ -92,7 +92,10 @@ export function EditRideDialog({ ride }: { ride: EditableRide }) {
       const result = await updateRide(ride.id, {
         title: values.title,
         description: values.description,
-        startTime: values.startTime,
+        // The datetime-local value has no offset; resolving it in the
+        // browser timezone and sending full ISO keeps the intended wall
+        // time intact across the client→server boundary.
+        startTime: new Date(values.startTime).toISOString(),
         pace: values.pace ?? null,
         difficulty: values.difficulty ?? null,
         maxParticipants:

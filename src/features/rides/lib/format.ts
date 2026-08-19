@@ -56,3 +56,34 @@ export function formatDuration(seconds: number): string {
 export function formatElevation(meters: number): string {
   return `${Math.round(meters)} hm`;
 }
+
+/**
+ * Parses a ride start time coming from a `datetime-local` input.
+ *
+ * `datetime-local` values ("2026-08-19T10:00") carry no timezone offset.
+ * ISO strings with an explicit offset or "Z" are handed to the native
+ * parser unchanged. Naive values are interpreted as wall-clock time in
+ * the server's local timezone — on Cloudflare Workers that is UTC, which
+ * is almost never what the user meant (this mismatch was F-07). The ride
+ * forms therefore convert to a full ISO string with offset in the
+ * browser before submitting; this naive branch is only the documented
+ * fallback for clients that still send raw input values.
+ */
+export function parseLocalDateTime(value: string): Date {
+  const naive =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/.exec(
+      value,
+    );
+  if (naive) {
+    const [, year, month, day, hour, minute, second] = naive;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second ?? "0"),
+    );
+  }
+  return new Date(value);
+}

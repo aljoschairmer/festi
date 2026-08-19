@@ -225,6 +225,10 @@ export function RidePlanner({
     mutationFn: async (values: RideFormValues) => {
       const result = await createRide({
         ...values,
+        // The datetime-local value has no offset; resolving it in the
+        // browser timezone and sending full ISO keeps the intended wall
+        // time intact across the client→server boundary.
+        startTime: new Date(values.startTime).toISOString(),
         startLocation: startPlace?.name ?? "",
         waypoints,
         profile,
