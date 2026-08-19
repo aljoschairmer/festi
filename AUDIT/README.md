@@ -1,0 +1,65 @@
+# Festi — End-to-End-Audit
+
+Vollständiger Audit von **festicycling.com** über drei Repos, durchgeführt
+am **2026-08-19** gegen die Produktion und die Live-Route-Engine.
+
+## Dokumente
+
+| Datei | Inhalt |
+| --- | --- |
+| [`00-overview.md`](./00-overview.md) | Architektur, Datenfluss, vollständige Routen-/Seiten-Liste, UI-Flows, lokaler Start, Basis-Performance |
+| [`00-routes-diff.md`](./00-routes-diff.md) | `festi-routes` ↔ Route Engine ↔ App: Bestand, Feature-Lücken, Integrationsstand, vier datenbelegte Engine-Defekte |
+| [`01-findings.md`](./01-findings.md) | Phase 1 + 2: 28 Funde aus Browser-Funktionstest, Responsive-, Design- und A11y-Prüfung — mit Repro, Messwerten und Screenshots |
+| [`review/A-auth-security.md`](./review/A-auth-security.md) | Auth, Session, Authorization/IDOR, Uploads, XSS, Rate-Limiting, Secrets |
+| [`review/B-backend-daten.md`](./review/B-backend-daten.md) | Fehlerbehandlung, Statuscodes, N+1, Indizes, Transaktionen, API-Vertrag |
+| [`review/C-frontend-architektur.md`](./review/C-frontend-architektur.md) | Server/Client-Grenzen, Caching, Revalidation, Bundles, State, Routing |
+| [`review/D-a11y-designsystem.md`](./review/D-a11y-designsystem.md) | Design-Tokens, Kontraste (gerechnet), Fokus, Tastatur, Zustände |
+| [`review/E-codequalitaet-tests.md`](./review/E-codequalitaet-tests.md) | Build/Lint/Typecheck/Tests (ausgeführt), Konventionen, `concerns.txt` |
+| [`screenshots/`](./screenshots/) | Belegbilder, benannt nach `<viewport>-<seite>.jpg` bzw. `err-*` / `flow-*` |
+
+## Methode
+
+* **Phase 0** — Repos gelesen, Frontend lokal gestartet, Live-Engine gegen
+  ihren OpenAPI-Vertrag geprüft, Routen und Flows inventarisiert.
+* **Phase 1** — Playwright/Chromium gegen die Produktion mit dem
+  Testaccount. Happy Paths plus provozierte Fehlerfälle (leere Felder,
+  falsches Format, falsches Passwort, unbekannte IDs, zu große und
+  gefälschte Uploads, Deep-Links ohne Session). Konsole und Netzwerk auf
+  Errors und 4xx/5xx mitgeschnitten.
+* **Phase 2** — Viewports 375 / 768 / 1440 px, gemessene Overflow- und
+  Touch-Target-Audits im DOM, Tastatur-Tab-Durchlauf mit
+  `getComputedStyle`-Auswertung der Fokus-Stile, Zustands- und
+  Konsistenzprüfung.
+* **Phase 3** — Fünf parallele Code-Review-Agenten mit je eigenem Fokus.
+
+## Zahlen
+
+| | |
+| --- | --- |
+| Funde Phase 1 + 2 | 28 (2 × P0, 15 × P1, 8 × P2, 4 × P3) |
+| Funde Phase 3 (Code-Review) | 121 über fünf Reports |
+| Geprüfte Seiten | 22 Routen × bis zu 3 Viewports |
+| Screenshots | siehe `screenshots/` |
+| Ausgewertete generierte Routen | 569 aus `festi-routes` |
+
+## Die fünf wichtigsten Punkte
+
+1. **Der Dashboard-Feed braucht ~21 s bis zum ersten Inhalt** — Next.js
+   serialisiert die Server Actions, und im Layout hängen vier, die auf
+   jeder Seite vor der eigentlichen Abfrage laufen (`01-findings.md`, F-01).
+2. **Jede Fahrt ist per Default öffentlich** — Startort, Termin und
+   Klarname des Organisators ohne Login abrufbar (F-02, Review `A-03`).
+3. **Autorisierungslücken**: `kickGroupMember` prüft die Gruppen-Zugehörigkeit
+   der Mitgliedszeile nicht; Gruppen-Rides sind nicht gegen Nicht-Mitglieder
+   abgeschirmt (Review `A-01`, `A-02`).
+4. **Die Datenschicht ist ungeschützt gegen Nebenläufigkeit**: ein einziges
+   `$transaction` im gesamten Projekt, Wartelisten-Beförderung und
+   Kapazitätsprüfung sind Races (Review `B`).
+5. **Die Route Engine kann deutlich mehr, als die App anbietet** — acht
+   Parameter und neun Ergebnisfelder ungenutzt, und 569 fertig berechnete
+   Routen über 70 Regionen liegen brach (`00-routes-diff.md`).
+
+## Hinweis
+
+Dieser Audit ist reine Dokumentation. **Es wurde kein Produktivcode
+geändert** und **nichts aus `festi-routes` integriert.**
