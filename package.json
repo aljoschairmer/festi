@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "ci": "npm run lint && npm run typecheck && npm run build",
+    "ci": "npm run lint && npm run typecheck && npm test && npm run build",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:setup": "prisma migrate deploy && prisma db seed",
@@ -16,6 +16,8 @@
     "postinstall": "prisma generate",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
@@ -71,6 +73,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
+    "vitest": "^4.1.11",
     "wrangler": "^4.110.0"
   },
   "engines": {
