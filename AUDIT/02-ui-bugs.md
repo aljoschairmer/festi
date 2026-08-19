@@ -27,6 +27,28 @@ Grundfarbe zurückrechnen, dann über den tatsächlichen Elternhintergrund
 komponieren). Gegengeprüft an zwei Referenzen: Weiß/Schwarz = **21.00**,
 `#767676`/Weiß = **4.54** — beide exakt.
 
+## Status
+
+Alle Funde bis auf die vier zurückgezogenen sind behoben — siehe Commits auf
+`claude/festi-e2e-audit-n10238`. Die Kontrastwerte sind nach dem Fix erneut
+gemessen worden:
+
+| Paar | vorher | nachher | Ziel |
+| --- | ---: | ---: | ---: |
+| `text-primary` auf Hintergrund | 4.11 | **5.15** | 4.5 |
+| `text-primary` auf Karte | 4.03 | **5.04** | 4.5 |
+| Button-Text auf Primary | 4.77 | **4.80** | 4.5 |
+| `text-destructive` | 4.11 | **7.18** | 4.5 |
+| Fokus-Ring (`ring/50`) | 1.69 | **3.30** | 3.0 |
+| Input-Rahmen | 1.07 | **3.01** | 3.0 |
+| Chart-Farben 1–5 | 1.05–4.11 | **5.83–10.95** | 3.0 |
+| „Host"-Badge | 3.84 | **4.61** | 4.5 |
+
+`--destructive` ist zusätzlich auf einen eigenen Farbton gelegt, damit
+Fehlermeldungen nicht mehr aussehen wie Primäraktionen, und `--ring` auf ein
+neutrales Hell, damit der Fokus auf jeder Fläche liest.
+
+
 ## Übersicht
 
 | ID | Titel | Schwere |
@@ -466,6 +488,31 @@ Tailwind-Ton ist der hellere und zugleich der mit dem schlechteren Kontrast.
 Ein einziger Token für Rot würde beide Probleme lösen.
 
 ---
+
+---
+
+## Korrektur: U-09 bis U-12 waren Fehlalarme
+
+Beim Umsetzen der Fixes habe ich alle Namens- und Label-Funde gegen den
+**Chromium-Accessibility-Baum** (CDP `Accessibility.getPartialAXTree`)
+gegengeprüft, statt gegen meinen eigenen Scanner. Vier Funde halten dem
+nicht stand — mein Scanner prüfte nur `aria-label`, `title` und Textinhalt,
+nicht `label[for]` und nicht `sr-only`-Text in Kindelementen:
+
+| Fund | Behauptung | Tatsächlich (AX-Baum) |
+| --- | --- | --- |
+| **U-09** | Checkboxen ohne Label | ✅ Alle vier korrekt benannt, Quelle `relatedElement`. `#terms` heißt „I agree to the Terms of Service and Privacy Policy". Ein Klick auf den Labeltext schaltet um (`aria-checked false → true` verifiziert) — `label[for]` greift in Chromium auch auf Radix' `button[role=checkbox]`. |
+| **U-10** | Switch ohne Namen | ✅ `#include-past` heißt „Include past rides". |
+| **U-11** | Ride-Kartenlink ohne Namen | ✅ Heißt „Route preview" — `routeThumbnail.tsx:90` setzt `aria-label`. |
+| **U-12** | Vier Suchfelder ohne Label | ⚠️ Abgeschwächt: alle haben einen Namen, drei über `placeholder`, das Rides-Feld sogar über ein echtes `aria-label="Search rides"`. Ein Platzhalter ist ein schwaches Label (er verschwindet beim Tippen), aber kein Verstoß. |
+
+**Nicht behoben, weil nichts kaputt war.** Ein zwischenzeitlich gesetztes
+`aria-hidden` auf dem Kartenlink habe ich wieder zurückgenommen — es hätte
+einen funktionierenden Link aus der Tastaturnavigation entfernt.
+
+Bestätigt geblieben ist **U-08**: genau *ein* Header-Button hat keinen
+Namen. Der ist gefixt.
+
 
 ## Geprüft und in Ordnung
 
