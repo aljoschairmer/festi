@@ -563,6 +563,19 @@ model ProTelemetryFrame {
   @@map("pro_telemetry_frame")
 }
 
+// Fixed-window rate limit counters for sensitive server actions
+// (registration, posts, chat, uploads). Rows are keyed by a caller-scoped
+// string (e.g. "register:<ip>:<email>" or "post:<userId>") and become
+// stale once their window has passed; the limiter in src/lib/rateLimit.ts
+// resets them atomically and prunes stale rows opportunistically.
+model RateLimitEntry {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@map("rate_limit_entry")
+}
+
 // Singleton row (id = 1) tracking calendar sync freshness and acting as a
 // lock so concurrent visitors don't scrape rad-net in parallel.
 model RadnetSyncState {

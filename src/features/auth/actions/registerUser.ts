@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { auth } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { type RegisterFormData, registerSchema } from "../schemas";
 import { checkUsernameAvailable } from "./checkAvailability";
 import { validateEmailDomain } from "./validateEmail";
@@ -24,6 +25,22 @@ export async function registerUser(input: RegisterFormData) {
   }
 
   const { firstName, lastName, username, email, password } = parsed.data;
+
+  // Rate-limit BEFORE the MX lookup and sign-up orchestration: the flow
+  // sends a verification mail to an arbitrary address via Resend, so an
+  // unthrottled endpoint is a mail-bombing vector (SEC-07).
+  const ip = await getClientIp();
+  const rateLimitResult = await checkRateLimit(
+    `register:${ip}:${email.toLowerCase()}`,
+    5,
+    60 * 60,
+  );
+  if (!rateLimitResult.allowed) {
+    return {
+      success: false as const,
+      error: "Too many registration attempts. Please try again later.",
+    };
+  }
 
   const emailValidation = await validateEmailDomain(email);
   if (!emailValidation.valid) {

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { type MessageFormData, MessageSchema } from "../schemas";
 
 export async function getGroupMessages(groupId: string) {
@@ -73,6 +74,17 @@ export async function sendGroupMessage(values: MessageFormData) {
   const session = await getCurrentUser();
   if (!session) {
     throw new Error("You must be signed in.");
+  }
+
+  const rateLimitResult = await checkRateLimit(
+    `chat:${session.user.id}`,
+    30,
+    60,
+  );
+  if (!rateLimitResult.allowed) {
+    throw new Error(
+      "You're sending messages too quickly. Please wait a moment.",
+    );
   }
 
   const validatedFields = MessageSchema.safeParse(values);

@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/features/auth/guards";
 import { validateImageUpload } from "@/lib/image";
 import { prisma } from "@/lib/prisma";
 import { publicUrl, putObject } from "@/lib/r2";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { MAX_RIDE_PHOTOS } from "../schemas";
 
 type Result =
@@ -23,6 +24,18 @@ export async function uploadRidePhoto(
   const session = await getCurrentUser();
   if (!session) {
     return { success: false, error: "You must be signed in." };
+  }
+
+  const rateLimitResult = await checkRateLimit(
+    `upload:${session.user.id}`,
+    20,
+    60,
+  );
+  if (!rateLimitResult.allowed) {
+    return {
+      success: false,
+      error: "Too many uploads. Please try again in a minute.",
+    };
   }
 
   if (!rideId) {
