@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLinkIcon } from "lucide-react";
+import { CalendarOffIcon, ExternalLinkIcon } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { cn } from "@/lib/utils";
 import { eventColor, eventLocation, formatEventDate } from "../lib/eventTypes";
 import type { CalendarEvent } from "../types";
@@ -19,9 +20,12 @@ type EventsListProps = {
 export function EventsList({ events, selectedId, onSelect }: EventsListProps) {
   if (events.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
-        No events match the current filters
-      </div>
+      <EmptyState
+        icon={CalendarOffIcon}
+        title="No events match the current filters"
+        description="Try a different type, region, or date range."
+        className="flex-1 p-6"
+      />
     );
   }
 

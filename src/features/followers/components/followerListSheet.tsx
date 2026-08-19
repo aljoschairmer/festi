@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, SearchIcon, UserCheck, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,17 +217,24 @@ const FollowerListSheet = () => {
               Failed to load your network.
             </p>
           ) : !hasResults ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <UserIcon className="mb-4 size-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground">
-                {search ? "No matches found" : "No connections yet"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {search
+            <EmptyState
+              icon={UserIcon}
+              title={search ? "No matches found" : "No connections yet"}
+              description={
+                search
                   ? "Try a different name or username."
-                  : "Follow some riders to see them here."}
-              </p>
-            </div>
+                  : "Follow some riders to see them here."
+              }
+              action={
+                search ? null : (
+                  <Button asChild variant="outline" size="sm">
+                    <SheetClose asChild>
+                      <Link href="/dashboard/community">Find riders</Link>
+                    </SheetClose>
+                  </Button>
+                )
+              }
+            />
           ) : (
             <>
               <FollowerSection
