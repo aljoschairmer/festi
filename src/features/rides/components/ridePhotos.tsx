@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { processImageToWebp } from "@/lib/imageProcessing";
 import { cn } from "@/lib/utils";
 import { deleteRidePhoto } from "../actions/deleteRidePhoto";
@@ -36,6 +37,10 @@ export function RidePhotos({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
 
   const remaining = MAX_RIDE_PHOTOS - photos.length;
 
@@ -48,9 +53,12 @@ export function RidePhotos({
       return;
     }
 
+    const queue = files.slice(0, remaining);
     setBusy(true);
+    setUploadProgress({ done: 0, total: queue.length });
+    let failed = false;
     try {
-      for (const file of files.slice(0, remaining)) {
+      for (const file of queue) {
         const webp = await processImageToWebp(file, {
           maxDimension: 1600,
           quality: 0.82,
@@ -59,9 +67,18 @@ export function RidePhotos({
         formData.append("image", webp, "photo.webp");
         const result = await uploadRidePhoto(rideId, formData);
         if (!result.success) {
+          failed = true;
           toast.error(result.error);
           break;
         }
+        setUploadProgress((prev) =>
+          prev ? { ...prev, done: prev.done + 1 } : prev,
+        );
+      }
+      if (!failed) {
+        toast.success(
+          queue.length === 1 ? "Photo uploaded." : "Photos uploaded.",
+        );
       }
       router.refresh();
     } catch (error) {
@@ -70,6 +87,7 @@ export function RidePhotos({
       );
     } finally {
       setBusy(false);
+      setUploadProgress(null);
     }
   };
 
@@ -122,6 +140,19 @@ export function RidePhotos({
           </>
         )}
       </div>
+
+      {busy && uploadProgress && (
+        <output className="flex items-center gap-3" aria-live="polite">
+          <Progress
+            value={(uploadProgress.done / uploadProgress.total) * 100}
+            className="flex-1"
+            aria-label="Photo upload progress"
+          />
+          <span className="shrink-0 text-xs text-muted-foreground">
+            Uploading {uploadProgress.done}/{uploadProgress.total}…
+          </span>
+        </output>
+      )}
 
       {photos.length === 0 ? (
         <p className="rounded-lg border border-dashed py-6 text-center text-xs text-muted-foreground">
