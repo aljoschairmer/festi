@@ -58,6 +58,24 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
 
   const where: Prisma.RideWhereInput = {
     status: "SCHEDULED",
+    // Group rides are members-only (same semantics as getGroupRides):
+    // discovery must not list another group's rides. Public rides
+    // (groupId: null) and the user's own rides are unaffected.
+    AND: [
+      {
+        OR: [
+          { groupId: null },
+          { creatorId: session.user.id },
+          {
+            group: {
+              members: {
+                some: { userId: session.user.id, status: "APPROVED" },
+              },
+            },
+          },
+        ],
+      },
+    ],
     ...(filters.includePast ? {} : { startTime: { gte: new Date() } }),
     ...(filters.search
       ? {

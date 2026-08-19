@@ -46,6 +46,23 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
 
   const isCreator = ride.creatorId === session.user.id;
 
+  // Group rides are members-only (same semantics as getGroupRides): without
+  // this check any signed-in user could read another group's ride — including
+  // participant identities and route geometry — by guessing the id.
+  if (ride.groupId && !isCreator) {
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: ride.groupId,
+        userId: session.user.id,
+        status: "APPROVED",
+      },
+      select: { id: true },
+    });
+    if (!membership) {
+      return null;
+    }
+  }
+
   const visibleParticipants = ride.participants.filter(
     (participant) =>
       isCreator ||
