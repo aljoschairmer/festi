@@ -6,6 +6,55 @@ import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "festi-cookie-consent";
 
+export type ConsentChoice = "accepted" | "rejected";
+
+/**
+ * Window event dispatched whenever the user makes or changes a consent
+ * choice. Optional integrations (e.g. analytics loaders) can listen for it
+ * to react without a page reload.
+ */
+export const CONSENT_CHANGED_EVENT = "festi-consent-changed";
+
+type StoredConsent = {
+  choice?: ConsentChoice;
+  /** Legacy format written before the explicit accept/reject choice. */
+  accepted?: boolean;
+  at?: number;
+};
+
+/**
+ * Reads the stored consent choice. Returns `null` when the user has not
+ * decided yet (or storage is unavailable, e.g. private mode).
+ */
+export function getConsentChoice(): ConsentChoice | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredConsent;
+    if (parsed.choice === "accepted" || parsed.choice === "rejected") {
+      return parsed.choice;
+    }
+    if (parsed.accepted === true) return "accepted";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function storeConsent(choice: ConsentChoice) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ choice, at: Date.now() }),
+    );
+  } catch {
+    // Ignore storage errors (e.g. private mode); banner just won't persist.
+  }
+  window.dispatchEvent(
+    new CustomEvent<ConsentChoice>(CONSENT_CHANGED_EVENT, { detail: choice }),
+  );
+}
+
 export function CookieConsent() {
   // `null` = not yet determined (avoids a flash before we read storage).
   const [visible, setVisible] = useState(false);
@@ -13,26 +62,15 @@ export function CookieConsent() {
 
   useEffect(() => {
     setMounted(true);
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        // Defer one tick so the enter transition plays.
-        const t = setTimeout(() => setVisible(true), 400);
-        return () => clearTimeout(t);
-      }
-    } catch {
-      setVisible(true);
+    if (getConsentChoice() === null) {
+      // Defer one tick so the enter transition plays.
+      const t = setTimeout(() => setVisible(true), 400);
+      return () => clearTimeout(t);
     }
   }, []);
 
-  const accept = () => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ accepted: true, at: Date.now() }),
-      );
-    } catch {
-      // Ignore storage errors (e.g. private mode); banner just won't persist.
-    }
+  const choose = (choice: ConsentChoice) => {
+    storeConsent(choice);
     setVisible(false);
   };
 
@@ -51,19 +89,29 @@ export function CookieConsent() {
     >
       <div className="flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-border bg-card/95 p-5 shadow-2xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          We use only essential cookies needed to keep you signed in and to keep
-          Festi secure. See our{" "}
+          We use essential cookies to keep you signed in and to keep Festi
+          secure. With your consent we also use analytics cookies to improve the
+          service. See our{" "}
           <Link href="/privacy" className="text-red-500 hover:text-red-400">
             Privacy Policy
           </Link>
           .
         </p>
-        <Button
-          onClick={accept}
-          className="w-full shrink-0 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 sm:w-auto"
-        >
-          Got it
-        </Button>
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => choose("rejected")}
+            className="w-full sm:w-auto"
+          >
+            Decline
+          </Button>
+          <Button
+            onClick={() => choose("accepted")}
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 sm:w-auto"
+          >
+            Accept
+          </Button>
+        </div>
       </div>
     </div>
   );
