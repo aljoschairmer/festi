@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { BikeIcon, ClockIcon, MapPinIcon, MountainIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import {
   formatDuration,
   formatElevation,
   formatPace,
+  formatRideDate,
 } from "../lib/format";
 import type { RideSummary } from "../types";
 import { RideJoinButton } from "./rideJoinButton";
@@ -42,7 +42,7 @@ export function RideCard({ ride }: RideCardProps) {
               {ride.title}
             </Link>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(ride.startTime), "EEEE, MMM d 'at' HH:mm")}
+              {formatRideDate(ride.startTime)}
             </p>
             {(ride.pace || ride.difficulty) && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">

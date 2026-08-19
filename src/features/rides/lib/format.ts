@@ -57,6 +57,41 @@ export function formatElevation(meters: number): string {
   return `${Math.round(meters)} hm`;
 }
 
+const RIDE_DATE_FORMATS = {
+  short: new Intl.DateTimeFormat("en", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }),
+  long: new Intl.DateTimeFormat("en", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }),
+} as const;
+
+const RIDE_TIME_FORMAT = new Intl.DateTimeFormat("en", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/**
+ * The single way ride start times are shown across list and detail
+ * surfaces: the viewer's local timezone (browser) with the ride UI's
+ * English terminology, e.g. "Saturday, Aug 23 at 14:30". GPX export
+ * deliberately does NOT use this — GPX timestamps stay ISO 8601 UTC
+ * ("…Z") as the spec expects.
+ */
+export function formatRideDate(
+  date: Date | string,
+  style: "short" | "long" = "short",
+): string {
+  const value = typeof date === "string" ? new Date(date) : date;
+  return `${RIDE_DATE_FORMATS[style].format(value)} at ${RIDE_TIME_FORMAT.format(value)}`;
+}
+
 /**
  * Parses a ride start time coming from a `datetime-local` input.
  *
