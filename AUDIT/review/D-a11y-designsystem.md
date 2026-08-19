@@ -144,6 +144,11 @@ Auffällig:
   eigener CI-Schritt. Negativ getestet: ein absichtlich eingefügtes `text-red-500` bricht mit Exit 1,
   `// check-colors: allow` auf derselben Zeile lässt es durch.
 
+  **Im Browser gegengeprüft**, nicht nur gebaut: Landing, Login und Terms aus einem lokalen
+  Produktions-Build. Der Hover-Token greift wirklich — `getComputedStyle` auf „Back to home" liefert
+  ruhend `lab(53.69 69.68 43.77)` (= `--primary`) und im Hover `lab(65.95 50.14 28.70)`
+  (= `--primary-hover`).
+
 - **Bewusst offen gelassen — braucht eine Designentscheidung, keine Ersetzung:**
   - **56 Gradient-Klassen** (`from-red-500 to-red-600` usw.). Ein Gradient lässt sich nicht 1:1 auf
     einen Token abbilden; das gehört an die `cta`-Variante aus D-03.

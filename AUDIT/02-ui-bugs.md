@@ -345,6 +345,15 @@ Hintergrund-Gradienten keine sichtbare Kante entsteht und die Labels außerhalb
 des Textblocks — der eigentliche Effekt — erhalten bleiben. Tailwind erzeugt
 zusätzlich einen `@supports`-freien Fallback mit deckendem `var(--background)`.
 
+Im Browser nachgeprüft, nicht nur gebaut: der erste Versuch (eine Ellipse mit
+70 % Breite für alle Viewports) reichte bei 1440 px, bei 375 px liefen
+„Stuttgart", „Barcelona" und „Marseille" weiterhin sichtbar durch den Absatz —
+der Textblock füllt dort fast die ganze Breite, die Ellipse nicht. Unterhalb
+`sm` liegt jetzt eine breitere, flachere Ellipse (125 % × 38 %, deckend bis
+35 %, Fade bis 80 %).
+
+📸 Nachher: `screenshots/375-root-after-scrim.jpg`, `screenshots/1440-root-after-scrim.jpg`
+
 📸 `screenshots/375-root.jpg`
 
 ---
