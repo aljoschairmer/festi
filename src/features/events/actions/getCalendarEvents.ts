@@ -9,6 +9,9 @@ import type { CalendarEvent } from "../types";
  * ordered by date. Events whose detail pass hasn't run yet come without
  * coordinates — the map simply skips them until the sync fills them in.
  */
+/** Hard cap: the calendar syncs six months ahead. */
+const MAX_EVENTS = 1000;
+
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
   const session = await getCurrentUser();
   if (!session) {
@@ -19,6 +22,7 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
   today.setUTCHours(0, 0, 0, 0);
 
   const events = await prisma.radnetEvent.findMany({
+    take: MAX_EVENTS,
     where: { date: { gte: today } },
     orderBy: [{ date: "asc" }, { title: "asc" }],
   });

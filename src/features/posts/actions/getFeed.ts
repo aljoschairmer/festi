@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/features/auth/guards";
+import { visibleRidesFilter } from "@/features/rides/lib/visibility";
 import type { RideSummary, Waypoint } from "@/features/rides/types";
 import { prisma } from "@/lib/prisma";
 import type { FeedItem, PostSummary } from "../types";
@@ -56,6 +57,9 @@ export async function getFeed(
       }
     : {};
 
+  // Group rides stay inside their group, even in the timeline.
+  const rideVisibility = await visibleRidesFilter(userId);
+
   // One extra row per source tells us whether older items remain.
   const [posts, rides] = await Promise.all([
     prisma.post.findMany({
@@ -80,7 +84,12 @@ export async function getFeed(
       },
     }),
     prisma.ride.findMany({
-      where: { creatorId: authorFilter, ...cursorFilter },
+      // Group rides stay inside their group, even in the timeline.
+      where: {
+        creatorId: authorFilter,
+        // `AND`: `cursorFilter` and the visibility rule both use `OR`.
+        AND: [cursorFilter, rideVisibility],
+      },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       include: {

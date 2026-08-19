@@ -38,6 +38,9 @@ function parseRiders(payload: unknown): ProLiveRider[] {
  * downsampled to a client-friendly size. Empty when the stage was never
  * captured (frames only exist where the capture cron ran during the stage).
  */
+/** Hard cap: a long stage at 30s cadence is ~600 frames. */
+const MAX_REPLAY_FRAMES = 1200;
+
 export async function getStageReplay(
   raceKey: string,
   year: number,
@@ -53,6 +56,7 @@ export async function getStageReplay(
 
   try {
     const rows = await prisma.proTelemetryFrame.findMany({
+      take: MAX_REPLAY_FRAMES,
       where: { raceKey: race.key, year, stage: stageNumber },
       orderBy: { capturedAt: "asc" },
       select: { capturedAt: true, payload: true },

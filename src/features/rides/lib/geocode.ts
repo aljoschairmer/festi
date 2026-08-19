@@ -4,6 +4,8 @@
  * fallback. Prefers a city/town-level label over a full street address.
  */
 
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+
 type MapTilerFeature = {
   text?: string;
   place_name?: string;
@@ -49,7 +51,7 @@ export async function reverseGeocode(
   try {
     if (key) {
       const url = `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${key}&limit=1&language=en`;
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetchWithTimeout(url, { cache: "no-store" });
       if (!response.ok) {
         return null;
       }
@@ -58,7 +60,7 @@ export async function reverseGeocode(
     }
 
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2`;
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       cache: "no-store",
       headers: { "User-Agent": "FestiRidePlanner/1.0" },
     });

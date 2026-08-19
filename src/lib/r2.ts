@@ -85,6 +85,23 @@ export function publicUrl(key: string): string {
   return `${publicUrl}/${key}`;
 }
 
+/**
+ * Recovers the object key from a stored public URL, so callers that only
+ * kept the URL (every image row does) can still delete the object.
+ * Returns null when the URL does not belong to our bucket.
+ */
+export function keyFromPublicUrl(url: string): string | null {
+  const { publicUrl: base } = getR2();
+  const prefix = `${base}/`;
+  if (!url.startsWith(prefix)) return null;
+  const encoded = url.slice(prefix.length).split("?")[0];
+  try {
+    return encoded.split("/").map(decodeURIComponent).join("/");
+  } catch {
+    return null;
+  }
+}
+
 // Encode each path segment but keep the slashes that define the folder layout.
 function encodeKey(key: string): string {
   return key

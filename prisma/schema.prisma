@@ -60,6 +60,7 @@ model User {
   postComments PostComment[]
 
   @@unique([email])
+  @@index([banned, createdAt])
   @@map("user")
 }
 
@@ -77,6 +78,7 @@ model Session {
 
   @@unique([token])
   @@index([userId])
+  @@index([expiresAt])
   @@map("session")
 }
 
@@ -120,6 +122,8 @@ model GroupMember {
   @@unique([userId, groupId])
   @@index([userId])
   @@index([groupId])
+  @@index([groupId, status])
+  @@index([userId, status])
   @@map("group_member")
 }
 
@@ -168,6 +172,7 @@ model GroupMessage {
 
   @@index([groupId])
   @@index([userId])
+  @@index([groupId, createdAt])
   @@map("group_message")
 }
 
@@ -186,6 +191,9 @@ model DirectMessage {
   @@index([senderId])
   @@index([recipientId])
   @@index([senderId, recipientId])
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, senderId, createdAt])
+  @@index([recipientId, readAt])
   @@map("direct_message")
 }
 
@@ -210,6 +218,8 @@ model Notification {
 
   @@index([userId])
   @@index([userId, read])
+  @@index([userId, createdAt, id])
+  @@index([userId, type, targetId])
   @@map("notification")
 }
 
@@ -326,6 +336,8 @@ model ActivityLog {
   @@index([targetUserId])
   @@index([targetType, targetId])
   @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([actorId, createdAt])
   @@map("activity_log")
 }
 
@@ -363,7 +375,9 @@ model Ride {
   recurrenceId  String?
   startLat      Float?
   startLng      Float?
-  isPublic      Boolean  @default(true)
+  /// Opt-in. The public page exposes start location, time and the
+  /// organiser's name to anyone with the link, so it must be a choice.
+  isPublic      Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -377,6 +391,9 @@ model Ride {
   @@index([status, startTime])
   @@index([groupId])
   @@index([recurrenceId])
+  @@index([creatorId, createdAt, id])
+  @@index([groupId, status, startTime])
+  @@index([startLat, startLng])
   @@map("ride")
 }
 
@@ -428,6 +445,7 @@ model GroupAnnouncement {
   author User  @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
+  @@index([groupId, createdAt])
   @@map("group_announcement")
 }
 
@@ -446,6 +464,7 @@ model RideParticipant {
   @@unique([rideId, userId])
   @@index([rideId])
   @@index([userId])
+  @@index([rideId, status, createdAt])
   @@map("ride_participant")
 }
 
@@ -464,6 +483,7 @@ model Post {
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([authorId, createdAt, id])
   @@map("post")
 }
 
@@ -507,6 +527,7 @@ model PostImage {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
+  @@unique([postId, position])
   @@map("post_image")
 }
 
@@ -542,6 +563,7 @@ model RadnetEvent {
 
   @@index([date])
   @@index([detailSyncedAt])
+  @@index([detailSyncedAt, date])
   @@map("radnet_event")
 }
 
@@ -572,4 +594,16 @@ model RadnetSyncState {
   lockedUntil  DateTime?
 
   @@map("radnet_sync_state")
+}
+
+/// Fixed-window counters for public, unauthenticated server actions.
+/// better-auth's own limiter only covers its router; actions that call
+/// `auth.api.*` directly (registration) bypass it entirely.
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("rate_limit")
 }

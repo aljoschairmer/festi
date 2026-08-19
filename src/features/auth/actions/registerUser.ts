@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { auth } from "@/lib/auth";
+import { limitByIp } from "@/lib/rateLimit";
 import { type RegisterFormData, registerSchema } from "../schemas";
 import { checkUsernameAvailable } from "./checkAvailability";
 import { validateEmailDomain } from "./validateEmail";
@@ -14,6 +15,17 @@ import { validateEmailDomain } from "./validateEmail";
  * by Next.js in production).
  */
 export async function registerUser(input: RegisterFormData) {
+  // better-auth's limiter guards its router, not `auth.api.signUpEmail`,
+  // which this action calls directly — so registration had no limit at all
+  // and could be used to send mail through Resend in bulk.
+  const limit = await limitByIp("register", { limit: 5, windowSec: 60 * 15 });
+  if (!limit.allowed) {
+    return {
+      success: false as const,
+      error: `Too many registration attempts. Try again in ${Math.ceil(limit.retryAfterSec / 60)} minutes.`,
+    };
+  }
+
   // Never trust client input on a public endpoint.
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {

@@ -229,6 +229,24 @@ export function RouteGeneratorMap() {
     if (statusData && !statusData.success) {
       toast.error(statusData.error);
       setJobId(null);
+      return;
+    }
+    // A job can also end in FAILED or CANCELLED with a perfectly successful
+    // *response*. Without this branch the spinner simply stopped and the
+    // panel sat there empty, with no idea why nothing appeared.
+    const state = statusData?.success ? statusData.status.state : null;
+    if (state === "FAILED") {
+      toast.error(
+        statusData?.success
+          ? (statusData.status.errorDetail ??
+              statusData.status.message ??
+              "The route generator could not build a route here.")
+          : "The route generator could not build a route here.",
+      );
+      setJobId(null);
+    } else if (state === "CANCELLED") {
+      toast.info("Route generation was cancelled.");
+      setJobId(null);
     }
   }, [statusData]);
 

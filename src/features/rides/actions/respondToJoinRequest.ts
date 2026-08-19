@@ -75,6 +75,8 @@ export async function respondToJoinRequest(
     };
   }
 
+  // Capacity is re-checked inside the transaction below; this early exit
+  // only avoids the write when the ride is already visibly full.
   if (approve && participant.ride.maxParticipants !== null) {
     const approvedCount = await prisma.rideParticipant.count({
       where: { rideId: participant.ride.id, status: "APPROVED" },
@@ -85,11 +87,27 @@ export async function respondToJoinRequest(
   }
 
   const status = approve ? "APPROVED" : "REJECTED";
+  const cap = participant.ride.maxParticipants;
 
-  await prisma.rideParticipant.update({
-    where: { id: participantId },
-    data: { status },
+  // Re-check capacity inside the transaction: two approvals racing each
+  // other would both pass the check above and overbook the ride.
+  const overbooked = await prisma.$transaction(async (tx) => {
+    if (approve && cap !== null) {
+      const approvedCount = await tx.rideParticipant.count({
+        where: { rideId: participant.ride.id, status: "APPROVED" },
+      });
+      if (approvedCount >= cap) return true;
+    }
+    await tx.rideParticipant.update({
+      where: { id: participantId },
+      data: { status },
+    });
+    return false;
   });
+
+  if (overbooked) {
+    return { success: false, error: "This ride is full." };
+  }
 
   revalidatePath(`/dashboard/community-rides/${participant.ride.id}`);
 

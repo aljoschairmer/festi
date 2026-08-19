@@ -3,6 +3,7 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { fetchRoute } from "../lib/brouter";
+import { canViewRide } from "../lib/visibility";
 import type { ElevationPoint, RideDetail, Waypoint } from "../types";
 
 /**
@@ -41,6 +42,12 @@ export async function getRide(rideId: string): Promise<RideDetail | null> {
   });
 
   if (!ride) {
+    return null;
+  }
+
+  // A ride posted to a group is readable by that group only — treat
+  // "not a member" the same as "does not exist".
+  if (!(await canViewRide(session.user.id, ride))) {
     return null;
   }
 

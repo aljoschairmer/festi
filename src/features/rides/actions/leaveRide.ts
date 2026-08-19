@@ -52,23 +52,30 @@ export async function leaveRide(rideId: string): Promise<LeaveRideResult> {
     return { success: false, error: "You are not part of this ride." };
   }
 
-  await prisma.rideParticipant.delete({
-    where: { rideId_userId: { rideId, userId: session.user.id } },
-  });
+  // One transaction: leaving and promoting the next rider must not be able
+  // to half-happen, or the freed spot stays blocked with a waitlist behind
+  // it. `updateMany` with the status in the `where` also makes the promotion
+  // idempotent, so two concurrent leaves cannot promote the same rider twice.
+  const nextInLine = await prisma.$transaction(async (tx) => {
+    await tx.rideParticipant.delete({
+      where: { rideId_userId: { rideId, userId: session.user.id } },
+    });
 
-  // A freed spot promotes the oldest waitlisted rider to a pending request.
-  const nextInLine = await prisma.rideParticipant.findFirst({
-    where: { rideId, status: "WAITLISTED" },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, userId: true },
+    const candidate = await tx.rideParticipant.findFirst({
+      where: { rideId, status: "WAITLISTED" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, userId: true },
+    });
+    if (!candidate) return null;
+
+    const promoted = await tx.rideParticipant.updateMany({
+      where: { id: candidate.id, status: "WAITLISTED" },
+      data: { status: "PENDING" },
+    });
+    return promoted.count === 1 ? candidate : null;
   });
 
   if (nextInLine) {
-    await prisma.rideParticipant.update({
-      where: { id: nextInLine.id },
-      data: { status: "PENDING" },
-    });
-
     await Notifier.push({
       type: NotificationType.RIDE_WAITLIST_PROMOTED,
       userId: nextInLine.userId,

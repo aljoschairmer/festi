@@ -2,6 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 import type { Prisma } from "@/generated/prisma/client";
+import { getClientIp } from "@/lib/clientIp";
 import { prisma } from "@/lib/prisma";
 
 /** Every activity we can log. Keep in sync with the Prisma `ActivityAction` enum. */
@@ -75,10 +76,9 @@ type LogInput = {
 async function getRequestContext() {
   try {
     const h = await headers();
-    const ipAddress =
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      h.get("x-real-ip") ??
-      null;
+    // `cf-connecting-ip` first — `x-forwarded-for` is client-settable, so the
+    // audit trail (and the brute-force detection built on it) was forgeable.
+    const ipAddress = await getClientIp();
     const userAgent = h.get("user-agent");
     return { ipAddress, userAgent };
   } catch {

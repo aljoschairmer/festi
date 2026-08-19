@@ -3,8 +3,12 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { visibleRidesFilter } from "../lib/visibility";
 import { type RideFiltersInput, rideFiltersSchema } from "../schemas";
 import type { RideSummary, Waypoint } from "../types";
+
+/** Hard cap so one query cannot pull the whole rides table into memory. */
+const MAX_RIDES = 200;
 
 /** Great-circle distance in kilometres. */
 function haversineKm(
@@ -57,6 +61,9 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
     : 0;
 
   const where: Prisma.RideWhereInput = {
+    // `AND`, not a spread: the visibility rule and the search filter below
+    // both use `OR`, and spreading would silently drop one of them.
+    AND: [await visibleRidesFilter(session.user.id)],
     status: "SCHEDULED",
     ...(filters.includePast ? {} : { startTime: { gte: new Date() } }),
     ...(filters.search
@@ -89,6 +96,7 @@ export async function getRides(input?: unknown): Promise<RideSummary[]> {
   };
 
   const rides = await prisma.ride.findMany({
+    take: MAX_RIDES,
     where,
     orderBy: {
       startTime: "asc",

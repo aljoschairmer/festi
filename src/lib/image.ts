@@ -45,7 +45,93 @@ export async function validateImageUpload(
     return { ok: false, error: "File does not appear to be a valid image." };
   }
 
+  // `MAX_IMAGE_DIMENSION` was declared but never enforced: the browser
+  // resizes before upload, and a client that skips the browser could store a
+  // decompression bomb. Read the dimensions out of the header instead of
+  // decoding the whole image.
+  const size = readImageSize(bytes, sniffed);
+  if (
+    size &&
+    (size.width > MAX_IMAGE_DIMENSION || size.height > MAX_IMAGE_DIMENSION)
+  ) {
+    return {
+      ok: false,
+      error: `Image must be at most ${MAX_IMAGE_DIMENSION}px on each side.`,
+    };
+  }
+
   return { ok: true, bytes, contentType: sniffed };
+}
+
+/**
+ * Pixel dimensions straight from the file header. Returns null when they
+ * cannot be determined — callers treat that as "cannot rule it out", not as
+ * a failure, so an unusual but valid file is not rejected outright.
+ */
+function readImageSize(
+  bytes: Uint8Array,
+  contentType: string,
+): { width: number; height: number } | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  try {
+    if (contentType === "image/png") {
+      // IHDR is always the first chunk: width/height at bytes 16..23.
+      return { width: view.getUint32(16), height: view.getUint32(20) };
+    }
+    if (contentType === "image/jpeg") {
+      // Walk the segment markers to the first SOFn frame header.
+      let offset = 2;
+      while (offset + 9 < bytes.length) {
+        if (bytes[offset] !== 0xff) {
+          offset += 1;
+          continue;
+        }
+        const marker = bytes[offset + 1];
+        // SOFn, excluding DHT (c4), JPG (c8) and DAC (cc).
+        if (
+          marker >= 0xc0 &&
+          marker <= 0xcf &&
+          marker !== 0xc4 &&
+          marker !== 0xc8 &&
+          marker !== 0xcc
+        ) {
+          return {
+            height: view.getUint16(offset + 5),
+            width: view.getUint16(offset + 7),
+          };
+        }
+        offset += 2 + view.getUint16(offset + 2);
+      }
+      return null;
+    }
+    if (contentType === "image/webp") {
+      const chunk = String.fromCharCode(...bytes.slice(12, 16));
+      if (chunk === "VP8X") {
+        // 24-bit little-endian, stored as value-1.
+        const w = bytes[24] | (bytes[25] << 8) | (bytes[26] << 16);
+        const h = bytes[27] | (bytes[28] << 8) | (bytes[29] << 16);
+        return { width: w + 1, height: h + 1 };
+      }
+      if (chunk === "VP8 ") {
+        return {
+          width: view.getUint16(26, true) & 0x3fff,
+          height: view.getUint16(28, true) & 0x3fff,
+        };
+      }
+      if (chunk === "VP8L") {
+        const bits =
+          bytes[21] | (bytes[22] << 8) | (bytes[23] << 16) | (bytes[24] << 24);
+        return {
+          width: (bits & 0x3fff) + 1,
+          height: ((bits >> 14) & 0x3fff) + 1,
+        };
+      }
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /** Detects the real image type from magic bytes. Returns null if unknown. */

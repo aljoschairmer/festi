@@ -1,4 +1,5 @@
 import polyline from "@mapbox/polyline";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { RouteProfile, RouteResult, Waypoint } from "../types";
 
 /**
@@ -143,7 +144,7 @@ export async function fetchRoute(
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetchWithTimeout(url, {
       headers: { Accept: "application/json" },
       cache: "no-store",
     });

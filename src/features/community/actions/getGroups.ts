@@ -3,6 +3,9 @@
 import { getCurrentUser } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 
+/** Hard cap so one query cannot pull an unbounded table into memory. */
+const DEFAULT_GROUP_LIMIT = 200;
+
 export async function getGroups() {
   const session = await getCurrentUser();
   if (!session) {
@@ -10,6 +13,7 @@ export async function getGroups() {
   }
 
   const groups = await prisma.group.findMany({
+    take: DEFAULT_GROUP_LIMIT,
     include: {
       createdBy: {
         select: {

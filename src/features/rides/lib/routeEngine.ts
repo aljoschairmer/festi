@@ -1,6 +1,7 @@
 import "server-only";
 
 import polyline from "@mapbox/polyline";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { ElevationPoint, RouteResult } from "../types";
 
 /**
@@ -235,7 +236,7 @@ export async function submitGenerationJob(
 ): Promise<{ jobId: string }> {
   let response: Response;
   try {
-    response = await fetch(`${getRouteEngineBaseUrl()}/v1/jobs`, {
+    response = await fetchWithTimeout(`${getRouteEngineBaseUrl()}/v1/jobs`, {
       method: "POST",
       headers: engineHeaders(userRef, idempotencyKey),
       body: JSON.stringify(request),
@@ -254,7 +255,7 @@ export async function submitGenerationJob(
 export async function getGenerationJobStatus(
   jobId: string,
 ): Promise<EngineJobStatus | null> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}`,
     { headers: engineHeaders(), cache: "no-store" },
   );
@@ -270,7 +271,7 @@ export async function getGenerationJobStatus(
 export async function getGenerationJobResult(
   jobId: string,
 ): Promise<EngineRoute[] | null> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}/result`,
     { headers: engineHeaders(), cache: "no-store" },
   );
@@ -282,7 +283,7 @@ export async function getGenerationJobResult(
 
 /** Cancels a pending or running job. Best-effort: errors are swallowed. */
 export async function cancelGenerationJob(jobId: string): Promise<void> {
-  await fetch(
+  await fetchWithTimeout(
     `${getRouteEngineBaseUrl()}/v1/jobs/${encodeURIComponent(jobId)}`,
     {
       method: "DELETE",

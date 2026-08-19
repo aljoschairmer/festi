@@ -5,6 +5,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { isUniqueViolation } from "@/lib/prismaErrors";
 import { type FollowUserFormData, followUserFormSchema } from "../schemas";
 
 export async function followRider(values: FollowUserFormData) {
@@ -40,12 +41,19 @@ export async function followRider(values: FollowUserFormData) {
     return { success: false, message: "You are already following this user." };
   }
 
-  await prisma.follow.create({
-    data: {
-      followerId: session.user.id,
-      followingId: targetId,
-    },
-  });
+  try {
+    await prisma.follow.create({
+      data: {
+        followerId: session.user.id,
+        followingId: targetId,
+      },
+    });
+  } catch (error) {
+    // Already following — the double click produced the state the user asked
+    // for, so do not surface a database error.
+    if (!isUniqueViolation(error)) throw error;
+    return { success: true as const, message: "You are now following them." };
+  }
 
   await Logger.log(
     ActivityAction.USER_FOLLOWED,

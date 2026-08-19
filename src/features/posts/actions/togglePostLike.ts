@@ -5,6 +5,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { isUniqueViolation } from "@/lib/prismaErrors";
 
 type Result =
   | { success: true; liked: boolean; likeCount: number }
@@ -47,9 +48,20 @@ export async function togglePostLike(postId: string): Promise<Result> {
       targetId: post.id,
     });
   } else {
-    await prisma.postLike.create({
-      data: { postId, userId: session.user.id },
-    });
+    try {
+      await prisma.postLike.create({
+        data: { postId, userId: session.user.id },
+      });
+    } catch (error) {
+      // Double-click: the row already exists. That is the state the user
+      // wanted, so report success instead of leaking a raw P2002.
+      if (!isUniqueViolation(error)) throw error;
+      return {
+        success: true,
+        liked: true,
+        likeCount: await prisma.postLike.count({ where: { postId } }),
+      };
+    }
     liked = true;
 
     await Logger.log(

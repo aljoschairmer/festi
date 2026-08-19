@@ -3,6 +3,9 @@
 import { getCurrentAdmin } from "@/features/auth/guards";
 import { prisma } from "@/lib/prisma";
 
+/** Hard cap so one query cannot pull an unbounded table into memory. */
+const DEFAULT_USER_LIMIT = 500;
+
 export async function getUsers() {
   const session = await getCurrentAdmin();
   if (!session) {
@@ -10,6 +13,7 @@ export async function getUsers() {
   }
 
   const users = await prisma.user.findMany({
+    take: DEFAULT_USER_LIMIT,
     orderBy: { createdAt: "desc" },
     include: {
       sessions: {

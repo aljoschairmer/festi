@@ -6,6 +6,7 @@ import { Logger } from "@/features/logger";
 import { ActivityAction } from "@/features/logger/logger";
 import { NotificationType, Notifier } from "@/features/notification";
 import { prisma } from "@/lib/prisma";
+import { canViewRide } from "../lib/visibility";
 
 type RequestJoinResult =
   | { success: true; message: string }
@@ -31,10 +32,16 @@ export async function requestJoinRide(
       startTime: true,
       status: true,
       maxParticipants: true,
+      groupId: true,
     },
   });
 
   if (!ride) {
+    return { success: false, error: "Ride not found." };
+  }
+
+  // A group ride is only joinable by approved members of that group.
+  if (!(await canViewRide(session.user.id, ride))) {
     return { success: false, error: "Ride not found." };
   }
 
