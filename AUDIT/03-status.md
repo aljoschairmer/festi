@@ -7,9 +7,9 @@
 
 | | Anzahl |
 | --- | ---: |
-| **Behoben** | ~68 |
+| **Behoben** | ~73 |
 | **Zurückgezogen** (Fehlmessung / Fehlalarm) | 5 |
-| **Offen** | ~83 |
+| **Offen** | ~78 |
 
 Die Fix-Runde hat sich auf **Sicherheit, Datenkonsistenz und die konkreten
 UI-Defekte** konzentriert. Drei ganze Review-Bereiche sind weitgehend
@@ -79,6 +79,24 @@ bereits selbst; korrigiert in `review/C-frontend-architektur.md`.
 **Sichtbares (D-10, U-07)** — Scrollbars sind wieder dunkel (`hsl()` um
 OKLCH-Variablen entfernt), und hinter dem Landing-Page-Text liegt ein Scrim,
 sodass keine Städtenamen mehr durch den Fließtext laufen.
+
+**Toter Code (E-15, E-14)** — 34 Dateien, 3507 Zeilen gelöscht: vier
+app-eigene Module ohne Importeur und 30 nie benutzte shadcn-Komponenten
+(nachgezählt, nicht der Liste geglaubt — es waren 30, nicht 31). Sie hielten
+sieben npm-Pakete am Leben, jedes mit genau einer Import-Stelle in einer toten
+Datei; `dependencies` sinkt von 37 auf 30, `shadcn` wandert nach
+`devDependencies`.
+
+**Farb-Tokens (D-08)** — 175 Ersetzungen in 46 Dateien; keine
+`(text|bg|border|ring|shadow)-red-*` mehr in `src/`. Neuer Token
+`--primary-hover`, weil alle 24 `red-400`-Stellen Hover-Partner waren und ein
+gemeinsamer Token das Hover-Feedback gelöscht hätte. Fünf vermeintliche
+Markenfarben stellten sich als Fehlermeldungen heraus und liegen jetzt auf
+`--destructive`. Wiederholungsschutz: `scripts/check-colors.mjs` als eigener
+CI-Schritt, negativ getestet.
+
+**Community-Pfade (C-03)** — `features/community/lib/routes.ts` baut alle 15
+`revalidatePath`-Pfade, damit der behobene `/groups/…`-Fehler nicht wiederkommt.
 
 **Routen-Repo (3 von 8 + Datenfehler)** — L-04 Schema-Validierung ·
 L-05 Quota-Header · L-06 `.gitignore`. Dabei aufgedeckt: 14 Constraint-Werte
@@ -183,6 +201,17 @@ E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
    in `groupChat` und `directChatThread` (+30/min je offenem Thread). Das SSE-Muster
    dafür liegt fertig in `src/app/api/pro/live/[race]/[year]/[stage]/route.ts`.
 4. ~~**D-10 Scrollbar** und **U-07 Partikel-Lesbarkeit**~~ — erledigt.
-5. **Als Nächstes:** die großen mechanischen Blöcke (D-08 291 Farb-Call-Sites,
-   E-15 31 tote Komponenten) als je eigener PR, und C-03 — sieben `revalidatePath()`
-   auf `/groups/…`, ein Segment, das es nicht gibt.
+5. ~~Die großen mechanischen Blöcke (D-08, E-15)~~ — erledigt, jeweils als eigener Commit
+   auf diesem Branch statt als eigener PR, damit alles an einer Stelle reviewbar bleibt.
+   C-03 war bereits in `9b32f02` behoben; nachgezogen ist der Wiederholungsschutz.
+
+## Was jetzt eine Entscheidung von dir braucht
+
+| Thema | Frage |
+| --- | --- |
+| **`text-white` auf Rot** | Weiß auf `--primary` misst **4,06:1** und verfehlt AA; `--primary-foreground` misst **4,79:1**. Die `Button`-Default-Variante macht es schon richtig. Umstellen heißt: jeder rote CTA bekommt fast schwarze statt weißer Schrift. Sichtbar genug, dass ich das nicht allein entscheide. |
+| **Gradient-CTAs** (D-03, 56 Klassen) | Als `cta`-Variante in `buttonVariants` aufnehmen? Dann greift auch der Farb-Guard dafür. |
+| **Chat auf SSE** (C-02, Rest) | 2-s-Polling in `groupChat` und `directChatThread` = +30 Req/min je offenem Thread. Das Muster liegt fertig in `src/app/api/pro/live/[race]/[year]/[stage]/route.ts`. |
+| **Light-Theme** (D-01, C-23) | Unverändert offen — Designentscheidung. |
+| **`.env.example`** (F-28) | Lege ich weiterhin nicht ohne Absprache an. |
+| **`maxUses: 1`** (B-01) | Ohne Deployment nicht gegenzutesten. |
