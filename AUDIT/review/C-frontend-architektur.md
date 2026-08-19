@@ -154,7 +154,40 @@ Insgesamt: **26 Findings** (2 × P0, 8 × P1, 11 × P2, 5 × P3).
   gelöscht (jede exportierte Server-Action ist ein öffentlicher Endpunkt). `follow-connections` läuft
   nur noch mit `enabled: open` — im Sheet und in `ProfileFollowStats` — und wird nach Follow/Unfollow
   invalidiert. Damit sinkt die Grundlast eines idle Tabs von **16 auf 6 Req/min**
-  (Badges 4 + Presence 2). Punkt 4 (Chat auf SSE) ist offen.
+  (Badges 4 + Presence 2).
+
+  **Punkt 4 (Chat auf SSE) ist jetzt ebenfalls umgesetzt.** Zwei neue Endpunkte —
+  `/api/chat/group/[groupId]` und `/api/chat/direct/[partnerId]` — ersetzen das 2-s-Polling in
+  `groupChat.tsx` und `directChatThread.tsx`.
+
+  **Was es ist und was es nicht ist:** Chat hat keinen Upstream zum Abonnieren; die einzige
+  Wahrheitsquelle ist die Datenbank, beschrieben von einer fremden Request auf einer fremden Instanz.
+  Das hier ist deshalb kein Push, das sich als Push ausgibt — das Pollen bleibt, es passiert nur
+  einmal auf dem Server statt einmal pro offenem Tab, und es stellt eine viel billigere Frage:
+  ein indexgestütztes `count + max(createdAt)` statt Session-Lookup, Mitgliedschaftsprüfung,
+  100-Zeilen-Abfrage und vollem JSON-Payload.
+
+  **Gegen eine echte Datenbank gemessen** (lokales Postgres 16, `log_statement = all`):
+
+  | | vorher (2-s-Polling) | nachher (Stream) |
+  | --- | ---: | ---: |
+  | HTTP-Requests / min | 30 | 0 |
+  | DB-Statements / min, Thread ruhig | ~120 | 30, nach 60 s Stille 7,5 |
+  | Payloads / min ohne Änderung | 30 | 0 |
+
+  Der Backoff ist gemessen, nicht angenommen: Abstände von 2,0 s in den ersten 30 s, 8,0 s nach der
+  Ruhephase. Latenz einer neuen Nachricht: 0,6–1,4 s. Das Probe-Statement läuft über
+  `group_message_groupId_createdAt_idx` (B-08), 2 Buffer, 0,03 ms.
+
+  **Sicherheit mitgeprüft:** unauthentifiziert 401, Nicht-Mitglied 403. Wird jemand *während* eines
+  offenen Streams aus der Gruppe entfernt, endet der Stream bei der nächsten Änderung, ohne die neue
+  Nachricht auszuliefern — `getGroupMessages` prüft die Mitgliedschaft bei jedem Push.
+
+  **Im Browser gegengeprüft:** eine per SQL eingefügte Nachricht erschien in der laufenden UI, während
+  die Seite in 12 Sekunden **null** Chat-Requests machte; Senden aus der UI funktioniert weiter.
+
+  Fällt der Stream aus (Proxy, altes Mobilfunknetz), fällt die Query auf 5-s-Polling zurück statt
+  einzufrieren.
 
 ---
 

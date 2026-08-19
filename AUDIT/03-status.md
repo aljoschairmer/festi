@@ -7,9 +7,9 @@
 
 | | Anzahl |
 | --- | ---: |
-| **Behoben** | ~73 |
+| **Behoben** | ~74 |
 | **Zurückgezogen** (Fehlmessung / Fehlalarm) | 5 |
-| **Offen** | ~78 |
+| **Offen** | ~77 |
 
 Die Fix-Runde hat sich auf **Sicherheit, Datenkonsistenz und die konkreten
 UI-Defekte** konzentriert. Drei ganze Review-Bereiche sind weitgehend
@@ -94,6 +94,11 @@ gemeinsamer Token das Hover-Feedback gelöscht hätte. Fünf vermeintliche
 Markenfarben stellten sich als Fehlermeldungen heraus und liegen jetzt auf
 `--destructive`. Wiederholungsschutz: `scripts/check-colors.mjs` als eigener
 CI-Schritt, negativ getestet.
+
+**Chat-Streams (C-02, Rest)** — `/api/chat/group/[groupId]` und
+`/api/chat/direct/[partnerId]` ersetzen das 2-s-Polling. Pro offenem Thread:
+30 Requests/min → 0, DB-Statements ~120/min → 30 und nach einer Minute Stille
+7,5. Gegen ein echtes Postgres gemessen, nicht geschätzt.
 
 **Community-Pfade (C-03)** — `features/community/lib/routes.ts` baut alle 15
 `revalidatePath`-Pfade, damit der behobene `/groups/…`-Fehler nicht wiederkommt.
@@ -211,7 +216,6 @@ E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
 | --- | --- |
 | **`text-white` auf Rot** | Weiß auf `--primary` misst **4,06:1** und verfehlt AA; `--primary-foreground` misst **4,79:1**. Die `Button`-Default-Variante macht es schon richtig. Umstellen heißt: jeder rote CTA bekommt fast schwarze statt weißer Schrift. Sichtbar genug, dass ich das nicht allein entscheide. |
 | **Gradient-CTAs** (D-03, 56 Klassen) | Als `cta`-Variante in `buttonVariants` aufnehmen? Dann greift auch der Farb-Guard dafür. |
-| **Chat auf SSE** (C-02, Rest) | 2-s-Polling in `groupChat` und `directChatThread` = +30 Req/min je offenem Thread. Das Muster liegt fertig in `src/app/api/pro/live/[race]/[year]/[stage]/route.ts`. |
 | **Light-Theme** (D-01, C-23) | Unverändert offen — Designentscheidung. |
 | **`.env.example`** (F-28) | Lege ich weiterhin nicht ohne Absprache an. |
 | **`maxUses: 1`** (B-01) | Ohne Deployment nicht gegenzutesten. |

@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useChatStream } from "@/hooks/useChatStream";
 import { UNREAD_BADGES_KEY } from "@/hooks/useUnreadBadges";
 import {
   type DirectMessagesResult,
@@ -54,10 +55,17 @@ export function DirectChatThread({ partnerId }: { partnerId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
+  // The stream is the update path; `refetchInterval` is only the fallback
+  // for when it is not connected (C-02).
+  const { refetchInterval } = useChatStream<DirectMessagesResult>(
+    `/api/chat/direct/${partnerId}`,
+    ["direct-chat", partnerId],
+  );
+
   const { data, isLoading } = useQuery<DirectMessagesResult>({
     queryKey: ["direct-chat", partnerId],
     queryFn: () => getDirectMessages(partnerId),
-    refetchInterval: 2000,
+    refetchInterval,
   });
 
   const messages = data?.messages ?? [];

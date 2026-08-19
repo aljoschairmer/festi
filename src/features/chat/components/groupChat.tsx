@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useChatStream } from "@/hooks/useChatStream";
 import { getGroupMessages, sendGroupMessage } from "../actions/chat-action";
 import { type MessageFormData, MessageSchema } from "../schemas";
 
@@ -62,10 +63,17 @@ export function GroupChat({ groupId }: { groupId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
+  // The stream is the update path; `refetchInterval` is only the fallback
+  // for when it is not connected (C-02).
+  const { refetchInterval } = useChatStream<ChatData>(
+    `/api/chat/group/${groupId}`,
+    ["group-chat", groupId],
+  );
+
   const { data, isLoading } = useQuery<ChatData>({
     queryKey: ["group-chat", groupId],
     queryFn: () => getGroupMessages(groupId),
-    refetchInterval: 2000,
+    refetchInterval,
   });
 
   const messages = data?.messages ?? [];
