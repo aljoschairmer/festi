@@ -49,6 +49,7 @@
 | F-26 | Überschriften-Sprung H1 → H3 auf der Ride-Detailseite | P3 |
 | F-27 | Bilder ohne `alt` auf Ride- und Gruppendetail | P3 |
 | F-28 | Keine `.env.example` im `festi`-Repo | P2 |
+| F-29 | Neuer Kommentar erscheint erst nach über 12 s in der offenen Liste | P2 |
 
 ---
 
@@ -375,7 +376,18 @@ feed buttons: ["Create post|", "All|", "Posts|", "Rides|",
 
 Der Nachbar-Button („Delete post", `aria-label` in Zeile 130) macht es
 richtig. Derselbe Fehler trifft den Kommentar-Button, sobald
-`commentCount > 0` — dann steht dort nur noch eine Zahl.
+`commentCount > 0` — dann steht dort nur noch eine Zahl. Direkt am
+gerenderten DOM abgegriffen, nachdem der Post einen Kommentar hatte:
+
+```
+article buttons:
+  ""  aria-label="Delete post"  aria-pressed=""      ← korrekt benannt
+  ""  aria-label=""             aria-pressed="false" ← Like, ohne Namen
+  "1" aria-label=""             aria-pressed=""      ← Kommentare, nur "1"
+```
+
+Das ist nicht nur ein Screenreader-Problem: der Kommentar-Button ist damit
+auch für automatisierte Tests und für „per Text finden" unauffindbar.
 
 Dazu passt die Messung „1 Button ohne Namen" auf **jeder** Dashboard-Seite:
 der dritte Header-Button (`FollowerListSheet`).
@@ -593,6 +605,33 @@ weitere Tabs nötig — auf jeder Seite neu.
 
 ---
 
+### F-29 — Neuer Kommentar erscheint erst nach über 12 s in der offenen Liste · **P2**
+
+**Repro**
+1. Im Feed einen Post öffnen, Kommentar tippen, absenden.
+2. Die geöffnete Kommentarliste beobachten.
+
+**Tatsächlich:** Nach 12 s steht der Kommentar **weder in der Liste noch im
+Zähler**. Nach einem Reload ist er da (Zähler springt von 1 auf 2). Der
+Kommentar geht also nicht verloren — die Oberfläche hinkt nur hinterher.
+
+Die Invalidierung selbst ist korrekt implementiert
+(`src/features/posts/components/postComments.tsx:42-45` invalidiert sowohl
+`["post-comments", postId]` als auch `["posts"]`). Das Problem ist die
+Latenz aus F-01: beide Invalidierungen lösen Refetches über Server Actions
+aus, die seriell à ~3 s laufen — und der `posts`-Refetch lädt den kompletten
+Feed neu, bevor die Kommentare drankommen.
+
+**Fix:** Optimistisches Einfügen des Kommentars (`onMutate`), und den
+Feed-Refetch nicht mit-invalidieren, sondern nur den Zähler lokal
+hochzählen.
+
+*(Like funktioniert dagegen sofort — `postCard.tsx` aktualisiert
+`liked`/`likeCount` optimistisch im lokalen State: `aria-pressed` springt
+unmittelbar von `false` auf `true`.)*
+
+---
+
 ### F-28 — Keine `.env.example` im `festi`-Repo · **P2**
 
 `ls .env*` → nichts. Die benötigten Variablen (13 Stück) stehen nur in der
@@ -672,6 +711,9 @@ Damit klar ist, was Abdeckung hatte und in Ordnung war:
 | Avatar-Upload: gültiges 5,9-MB-PNG | ✅ „Profile picture updated." |
 | Rides-Filter: Suche ohne Treffer | ✅ „No rides match your filters — Try a different search or reset the filters." |
 | Ride-Detail | ✅ Karte, Höhenprofil, Distanz/Dauer/Höhenmeter, Teilnehmerliste |
+| Kommentar schreiben | ✅ wird gespeichert (nach Reload sichtbar) — Anzeigeverzögerung s. F-29 |
+| Post liken | ✅ optimistisch, `aria-pressed` springt sofort um, Zähler stimmt |
+| Post löschen | ✅ Bestätigungsdialog („Delete this post? — This action cannot be undone.“), danach ist der Post samt Kommentaren weg |
 | `/dashboard/community-rides/{unbekannt}` | ✅ HTTP 404 |
 | `/dashboard/community/g/{unbekannt}` | ✅ HTTP 404 |
 | Events (rad-net-Kalender) | ✅ 181 Events, Liste + Karte |

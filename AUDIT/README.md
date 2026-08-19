@@ -9,13 +9,21 @@ am **2026-08-19** gegen die Produktion und die Live-Route-Engine.
 | --- | --- |
 | [`00-overview.md`](./00-overview.md) | Architektur, Datenfluss, vollständige Routen-/Seiten-Liste, UI-Flows, lokaler Start, Basis-Performance |
 | [`00-routes-diff.md`](./00-routes-diff.md) | `festi-routes` ↔ Route Engine ↔ App: Bestand, Feature-Lücken, Integrationsstand, vier datenbelegte Engine-Defekte |
-| [`01-findings.md`](./01-findings.md) | Phase 1 + 2: 28 Funde aus Browser-Funktionstest, Responsive-, Design- und A11y-Prüfung — mit Repro, Messwerten und Screenshots |
+| [`01-findings.md`](./01-findings.md) | Phase 1 + 2: 29 Funde aus Browser-Funktionstest, Responsive-, Design- und A11y-Prüfung — mit Repro, Messwerten und Screenshots |
 | [`review/A-auth-security.md`](./review/A-auth-security.md) | Auth, Session, Authorization/IDOR, Uploads, XSS, Rate-Limiting, Secrets |
 | [`review/B-backend-daten.md`](./review/B-backend-daten.md) | Fehlerbehandlung, Statuscodes, N+1, Indizes, Transaktionen, API-Vertrag |
 | [`review/C-frontend-architektur.md`](./review/C-frontend-architektur.md) | Server/Client-Grenzen, Caching, Revalidation, Bundles, State, Routing |
 | [`review/D-a11y-designsystem.md`](./review/D-a11y-designsystem.md) | Design-Tokens, Kontraste (gerechnet), Fokus, Tastatur, Zustände |
 | [`review/E-codequalitaet-tests.md`](./review/E-codequalitaet-tests.md) | Build/Lint/Typecheck/Tests (ausgeführt), Konventionen, `concerns.txt` |
-| [`screenshots/`](./screenshots/) | Belegbilder, benannt nach `<viewport>-<seite>.jpg` bzw. `err-*` / `flow-*` |
+| [`screenshots/`](./screenshots/) | 106 Belegbilder, benannt nach `<viewport>-<seite>.jpg` bzw. `err-*` / `flow-*` |
+
+Die beiden anderen Repos tragen ihre eigenen Funde jeweils in
+`AUDIT-FINDINGS.md` (gleicher Branch):
+
+| Repo | Datei | Funde |
+| --- | --- | --- |
+| `festi-backend` (Route Engine) | `AUDIT-FINDINGS.md` | R-01 … R-12 |
+| `festi-routes` (Routen-Bibliothek) | `AUDIT-FINDINGS.md` | L-01 … L-08 |
 
 ## Methode
 
@@ -36,10 +44,10 @@ am **2026-08-19** gegen die Produktion und die Live-Route-Engine.
 
 | | |
 | --- | --- |
-| Funde Phase 1 + 2 | 28 (2 × P0, 15 × P1, 8 × P2, 4 × P3) |
+| Funde Phase 1 + 2 | 29 (2 × P0, 15 × P1, 9 × P2, 4 × P3) |
 | Funde Phase 3 (Code-Review) | 121 über fünf Reports |
 | Geprüfte Seiten | 22 Routen × bis zu 3 Viewports |
-| Screenshots | siehe `screenshots/` |
+| Screenshots | 106 |
 | Ausgewertete generierte Routen | 569 aus `festi-routes` |
 
 ## Die fünf wichtigsten Punkte
@@ -59,7 +67,14 @@ am **2026-08-19** gegen die Produktion und die Live-Route-Engine.
    Parameter und neun Ergebnisfelder ungenutzt, und 569 fertig berechnete
    Routen über 70 Regionen liegen brach (`00-routes-diff.md`).
 
-## Hinweis
+## Hinweise
 
-Dieser Audit ist reine Dokumentation. **Es wurde kein Produktivcode
-geändert** und **nichts aus `festi-routes` integriert.**
+* Dieser Audit ist reine Dokumentation. **Es wurde kein Produktivcode
+  geändert** und **nichts aus `festi-routes` integriert.**
+* Getestet wurde gegen die **Produktion**. Die dabei angelegten Testdaten
+  (ein Post, zwei Kommentare, ein Like) wurden am Ende über die UI wieder
+  gelöscht — was zugleich den Lösch-Flow verifiziert hat. Geblieben ist ein
+  Avatar auf dem Testaccount, hochgeladen beim Prüfen der Upload-Grenzen.
+* Die Route Engine wurde live angesprochen (Job-Submits, Statusabfragen,
+  GPX-Download). Es wurden 3 Jobs erzeugt; sie sind nach der Redis-TTL von
+  30 Minuten verfallen. Der API-Key steht in keiner Datei dieses Repos.
