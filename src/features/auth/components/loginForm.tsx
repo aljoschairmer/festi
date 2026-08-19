@@ -30,9 +30,10 @@ import { sessionQueryKey } from "../hooks/use-session";
 import { type LoginFormData, loginSchema } from "../schemas";
 import { formatBanExpiry } from "../utils/formatBanExpiry";
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const destination = returnTo ?? "/dashboard";
 
   const {
     register,
@@ -70,7 +71,7 @@ export function LoginForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      router.push("/dashboard");
+      router.push(destination);
       router.refresh();
     },
     onError: (error) => {
@@ -190,7 +191,11 @@ export function LoginForm() {
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
-              href="/register"
+              href={
+                returnTo
+                  ? `/register?returnTo=${encodeURIComponent(returnTo)}`
+                  : "/register"
+              }
               className="font-medium text-red-500 hover:text-red-400"
             >
               Sign up
