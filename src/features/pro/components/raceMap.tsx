@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { decodeRouteGeometry } from "@/features/rides/lib/geometry";
 import { getMapStyle } from "@/features/rides/lib/mapStyle";
+import { guardTerrainSource } from "@/features/rides/lib/terrain";
 import { cn } from "@/lib/utils";
 import type { ProRaceMapStage } from "../types";
 
@@ -95,6 +96,7 @@ export function RaceMap({ stages, raceKey, year, className }: RaceMapProps) {
         attributionControl: { compact: true },
       });
       mapRef.current = map;
+      guardTerrainSource(map);
       map.addControl(new maplibregl.NavigationControl(), "top-right");
 
       const observedMap = map;
