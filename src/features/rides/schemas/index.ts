@@ -265,6 +265,10 @@ export const rideFiltersSchema = z.object({
   nearLat: z.number().min(-90).max(90).optional(),
   nearLng: z.number().min(-180).max(180).optional(),
   radiusKm: z.number().min(1).max(500).optional(),
+  /** Cursor pagination: id of the last ride from the previous page. */
+  cursor: z.string().min(1).optional(),
+  /** Page size (server defaults to 20 when omitted). */
+  take: z.number().int().min(1).max(50).optional(),
 });
 
 export type RideFiltersInput = z.infer<typeof rideFiltersSchema>;

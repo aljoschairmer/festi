@@ -227,6 +227,39 @@ export type RideSummary = {
   photoCount: number;
 };
 
+/**
+ * Slim ride payload for the paginated community rides list. Contains only
+ * the fields the ride cards render; the full RideSummary (description,
+ * waypoints, photo count, …) stays available via getRide/getUserRides.
+ */
+export type RideListItem = {
+  id: string;
+  title: string;
+  startLocation: string | null;
+  startTime: string;
+  distance: number;
+  duration: number;
+  elevationGain: number;
+  routeGeometry: string;
+  status: RideStatus;
+  pace: RidePace | null;
+  difficulty: RideDifficulty | null;
+  /** Null means unlimited spots. */
+  maxParticipants: number | null;
+  creator: Pick<RideCreator, "name" | "username">;
+  /** Number of approved participants (the creator is not counted). */
+  participantCount: number;
+  isCreator: boolean;
+  participantStatus: RideParticipantStatus | null;
+};
+
+/** One page of the community rides list. */
+export type RideListPage = {
+  rides: RideListItem[];
+  /** Cursor for the next page, null when no more rides exist. */
+  nextCursor: string | null;
+};
+
 export type RideParticipantInfo = {
   id: string;
   status: RideParticipantStatus;

@@ -11,12 +11,14 @@ import {
   formatPace,
   formatRideDate,
 } from "../lib/format";
-import type { RideSummary } from "../types";
+import type { RideListItem } from "../types";
 import { RideJoinButton } from "./rideJoinButton";
 import { RouteThumbnail } from "./routeThumbnail";
 
+// RideSummary is a superset of RideListItem, so callers with a full summary
+// (group rides, timelines) can keep passing it.
 type RideCardProps = {
-  ride: RideSummary;
+  ride: RideListItem;
 };
 
 export function RideCard({ ride }: RideCardProps) {

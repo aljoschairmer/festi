@@ -1,26 +1,54 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { BikeIcon, SearchXIcon } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { BikeIcon, Loader2Icon, SearchXIcon } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRides } from "../actions/getRides";
 import type { RideFiltersInput } from "../schemas";
-import type { RideSummary } from "../types";
+import type { RideListPage } from "../types";
 import { RideCard } from "./rideCard";
 
 type RidesGridProps = {
   filters?: RideFiltersInput;
+  /** Server-rendered first page, used as initial data for the empty filter. */
+  initialPage?: RideListPage;
 };
 
-export function RidesGrid({ filters = {} }: RidesGridProps) {
+export function RidesGrid({ filters = {}, initialPage }: RidesGridProps) {
+  const hasActiveFilters = Boolean(
+    filters.search ||
+      filters.pace ||
+      filters.difficulty ||
+      filters.includePast ||
+      filters.nearLat !== undefined,
+  );
+
   const {
-    data: rides = [],
+    data,
     isLoading,
     isError,
-  } = useQuery<RideSummary[]>({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery<RideListPage>({
     queryKey: ["rides", filters],
-    queryFn: () => getRides(filters),
+    queryFn: ({ pageParam }) =>
+      getRides({
+        ...filters,
+        ...(pageParam ? { cursor: pageParam } : {}),
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    // The server-rendered first page is only valid for the unfiltered list.
+    initialData:
+      !hasActiveFilters && initialPage
+        ? { pages: [initialPage], pageParams: [undefined] }
+        : undefined,
   });
+
+  const rides = data?.pages.flatMap((page) => page.rides) ?? [];
 
   if (isLoading) {
     return (
@@ -41,10 +69,6 @@ export function RidesGrid({ filters = {} }: RidesGridProps) {
   }
 
   if (rides.length === 0) {
-    const hasActiveFilters = Boolean(
-      filters.search || filters.pace || filters.difficulty,
-    );
-
     if (hasActiveFilters) {
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -64,15 +88,37 @@ export function RidesGrid({ filters = {} }: RidesGridProps) {
         <p className="text-sm text-muted-foreground">
           Create your first ride and invite others to join!
         </p>
+        <Button asChild className="mt-4">
+          <Link href="/dashboard/community-rides/new">
+            Create your first ride
+          </Link>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {rides.map((ride) => (
-        <RideCard key={ride.id} ride={ride} />
-      ))}
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {rides.map((ride) => (
+          <RideCard key={ride.id} ride={ride} />
+        ))}
+      </div>
+
+      {hasNextPage && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage && (
+              <Loader2Icon className="size-4 animate-spin" />
+            )}
+            Load more rides
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
