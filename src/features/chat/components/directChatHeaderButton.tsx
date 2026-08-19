@@ -11,6 +11,9 @@ export function DirectChatHeaderButton() {
     queryKey: ["direct-unread"],
     queryFn: () => getUnreadDirectCount(),
     refetchInterval: 10000,
+    // Poll only while the tab is visible — background tabs must not keep
+    // firing server-action requests.
+    refetchIntervalInBackground: false,
   });
 
   return (

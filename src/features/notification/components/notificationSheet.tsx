@@ -238,6 +238,9 @@ const NotificationSheet = () => {
     queryKey: ["notifications-unread"],
     queryFn: () => getUnreadNotificationCount(),
     refetchInterval: 10000,
+    // Poll only while the tab is visible — background tabs must not keep
+    // firing server-action requests.
+    refetchIntervalInBackground: false,
   });
 
   const { data: notifications, isLoading } = useQuery<NotificationItem[]>({
@@ -245,6 +248,7 @@ const NotificationSheet = () => {
     queryFn: () => getNotifications(),
     enabled: open,
     refetchInterval: open ? 10000 : false,
+    refetchIntervalInBackground: false,
   });
 
   const markSeen = useMutation({

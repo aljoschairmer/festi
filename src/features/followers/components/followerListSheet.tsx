@@ -129,11 +129,17 @@ function matchesSearch(user: FollowUser, query: string) {
 
 const FollowerListSheet = () => {
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery<FollowConnections>({
     queryKey: ["follow-connections"],
     queryFn: () => getFollowConnections(),
+    // Fetch and poll only while the sheet is actually open.
+    enabled: open,
     refetchInterval: 30_000,
+    // Poll only while the tab is visible — background tabs must not keep
+    // firing server-action requests.
+    refetchIntervalInBackground: false,
   });
 
   const filtered = useMemo<FollowConnections>(() => {
@@ -160,7 +166,7 @@ const FollowerListSheet = () => {
     filtered.followers.length > 0;
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         className={buttonVariants({
           variant: "ghost",
