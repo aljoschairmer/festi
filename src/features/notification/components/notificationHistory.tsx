@@ -42,9 +42,14 @@ export function NotificationHistory() {
 
   if (query.isError) {
     return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        Something went wrong loading your notifications.
-      </p>
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          Something went wrong loading your notifications.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+          Retry
+        </Button>
+      </div>
     );
   }
 

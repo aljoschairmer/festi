@@ -243,7 +243,12 @@ const NotificationSheet = () => {
     refetchIntervalInBackground: false,
   });
 
-  const { data: notifications, isLoading } = useQuery<NotificationItem[]>({
+  const {
+    data: notifications,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<NotificationItem[]>({
     queryKey: ["notifications"],
     queryFn: () => getNotifications(),
     enabled: open,
@@ -309,6 +314,15 @@ const NotificationSheet = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                Something went wrong loading your notifications.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

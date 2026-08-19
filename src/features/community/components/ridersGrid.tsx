@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export function RidersGrid() {
     data: riders = [],
     isLoading,
     isError,
+    refetch,
   } = useQuery<Rider[]>({
     queryKey: ["riders"],
     queryFn: () => getRiders(),
@@ -66,7 +68,14 @@ export function RidersGrid() {
   if (isLoading)
     return <p className="text-sm text-muted-foreground">Loading riders...</p>;
   if (isError)
-    return <p className="text-sm text-red-500">Failed to load riders.</p>;
+    return (
+      <div className="flex items-center gap-3">
+        <p className="text-sm text-red-500">Failed to load riders.</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
