@@ -78,7 +78,7 @@ export function GroupChat({ groupId }: { groupId: string }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<ChatData>({
+  const { data, isLoading, isError, refetch } = useQuery<ChatData>({
     queryKey: ["group-chat", groupId],
     queryFn: () => getGroupMessages(groupId),
     refetchInterval: 2000,
@@ -110,6 +110,15 @@ export function GroupChat({ groupId }: { groupId: string }) {
       <div className="  flex-1 space-y-4 overflow-y-auto p-4">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading messages...</p>
+        ) : isError ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3">
+            <p className="text-sm text-red-500">
+              Failed to load the conversation.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
             No messages yet. Start the conversation.
