@@ -5,9 +5,11 @@ on:
     branches: ["**"]
   pull_request:
 
-# A newer push supersedes an in-flight run on the same ref.
+# Keyed on the branch, not on github.ref: a pull_request run and the push run
+# for the same commit would otherwise land in different groups and both go
+# ahead, so every commit on an open PR was built twice.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
