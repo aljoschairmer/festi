@@ -21,7 +21,7 @@ Ausnahmen und Einschränkungen:
 | F-14 (kein Dark/Light-Umschalter) | **nicht behoben** — die App ist bewusst dunkel; ein zweites Theme ist eine Designentscheidung, keine Fehlerbehebung. Die Kontraste im vorhandenen Theme sind gefixt. |
 | F-16 (Logout-Fehlermeldung) | **nicht behoben** — eine Server Action kommt nach dem Invalidieren der Session zurück. Der Presence-Heartbeat müsste beim Abmelden gestoppt werden. Reproduzierbar unabhängig von der Latenz, aber ein Umbau am Layout. |
 | F-24 (Font-Preload-Warnung) | **nicht behoben** — die Warnung kommt aus Next' eigenem Font-Handling, nicht aus Anwendungscode. |
-| F-28 (`.env.example`) | **nicht behoben** — die Liste steht in der README; eine `.env.example` anzulegen ist sinnvoll, aber ich wollte keine Datei mit Platzhaltern anlegen, die wie echte Konfiguration aussieht, ohne das mit dir abzustimmen. |
+| F-28 (`.env.example`) | **behoben** — beim Neon-Umbau angelegt: `.env.example` listet alle Variablen mit leeren Werten, `.gitignore` nimmt genau diese Datei aus. |
 
 
 ## Schweregrade

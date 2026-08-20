@@ -2,7 +2,7 @@
 
 Festi is a social platform built for cyclists. It lets riders plan group rides, share route-aware posts, join rider groups, follow each other, and stay in touch through direct and group messaging.
 
-The project is a modern [Next.js](https://nextjs.org) application that ships to [Cloudflare Workers](https://workers.cloudflare.com/) via [OpenNext](https://opennext.js.org/cloudflare), backed by PostgreSQL and Cloudflare R2 for media storage.
+The project is a modern [Next.js](https://nextjs.org) application that ships to [Cloudflare Workers](https://workers.cloudflare.com/) via [OpenNext](https://opennext.js.org/cloudflare), backed by [Neon](https://neon.com/) serverless Postgres and Cloudflare R2 for media storage.
 
 ---
 
@@ -57,7 +57,7 @@ The project is a modern [Next.js](https://nextjs.org) application that ships to 
 | Framework | [Next.js 16](https://nextjs.org) (App Router) + [React 19](https://react.dev) |
 | Language | [TypeScript](https://www.typescriptlang.org/) |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| ORM / Database | [Prisma 7](https://www.prisma.io/) + [PostgreSQL](https://www.postgresql.org/) |
+| ORM / Database | [Prisma 7](https://www.prisma.io/) + [Neon](https://neon.com/) serverless [PostgreSQL](https://www.postgresql.org/) |
 | Auth | [better-auth](https://www.better-auth.com/) with the admin plugin |
 | Server state | [TanStack Query](https://tanstack.com/query/latest) |
 | Forms | [react-hook-form](https://www.react-hook-form.com/) + [Zod](https://zod.dev/) |
@@ -75,7 +75,7 @@ The project is a modern [Next.js](https://nextjs.org) application that ships to 
 - **Feature folders**: `src/features/<domain>/` groups components, actions, schemas, types, and helpers per domain (e.g. `rides`, `posts`, `community`, `users`, `auth`, `analytics`).
 - **Server actions**: most mutations are implemented as Next.js server actions, guarded by `src/features/auth/guards.ts`.
 - **Auth**: the better-auth handler is mounted at `src/app/api/auth/[...all]/route.ts`. Client-side helpers are exported from `src/lib/auth-client.ts`.
-- **Database**: `src/lib/prisma.ts` builds a fresh Prisma client per request using the `@prisma/adapter-pg` driver. This avoids connection reuse issues on Cloudflare Workers.
+- **Database**: `src/lib/prisma.ts` exposes one lazily built Prisma client per Worker isolate. `src/lib/db/` picks the driver from `DATABASE_URL`: Neon's serverless driver in production, plain TCP for a local or CI Postgres. See [Database](#database).
 - **Media**: images are resized/encoded to WebP in the browser, validated server-side, and stored in Cloudflare R2 (`src/lib/r2.ts`).
 - **Maps**: MapTiler provides tiles and geocoding; BRouter computes cycling routes.
 - **Deployment**: OpenNext builds the app into `.open-next/`, and Wrangler serves static assets through the `ASSETS` binding.
@@ -116,7 +116,8 @@ The project is a modern [Next.js](https://nextjs.org) application that ships to 
 │   └── lib/                 # Cross-cutting utilities
 │       ├── auth.ts          # better-auth configuration
 │       ├── auth-client.ts   # Client auth client
-│       ├── prisma.ts        # Per-request Prisma client
+│       ├── db/              # Connection resolution + driver adapter
+│       ├── prisma.ts        # Prisma client, one per Worker isolate
 │       ├── email.ts         # Resend email helpers
 │       ├── image.ts         # Server-side image validation
 │       └── r2.ts            # Cloudflare R2 client
@@ -129,6 +130,50 @@ The project is a modern [Next.js](https://nextjs.org) application that ships to 
 ├── prisma.config.ts         # Prisma CLI configuration
 └── wrangler.jsonc           # Wrangler / Cloudflare Workers settings
 ```
+
+---
+
+## Database
+
+Production runs on [Neon](https://neon.com/). Neon matters here because the app
+is a Cloudflare Worker: a Worker isolate cannot keep a long-lived TCP pool the
+way a Node server can, and every colo that serves traffic would otherwise open
+its own connections against one Postgres.
+
+**How the connection is made**
+
+- `src/lib/db/connection.ts` reads `DATABASE_URL` and classifies it. A
+  `*.neon.tech` host selects Neon's serverless driver; anything else — Docker
+  Compose locally, the service container in CI — selects plain TCP through
+  `pg`. `DATABASE_DRIVER` overrides the guess.
+- `src/lib/db/adapter.ts` builds the matching Prisma driver adapter. On Neon,
+  `poolQueryViaFetch` sends ordinary queries as a single HTTPS request, so no
+  WebSocket handshake sits in front of a query. Transactions still need a
+  socket and open one on their own.
+- `src/lib/prisma.ts` exposes `prisma`, built on first use and cached on
+  `globalThis` for the life of the isolate. Building lazily matters on Workers:
+  the environment is bound per request, and the build imports this module
+  without ever running a query.
+
+**Pooled vs. direct endpoint**
+
+Neon offers two hostnames per branch. `DATABASE_URL` should be the pooled one
+(`…-pooler.…`), which fronts PgBouncer and absorbs the connection churn of many
+isolates. `DIRECT_URL` should be the unpooled one: the schema engine takes
+advisory locks and relies on session state, neither of which survives
+PgBouncer's transaction mode. `prisma.config.ts` therefore runs migrations and
+seeding against `DIRECT_URL`, falling back to `DATABASE_URL` when it is unset —
+which is what a single-endpoint local Postgres wants.
+
+The app warns on startup when `DATABASE_URL` points at a Neon endpoint that is
+not pooled.
+
+**Local development**
+
+`docker compose up -d` plus a `postgresql://postgres:changeme@localhost:5432/database`
+URL needs no Neon account and no extra configuration: the driver selection sees
+a non-Neon host and uses `pg`. Pointing `DATABASE_URL` at a Neon branch instead
+works just as well, and is the closer match to production.
 
 ---
 
@@ -151,7 +196,10 @@ Create `.env.local` (and/or `.env`) in the project root. The following variables
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string. |
+| `DATABASE_URL` | Connection string the app queries through. On Neon use the **pooled** endpoint (`…-pooler.<region>.aws.neon.tech`). |
+| `DIRECT_URL` | Connection string for migrations, introspection and seeding. On Neon use the **direct** endpoint; falls back to `DATABASE_URL` when unset. |
+| `SHADOW_DATABASE_URL` | Optional. Shadow database for `prisma migrate dev`; on Neon point it at a second branch or database. |
+| `DATABASE_DRIVER` | Optional. Forces `neon` or `postgres` when the host alone does not say — e.g. a Neon proxy under your own hostname. |
 | `NEXT_PUBLIC_APP_URL` | Canonical app URL (e.g. `http://localhost:3000`). |
 | `BETTER_AUTH_SECRET` | Secret used by better-auth for token signing. |
 | `RESEND_API_KEY` | Resend API key for transactional emails. |
@@ -172,6 +220,7 @@ For Cloudflare deployments, set sensitive values as Wrangler secrets:
 
 ```bash
 wrangler secret put DATABASE_URL
+wrangler secret put DIRECT_URL
 wrangler secret put BETTER_AUTH_SECRET
 wrangler secret put RESEND_API_KEY
 # ... etc
@@ -184,7 +233,7 @@ wrangler secret put RESEND_API_KEY
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (the project targets the LTS range used by Next.js 16)
-- A running PostgreSQL database (or use the provided Docker Compose file)
+- A Postgres to develop against: the provided Docker Compose file, or a [Neon](https://neon.com/) branch
 
 ### 1. Install dependencies
 
@@ -198,15 +247,25 @@ npm install
 docker compose up -d
 ```
 
-This starts PostgreSQL on port `5432` and pgAdmin on port `5050`.
+This starts PostgreSQL on port `5432` and pgAdmin on port `5050`. Skip it if
+you develop against a Neon branch instead.
 
 ### 3. Configure environment variables
 
-Create `.env.local` in the project root. At minimum set `DATABASE_URL` and `NEXT_PUBLIC_APP_URL`:
+Copy `.env.example` to `.env.local` and fill it in. At minimum set
+`DATABASE_URL` and `NEXT_PUBLIC_APP_URL`:
 
 ```bash
 DATABASE_URL="postgresql://postgres:changeme@localhost:5432/database"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+Against a Neon branch, use the pooled endpoint for `DATABASE_URL` and the
+direct one for `DIRECT_URL`:
+
+```bash
+DATABASE_URL="postgresql://…@ep-xxx-pooler.eu-central-1.aws.neon.tech/festi?sslmode=require"
+DIRECT_URL="postgresql://…@ep-xxx.eu-central-1.aws.neon.tech/festi?sslmode=require"
 ```
 
 ### 4. Set up the database

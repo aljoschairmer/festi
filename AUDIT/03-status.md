@@ -1,15 +1,16 @@
 # 03 – Was ist behoben, was ist offen
 
-> Stand nach der Fix-Runde auf `claude/festi-e2e-audit-n10238`.
+> Stand nach der Fix-Runde auf `claude/festi-e2e-audit-n10238`, ergänzt um den
+> Neon-Umbau der Datenbankschicht auf `claude/neon-db-implementation-p3jiia`.
 > Gesamtbestand: **156 Funde** (F 29 · U 16 · A 19 · B 30 · C 26 · D 25 · E 21 · R 12 · L 8).
 
 ## Kurzfassung
 
 | | Anzahl |
 | --- | ---: |
-| **Behoben** | ~74 |
+| **Behoben** | ~76 |
 | **Zurückgezogen** (Fehlmessung / Fehlalarm) | 5 |
-| **Offen** | ~77 |
+| **Offen** | ~75 |
 
 Die Fix-Runde hat sich auf **Sicherheit, Datenkonsistenz und die konkreten
 UI-Defekte** konzentriert. Drei ganze Review-Bereiche sind weitgehend
@@ -37,12 +38,12 @@ A-07 `proxy.ts` · A-08 `cf-connecting-ip` · A-09 Security-Header ·
 A-10 Port-Binding · A-12 HTML-Escaping in Mails · A-14 cookieCache ·
 A-15 Dev-Origins · A-16 Bildgröße durchgesetzt.
 
-**Daten (8 von 30)** — B-02 Waitlist-Transaktion · B-03 Race Conditions ·
-B-04 `take`-Limits · B-08 20 Composite-Indizes · B-12 fehlgeschlagene
-Generierung sichtbar · B-13 Fetch-Timeouts · B-19 R2-Aufräumen ·
-B-21 `@@unique([postId, position])`.
+**Daten (9 von 30)** — B-01 Neon-Serverless-Treiber statt `pg`-TCP-Pool ·
+B-02 Waitlist-Transaktion · B-03 Race Conditions · B-04 `take`-Limits ·
+B-08 20 Composite-Indizes · B-12 fehlgeschlagene Generierung sichtbar ·
+B-13 Fetch-Timeouts · B-19 R2-Aufräumen · B-21 `@@unique([postId, position])`.
 
-**Funktion und UI** — F-02/03/04/06/09/10/11/12/13/15/20/22/23/25 ·
+**Funktion und UI** — F-02/03/04/06/09/10/11/12/13/15/20/22/23/25 · F-28 `.env.example` ·
 U-01 bis U-08 · U-13 Kontraste · U-16 Rottöne teilweise.
 
 **Engine (5 von 12)** — R-01 Höhenmeter-Artefakte · R-02 Distanz-Scoring ·
@@ -155,11 +156,10 @@ in 12 Ideen erreichten die Engine nie.
 | U-14 | Events: Quellen-Link liegt in der Klickfläche des Event-Buttons. |
 | U-15 | `line-clamp` schneidet ohne Hinweis ab. |
 
-### 4. Daten und Backend (22 von 30 offen)
+### 4. Daten und Backend (21 von 30 offen)
 
 | ID | |
 | --- | --- |
-| B-01 | `maxUses: 1` — eine Verbindung pro Query. In einer Region unkritisch, über Kontinente teuer. Pooler (Hyperdrive/PgBouncer) wäre die Lösung. **P3, nicht P0** (siehe F-01). |
 | B-05 / B-07 | `include` statt `select` in Listen-Queries; volle Routen-Geometrie in jeder Zeile. |
 | B-06 | Feed-Cursor vergleicht IDs über zwei Tabellen hinweg. |
 | B-09 / B-10 / B-11 | Uneinheitliche Rückgabeformate; Read-Actions werfen für erwartete Zustände; rohe Upstream-Fehlertexte am Client. |
@@ -192,10 +192,8 @@ E-19 kein Node-Pinning · E-21 Barrel-Exports uneinheitlich.
 | | Warum |
 | --- | --- |
 | **Light-Theme** (D-01, C-23) | Eine Designentscheidung, keine Fehlerbehebung. Die Kontraste im vorhandenen dunklen Theme sind gefixt. |
-| **`.env.example`** (F-28) | Möchte ich nicht ohne Absprache anlegen — eine Datei voller Platzhalter, die wie echte Konfiguration aussieht. |
 | **291 Farb-Call-Sites** (D-08) | Mechanisch, aber 61 Dateien mit Regressionsrisiko in Gradienten. Gehört in einen eigenen, reviewbaren PR. |
 | **31 tote UI-Komponenten löschen** (E-15) | Dito — eigener PR, damit der Diff lesbar bleibt. |
-| **`maxUses: 1`** (B-01) | Der Kommentar im Code beschreibt einen echten Workers-Bug. Ohne Deployment kann ich einen Umbau nicht gegentesten. |
 
 ## Vorschlag für die Reihenfolge
 
@@ -258,5 +256,4 @@ Datenbank.
 | **`text-white` auf Rot** | Weiß auf `--primary` misst **4,06:1** und verfehlt AA; `--primary-foreground` misst **4,79:1**. Die `Button`-Default-Variante macht es schon richtig. Umstellen heißt: jeder rote CTA bekommt fast schwarze statt weißer Schrift. Sichtbar genug, dass ich das nicht allein entscheide. |
 | **Gradient-CTAs** (D-03, 56 Klassen) | Als `cta`-Variante in `buttonVariants` aufnehmen? Dann greift auch der Farb-Guard dafür. |
 | **Light-Theme** (D-01, C-23) | Unverändert offen — Designentscheidung. |
-| **`.env.example`** (F-28) | Lege ich weiterhin nicht ohne Absprache an. |
-| **`maxUses: 1`** (B-01) | Ohne Deployment nicht gegenzutesten. |
+| **Neon-Endpunkte** (B-01) | Der Umbau ist gegen einen lokalen Postgres und im Build verifiziert, gegen eine echte Neon-Instanz noch nicht. `DATABASE_URL` muss auf den `-pooler`-Endpunkt zeigen, `DIRECT_URL` auf den direkten — beides als Wrangler-Secret. |

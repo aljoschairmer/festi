@@ -11,7 +11,9 @@ import pg from "pg";
  * Raw SQL keeps `npm run db:setup` working in every environment.
  */
 async function main() {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  const client = new pg.Client({
+    connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+  });
   await client.connect();
 
   console.log("🌱 Starting seed...");
